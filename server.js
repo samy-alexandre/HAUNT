@@ -31,7 +31,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 ======================= */
 const io = new Server(server, {
   cors: { origin: "*" },
-  transports: ["websocket"]
+  transports: ["websocket","polling"]
 });
 
 /* =======================
