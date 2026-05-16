@@ -34,14 +34,14 @@ input[type=text]:focus{border-color:var(--accent);box-shadow:0 0 12px rgba(0,255
 .room-code{font-family:'Creepster',cursive;font-size:2.8rem;color:var(--accent);letter-spacing:0.4em;text-align:center;text-shadow:0 0 20px rgba(0,255,136,0.4);}
 .error-msg{color:var(--danger);font-size:0.75rem;letter-spacing:0.1em;text-align:center;min-height:1.2em;}
 
-#gameScreen{display:none;width:100vw;height:100vh;flex-direction:row;padding:0;max-width:none;}
+#gameScreen{display:none;position:fixed;inset:0;flex-direction:row;padding:0;max-width:none;}
 #gameScreen.active{display:flex;}
-#gameMain{flex:1;display:flex;flex-direction:column;min-width:0;}
+#gameMain{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;}
 #hud{display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0.8rem;background:rgba(7,7,13,0.97);border-bottom:1px solid var(--border);flex-shrink:0;gap:0.5rem;flex-wrap:wrap;}
 .hud-item{display:flex;flex-direction:column;align-items:center;}
 .hud-label{color:var(--dim);font-size:0.55rem;letter-spacing:0.2em;}
 .hud-val{color:var(--accent);font-size:0.9rem;}
-#canvas{flex:1;display:block;width:100%;}
+#canvas{display:block;width:100%;flex:1;min-height:0;}
 #controls-hint{padding:0.25rem 0.8rem;background:rgba(7,7,13,0.97);border-top:1px solid var(--border);font-size:0.6rem;color:var(--dim);letter-spacing:0.1em;text-align:center;flex-shrink:0;}
 
 #sidebar{width:200px;background:rgba(7,7,13,0.97);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
@@ -349,11 +349,21 @@ function showWinOverlay(state){
 // ---- CANVAS ----
 const canvas=document.getElementById('canvas');
 const ctx=canvas.getContext('2d');
-const TILE=28;
+const TILE=26;
 let tick=0, camX=12, camY=9;
 
-function initCanvas(){ resizeCanvas(); window.addEventListener('resize',resizeCanvas); }
-function resizeCanvas(){ canvas.width=canvas.clientWidth; canvas.height=canvas.clientHeight; }
+function initCanvas(){
+  resizeCanvas();
+  window.addEventListener('resize',resizeCanvas);
+}
+function resizeCanvas(){
+  // Use setTimeout to let the DOM settle after screen switch
+  setTimeout(()=>{
+    const rect=canvas.getBoundingClientRect();
+    canvas.width=rect.width>0?Math.floor(rect.width):window.innerWidth-200;
+    canvas.height=rect.height>0?Math.floor(rect.height):window.innerHeight-60;
+  },50);
+}
 function w2s(wx,wy){ return{ sx:(wx-camX)*TILE+canvas.width/2, sy:(wy-camY)*TILE+canvas.height/2 }; }
 
 function render(){
@@ -385,10 +395,9 @@ function render(){
   // Exit
   const{sx:ex,sy:ey}=w2s(34,1);
   const g=0.5+0.5*Math.sin(tick*0.07);
-  ctx.fillStyle=`rgba(0,255,136,${0.12+g*0.1})`; ctx.fillRect(ex,ey,TILE,TILE);
-  ctx.shadowColor='#00ff88'; ctx.shadowBlur=18*g;
-  ctx.strokeStyle=`rgba(0,255,136,${0.5+g*0.5})`; ctx.lineWidth=2;
-  ctx.strokeRect(ex+1,ey+1,TILE-2,TILE-2); ctx.shadowBlur=0;
+  ctx.fillStyle=`rgba(0,255,136,${0.15+g*0.1})`; ctx.fillRect(ex,ey,TILE,TILE);
+  ctx.strokeStyle=`rgba(0,255,136,${0.6+g*0.4})`; ctx.lineWidth=2;
+  ctx.strokeRect(ex+1,ey+1,TILE-2,TILE-2);
   ctx.font=`${TILE*0.65}px serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.fillStyle='#fff'; ctx.fillText('🚪',ex+TILE/2,ey+TILE/2);
 
@@ -422,7 +431,6 @@ function render(){
     ctx.save(); ctx.globalAlpha=fl;
     // Body
     ctx.fillStyle='rgba(200,20,50,0.9)';
-    ctx.shadowColor='#ff0033'; ctx.shadowBlur=16;
     ctx.beginPath();
     const gx=mx+TILE/2, gy=my2+TILE/2+bob2, gr=TILE*0.4;
     ctx.arc(gx,gy-gr*0.1,gr,Math.PI,0);
@@ -482,9 +490,7 @@ function drawPlayer(p,isMe){
   ctx.fillRect(px+TILE-12,py+TILE-9-leg,5,8);
   // Body
   ctx.fillStyle=p.color;
-  ctx.shadowColor=p.color; ctx.shadowBlur=isMe?12:6;
   ctx.beginPath(); ctx.roundRect(px+5,py+8,TILE-10,TILE-14,3); ctx.fill();
-  ctx.shadowBlur=0;
   // Head
   ctx.fillStyle='#ffd6a5';
   ctx.beginPath(); ctx.roundRect(px+7,py+1,TILE-14,13,3); ctx.fill();
