@@ -57,9 +57,7 @@ canvas{
 /* =======================
    🔥 FIX RENDER SOCKET
 ======================= */
-const socket = io({
-  transports: ["websocket"]
-});
+const socket = io({ transports: ["websocket","polling"] });
 
 let gameMap = null;
 let gameState = null;
