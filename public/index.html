@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HAUNT — Co-op Survival</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Creepster&family=Share+Tech+Mono&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --panel: #0f0f1a;
+    --border: #1a1a2e;
+    --accent: #00ff88;
+    --danger: #ff3355;
+    --warn: #ffcc00;
+    --text: #c8c8e0;
+    --dim: #4a4a6a;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* Scanlines effect */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* Noise texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+    opacity: 0.5;
+  }
+
+  h1 {
+    font-family: 'Creepster', cursive;
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    color: var(--accent);
+    text-shadow: 0 0 30px rgba(0,255,136,0.5), 0 0 60px rgba(0,255,136,0.2);
+    letter-spacing: 0.15em;
+    margin-bottom: 0.25em;
+  }
+
+  .subtitle {
+    color: var(--dim);
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    margin-bottom: 2.5rem;
+  }
+
+  /* SCREENS */
+  .screen { display: none; flex-direction: column; align-items: center; gap: 1rem; width: 100%; max-width: 480px; padding: 1rem; }
+  .screen.active { display: flex; }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.5rem;
+    width: 100%;
+    position: relative;
+  }
+
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: -1px; right: -1px; bottom: -1px;
+    border-radius: 4px;
+    background: linear-gradient(135deg, rgba(0,255,136,0.15), transparent 50%);
+    pointer-events: none;
+  }
+
+  .panel-title {
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  input {
+    background: #080810;
+    border: 1px solid var(--border);
+    color: var(--accent);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.2rem;
+    padding: 0.6rem 1rem;
+    width: 100%;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input:focus { border-color: var(--accent); box-shadow: 0 0 15px rgba(0,255,136,0.1); }
+
+  btn, .btn {
+    display: block;
+    width: 100%;
+    padding: 0.8rem 1.5rem;
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.9rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .btn:hover::before { opacity: 0.08; }
+  .btn:active { transform: scale(0.98); }
+  .btn.primary { background: var(--accent); color: #000; font-weight: bold; }
+  .btn.primary::before { background: #000; }
+  .btn.danger { border-color: var(--danger); color: var(--danger); }
+
+  .divider {
+    display: flex; align-items: center; gap: 1rem; color: var(--dim); font-size: 0.7rem;
+    letter-spacing: 0.2em;
+  }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .room-code {
+    font-family: 'Creepster', cursive;
+    font-size: 3rem;
+    color: var(--accent);
+    letter-spacing: 0.4em;
+    text-align: center;
+    text-shadow: 0 0 20px rgba(0,255,136,0.4);
+  }
+
+  .player-count {
+    text-align: center;
+    color: var(--dim);
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+  }
+
+  .error-msg {
+    color: var(--danger);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-align: center;
+    min-height: 1.2em;
+  }
+
+  /* GAME SCREEN */
+  #gameScreen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
+    padding: 0;
+    max-width: none;
+  }
+  #gameScreen.active { display: flex; }
+
+  #hud {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background: rgba(10,10,15,0.95);
+    border-bottom: 1px solid var(--border);
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    flex-shrink: 0;
+  }
+
+  #hud .hud-item { display: flex; flex-direction: column; align-items: center; gap: 0.1rem; }
+  #hud .hud-label { color: var(--dim); font-size: 0.6rem; letter-spacing: 0.2em; }
+  #hud .hud-val { color: var(--accent); font-size: 1rem; }
+
+  #canvas {
+    flex: 1;
+    display: block;
+    image-rendering: pixelated;
+    cursor: none;
+  }
+
+  #controls-hint {
+    width: 100%;
+    padding: 0.3rem 1rem;
+    background: rgba(10,10,15,0.95);
+    border-top: 1px solid var(--border);
+    font-size: 0.65rem;
+    color: var(--dim);
+    letter-spacing: 0.15em;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  /* OVERLAY */
+  #overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 500;
+    backdrop-filter: blur(4px);
+  }
+  #overlay.active { display: flex; }
+  #overlay-box {
+    background: var(--panel);
+    border: 1px solid var(--accent);
+    padding: 3rem;
+    text-align: center;
+    border-radius: 4px;
+    max-width: 360px;
+    width: 90%;
+  }
+  #overlay-title {
+    font-family: 'Creepster', cursive;
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+  #overlay-sub { color: var(--dim); font-size: 0.8rem; letter-spacing: 0.15em; margin-bottom: 2rem; }
+
+  .pulse { animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  .flicker { animation: flicker 0.1s infinite alternate; }
+  @keyframes flicker { 0% { opacity: 1; } 100% { opacity: 0.85; } }
+</style>
+</head>
+<body>
+
+<!-- MENU SCREEN -->
+<div id="menuScreen" class="screen active">
+  <h1>HAUNT</h1>
+  <p class="subtitle">Cooperative Survival — 1 à 6 joueurs</p>
+
+  <div class="panel">
+    <div class="panel-title">▸ Créer une salle</div>
+    <button class="btn primary" id="btnCreate">Créer la partie</button>
+  </div>
+
+  <div class="divider">ou</div>
+
+  <div class="panel">
+    <div class="panel-title">▸ Rejoindre une salle</div>
+    <input type="text" id="codeInput" placeholder="CODE" maxlength="6" />
+    <br>
+    <button class="btn" id="btnJoin">Rejoindre</button>
+  </div>
+
+  <div class="error-msg" id="menuError"></div>
+</div>
+
+<!-- LOBBY SCREEN -->
+<div id="lobbyScreen" class="screen">
+  <h1>HAUNT</h1>
+
+  <div class="panel">
+    <div class="panel-title">▸ Code de la salle</div>
+    <div class="room-code" id="displayCode">------</div>
+    <div class="player-count" id="playerCount">1 joueur connecté</div>
+    <br>
+    <div style="font-size:0.7rem; color:var(--dim); text-align:center; letter-spacing:0.15em;">
+      Partage ce code à tes potes !
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">▸ Objectif</div>
+    <div style="font-size:0.75rem; line-height:1.8; color:var(--text);">
+      🏠 Explorez la maison hantée<br>
+      📦 Ramassez les <b style="color:var(--warn)">10 colis</b> cachés<br>
+      🚪 Livrez-les à la <b style="color:var(--accent)">sortie</b> (coin haut droit)<br>
+      👻 Évitez les <b style="color:var(--danger)">monstres</b> — ils vous font tomber !
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">▸ Contrôles</div>
+    <div style="font-size:0.75rem; line-height:1.8; color:var(--text);">
+      <b style="color:var(--accent)">ZQSD / WASD / Flèches</b> — Déplacer<br>
+      <b style="color:var(--accent)">ESPACE / E</b> — Ramasser / Poser l'objet
+    </div>
+  </div>
+
+  <button class="btn primary" id="btnStart">▶ LANCER LA PARTIE</button>
+  <div class="error-msg" id="lobbyError"></div>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="gameScreen" class="screen">
+  <div id="hud">
+    <div class="hud-item">
+      <span class="hud-label">COLIS</span>
+      <span class="hud-val" id="hudItems">0/10</span>
+    </div>
+    <div class="hud-item">
+      <span class="hud-label">SCORE</span>
+      <span class="hud-val" id="hudScore">0</span>
+    </div>
+    <div class="hud-item">
+      <span class="hud-label">STATUT</span>
+      <span class="hud-val" id="hudStatus" style="color:var(--accent)">EN VIE</span>
+    </div>
+  </div>
+  <canvas id="canvas"></canvas>
+  <div id="controls-hint">ZQSD / WASD — Déplacer &nbsp;|&nbsp; ESPACE / E — Ramasser / Poser</div>
+</div>
+
+<!-- OVERLAY (win/lose/dead) -->
+<div id="overlay">
+  <div id="overlay-box">
+    <div id="overlay-title"></div>
+    <div id="overlay-sub"></div>
+    <button class="btn primary" onclick="location.reload()">REJOUER</button>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+
+// State
+let myId = null;
+let myRoom = null;
+let gameMap = null;
+let gameState = null;
+let isHost = false;
+
+// Input
+const keys = {};
+let lastAction = false;
+document.addEventListener('keydown', e => {
+  keys[e.code] = true;
+  if (['Space','KeyE'].includes(e.code)) e.preventDefault();
+});
+document.addEventListener('keyup', e => { keys[e.code] = false; });
+
+// Screens
+const screens = {
+  menu: document.getElementById('menuScreen'),
+  lobby: document.getElementById('lobbyScreen'),
+  game: document.getElementById('gameScreen'),
+};
+function showScreen(name) {
+  Object.entries(screens).forEach(([k, el]) => {
+    el.classList.toggle('active', k === name);
+  });
+}
+
+// Menu actions
+document.getElementById('btnCreate').addEventListener('click', () => {
+  socket.emit('create_room');
+  isHost = true;
+});
+
+document.getElementById('btnJoin').addEventListener('click', () => {
+  const code = document.getElementById('codeInput').value.trim().toUpperCase();
+  if (!code) return;
+  socket.emit('join_room', { roomId: code });
+  isHost = false;
+});
+
+document.getElementById('codeInput').addEventListener('keydown', e => {
+  if (e.code === 'Enter') document.getElementById('btnJoin').click();
+});
+
+document.getElementById('btnStart').addEventListener('click', () => {
+  socket.emit('start_game');
+});
+
+// Socket events
+socket.on('room_created', ({ roomId, playerId }) => {
+  myId = playerId;
+  myRoom = roomId;
+  document.getElementById('displayCode').textContent = roomId;
+  document.getElementById('playerCount').textContent = '1 joueur connecté';
+  showScreen('lobby');
+});
+
+socket.on('joined', ({ playerId, roomId }) => {
+  myId = playerId;
+  myRoom = roomId;
+  document.getElementById('displayCode').textContent = roomId;
+  showScreen('lobby');
+});
+
+socket.on('player_joined', ({ count }) => {
+  document.getElementById('playerCount').textContent = `${count} joueur${count > 1 ? 's' : ''} connecté${count > 1 ? 's' : ''}`;
+});
+
+socket.on('map', (map) => { gameMap = map; });
+
+socket.on('game_started', () => { showScreen('game'); initCanvas(); startGameLoop(); });
+
+socket.on('error', (msg) => {
+  document.getElementById('menuError').textContent = '⚠ ' + msg;
+});
+
+socket.on('state', (state) => {
+  gameState = state;
+  updateHUD();
+
+  if (state.gameWon) showOverlay('VICTOIRE !', `Tous les colis livrés ! Score: ${state.score}`, '#00ff88');
+  if (state.gameOver) showOverlay('GAME OVER', 'La maison vous a eus...', '#ff3355');
+});
+
+function showOverlay(title, sub, color) {
+  const ov = document.getElementById('overlay');
+  document.getElementById('overlay-title').textContent = title;
+  document.getElementById('overlay-title').style.color = color;
+  document.getElementById('overlay-sub').textContent = sub;
+  ov.classList.add('active');
+}
+
+function updateHUD() {
+  if (!gameState) return;
+  document.getElementById('hudItems').textContent = `${gameState.itemsDelivered}/${gameState.totalItems}`;
+  document.getElementById('hudScore').textContent = gameState.score;
+  const me = gameState.players[myId];
+  if (me) {
+    const statusEl = document.getElementById('hudStatus');
+    if (me.dead) {
+      statusEl.textContent = 'MORT...';
+      statusEl.style.color = '#ff3355';
+    } else if (me.carrying !== null) {
+      statusEl.textContent = '📦 CHARGÉ';
+      statusEl.style.color = '#ffcc00';
+    } else {
+      statusEl.textContent = 'EN VIE';
+      statusEl.style.color = '#00ff88';
+    }
+  }
+}
+
+// Canvas / rendering
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const TILE = 32;
+
+function initCanvas() {
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+}
+
+function resizeCanvas() {
+  canvas.width = canvas.clientWidth;
+  canvas.height = canvas.clientHeight;
+}
+
+function worldToScreen(wx, wy, camX, camY) {
+  return {
+    sx: (wx - camX) * TILE + canvas.width / 2,
+    sy: (wy - camY) * TILE + canvas.height / 2
+  };
+}
+
+// Animated flicker for lights
+let tick = 0;
+
+function render() {
+  if (!gameState || !gameMap) return;
+  tick++;
+
+  const me = gameState.players[myId];
+  const camX = me ? me.x : 12;
+  const camY = me ? me.y : 9;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Background
+  ctx.fillStyle = '#050508';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Draw map
+  for (let y = 0; y < gameMap.length; y++) {
+    for (let x = 0; x < gameMap[y].length; x++) {
+      const { sx, sy } = worldToScreen(x, y, camX, camY);
+      if (sx < -TILE || sx > canvas.width + TILE || sy < -TILE || sy > canvas.height + TILE) continue;
+
+      if (gameMap[y][x] === 1) {
+        // Wall
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fillRect(sx, sy, TILE, TILE);
+        // Wall top highlight
+        ctx.fillStyle = '#252540';
+        ctx.fillRect(sx, sy, TILE, 3);
+        ctx.fillStyle = '#0f0f1f';
+        ctx.fillRect(sx, sy + TILE - 2, TILE, 2);
+        // Wall side
+        ctx.fillStyle = '#12121f';
+        ctx.fillRect(sx + TILE - 3, sy, 3, TILE);
+      } else {
+        // Floor
+        const shade = ((x + y) % 2 === 0) ? '#0c0c16' : '#0e0e18';
+        ctx.fillStyle = shade;
+        ctx.fillRect(sx, sy, TILE, TILE);
+        // Floor grid
+        ctx.strokeStyle = 'rgba(255,255,255,0.02)';
+        ctx.lineWidth = 0.5;
+        ctx.strokeRect(sx, sy, TILE, TILE);
+      }
+    }
+  }
+
+  // Exit marker
+  const exit = { x: 22, y: 1 };
+  const { sx: ex, sy: ey } = worldToScreen(exit.x, exit.y, camX, camY);
+  const glow = 0.5 + 0.5 * Math.sin(tick * 0.08);
+  ctx.fillStyle = `rgba(0,255,136,${0.15 + glow * 0.1})`;
+  ctx.fillRect(ex, ey, TILE, TILE);
+  ctx.strokeStyle = `rgba(0,255,136,${0.5 + glow * 0.5})`;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(ex + 1, ey + 1, TILE - 2, TILE - 2);
+  ctx.fillStyle = `rgba(0,255,136,${0.7 + glow * 0.3})`;
+  ctx.font = `${TILE * 0.6}px monospace`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('🚪', ex + TILE / 2, ey + TILE / 2);
+
+  // Items
+  gameState.items.forEach(item => {
+    if (item.collected) return;
+    const { sx: ix, sy: iy } = worldToScreen(item.x, item.y, camX, camY);
+    if (ix < -TILE || ix > canvas.width + TILE) return;
+
+    const bob = Math.sin(tick * 0.06 + item.id * 1.2) * 2;
+    ctx.fillStyle = item.carriedBy ? '#ff9900' : '#ffcc00';
+    ctx.shadowColor = item.carriedBy ? '#ff9900' : '#ffcc00';
+    ctx.shadowBlur = 10;
+    ctx.font = `${TILE * 0.55}px monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('📦', ix + TILE / 2, iy + TILE / 2 + bob);
+    ctx.shadowBlur = 0;
+  });
+
+  // Monsters
+  gameState.monsters.forEach(m => {
+    const { sx: mx, sy: my } = worldToScreen(m.x, m.y, camX, camY);
+    if (mx < -TILE || mx > canvas.width + TILE) return;
+
+    // Monster glow
+    const mFlicker = 0.7 + 0.3 * Math.sin(tick * 0.15 + m.id * 2.5);
+    ctx.shadowColor = '#ff0033';
+    ctx.shadowBlur = 20 * mFlicker;
+    ctx.font = `${TILE * 0.7}px monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = `rgba(255,50,50,${mFlicker})`;
+    ctx.fillText('👻', mx + TILE / 2, my + TILE / 2);
+    ctx.shadowBlur = 0;
+  });
+
+  // Other players
+  Object.values(gameState.players).forEach(p => {
+    if (p.id === myId) return;
+    const { sx: px, sy: py } = worldToScreen(p.x, p.y, camX, camY);
+
+    if (p.dead) {
+      ctx.globalAlpha = 0.3;
+    }
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.beginPath();
+    ctx.ellipse(px + TILE/2, py + TILE - 4, TILE/3, TILE/8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Player body
+    ctx.fillStyle = p.color || '#66d9ff';
+    ctx.shadowColor = p.color || '#66d9ff';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.roundRect(px + 6, py + 8, TILE - 12, TILE - 10, 4);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Head
+    ctx.fillStyle = '#ffd6a5';
+    ctx.beginPath();
+    ctx.arc(px + TILE/2, py + 6, 7, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Name tag
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(px + TILE/2 - 22, py - 14, 44, 12);
+    ctx.fillStyle = p.color || '#66d9ff';
+    ctx.font = '9px Share Tech Mono';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(p.name, px + TILE/2, py - 8);
+
+    ctx.globalAlpha = 1;
+  });
+
+  // MY PLAYER
+  if (me) {
+    const { sx: px, sy: py } = worldToScreen(me.x, me.y, camX, camY);
+
+    if (me.dead) {
+      // Death animation
+      ctx.globalAlpha = 0.5 + 0.5 * Math.sin(tick * 0.2);
+      ctx.font = `${TILE}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('💀', px + TILE/2, py + TILE/2);
+      ctx.globalAlpha = 1;
+
+      // Respawn text
+      ctx.fillStyle = '#ff3355';
+      ctx.font = '11px Share Tech Mono';
+      ctx.textAlign = 'center';
+      ctx.fillText('MORT — Réapparition...', canvas.width / 2, canvas.height / 2 - 30);
+    } else {
+      // Shadow
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.beginPath();
+      ctx.ellipse(px + TILE/2, py + TILE - 4, TILE/3, TILE/8, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Body
+      ctx.fillStyle = '#00ff88';
+      ctx.shadowColor = '#00ff88';
+      ctx.shadowBlur = 12;
+      ctx.beginPath();
+      ctx.roundRect(px + 6, py + 8, TILE - 12, TILE - 10, 4);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // Head
+      ctx.fillStyle = '#ffd6a5';
+      ctx.beginPath();
+      ctx.arc(px + TILE/2, py + 6, 7, 0, Math.PI * 2);
+      ctx.fill();
+
+      // YOU label
+      ctx.fillStyle = 'rgba(0,0,0,0.8)';
+      ctx.fillRect(px + TILE/2 - 16, py - 14, 32, 12);
+      ctx.fillStyle = '#00ff88';
+      ctx.font = 'bold 9px Share Tech Mono';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('TOI', px + TILE/2, py - 8);
+
+      // Carrying indicator
+      if (me.carrying !== null) {
+        ctx.font = '16px monospace';
+        ctx.fillText('📦', px + TILE/2 + 10, py - 2);
+      }
+    }
+  }
+
+  // Darkness vignette
+  const vx = canvas.width / 2;
+  const vy = canvas.height / 2;
+  const gradient = ctx.createRadialGradient(vx, vy, canvas.height * 0.2, vx, vy, canvas.height * 0.75);
+  gradient.addColorStop(0, 'rgba(0,0,0,0)');
+  gradient.addColorStop(1, 'rgba(0,0,5,0.85)');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+// Input loop
+function sendInput() {
+  let dx = 0, dy = 0;
+  if (keys['KeyW'] || keys['ArrowUp'] || keys['KeyZ']) dy = -1;
+  if (keys['KeyS'] || keys['ArrowDown']) dy = 1;
+  if (keys['KeyA'] || keys['ArrowLeft'] || keys['KeyQ']) dx = -1;
+  if (keys['KeyD'] || keys['ArrowRight']) dx = 1;
+
+  const action = (keys['Space'] || keys['KeyE']) && !lastAction;
+  lastAction = keys['Space'] || keys['KeyE'];
+
+  if (dx !== 0 || dy !== 0 || action) {
+    // Normalize diagonal
+    if (dx !== 0 && dy !== 0) { dx *= 0.707; dy *= 0.707; }
+    socket.emit('input', { dx, dy, action });
+  }
+}
+
+function startGameLoop() {
+  function loop() {
+    sendInput();
+    render();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>
