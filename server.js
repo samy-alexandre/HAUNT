@@ -10,11 +10,6 @@ const io = new Server(server, { cors: { origin: '*' } });
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use((req, res, next) => {
-  res.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' ws: wss:;");
-  next();
-});
-
 const rooms = {};
 const MAP_W = 36;
 const MAP_H = 28;
@@ -94,7 +89,6 @@ function createRoom(roomId) {
     score:0, gameOver:false, gameWon:false, started:false,
     itemsDelivered:0, totalItems:8+level*2,
     level, chatMessages:[], leaderboard:[],
-    lastUpdate:Date.now()
   };
 }
 
@@ -187,7 +181,8 @@ io.on('connection',socket=>{
     const room=rooms[roomId];
     if(!room){socket.emit('error','Salle introuvable !');return;}
     if(Object.keys(room.players).length>=6){socket.emit('error','Salle pleine !');return;}
-    currentRoom=roomId;socket.join(roomId);
+    currentRoom=roomId;
+    socket.join(roomId);
     const colors=['#00ff88','#ff6b6b','#66d9ff','#ffcc00','#ff88ff','#88ffcc'];
     const num=Object.keys(room.players).length;
     room.players[playerId]={
@@ -270,4 +265,4 @@ io.on('connection',socket=>{
 });
 
 const PORT=process.env.PORT||3000;
-server.listen(PORT,()=>console.log(`🎮 HAUNT v2 on http://localhost:${PORT}`));
+server.listen(PORT,()=>console.log(`HAUNT v2 running on port ${PORT}`));
