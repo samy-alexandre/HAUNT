@@ -34,17 +34,18 @@ input[type=text]:focus{border-color:var(--accent);box-shadow:0 0 12px rgba(0,255
 .room-code{font-family:'Creepster',cursive;font-size:2.8rem;color:var(--accent);letter-spacing:0.4em;text-align:center;text-shadow:0 0 20px rgba(0,255,136,0.4);}
 .error-msg{color:var(--danger);font-size:0.75rem;letter-spacing:0.1em;text-align:center;min-height:1.2em;}
 
-#gameScreen{display:none;position:fixed;inset:0;flex-direction:row;padding:0;max-width:none;}
+#gameScreen{display:none;position:fixed;inset:0;flex-direction:row;padding:0;max-width:none;width:100vw;height:100vh;}
 #gameScreen.active{display:flex;}
-#gameMain{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;}
-#hud{display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0.8rem;background:rgba(7,7,13,0.97);border-bottom:1px solid var(--border);flex-shrink:0;gap:0.5rem;flex-wrap:wrap;}
+#gameMain{flex:1;display:flex;flex-direction:column;min-width:0;height:100vh;}
+#hud{display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0.8rem;background:rgba(7,7,13,0.97);border-bottom:1px solid var(--border);flex-shrink:0;gap:0.5rem;}
 .hud-item{display:flex;flex-direction:column;align-items:center;}
 .hud-label{color:var(--dim);font-size:0.55rem;letter-spacing:0.2em;}
 .hud-val{color:var(--accent);font-size:0.9rem;}
-#canvas{display:block;width:100%;flex:1;min-height:0;}
+#canvas{display:block;flex:1;width:100%;min-height:0;}
 #controls-hint{padding:0.25rem 0.8rem;background:rgba(7,7,13,0.97);border-top:1px solid var(--border);font-size:0.6rem;color:var(--dim);letter-spacing:0.1em;text-align:center;flex-shrink:0;}
 
 #sidebar{width:200px;background:rgba(7,7,13,0.97);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
+@media(max-width:700px){#sidebar{display:none;}}
 .sidebar-title{font-size:0.6rem;letter-spacing:0.25em;color:var(--dim);padding:0.5rem 0.8rem 0.3rem;border-bottom:1px solid var(--border);text-transform:uppercase;}
 #chatMessages{flex:1;overflow-y:auto;padding:0.4rem;display:flex;flex-direction:column;gap:0.25rem;min-height:0;}
 #chatMessages::-webkit-scrollbar{width:3px;}
@@ -354,15 +355,13 @@ let tick=0, camX=12, camY=9;
 
 function initCanvas(){
   resizeCanvas();
-  window.addEventListener('resize',resizeCanvas);
+  window.addEventListener('resize', resizeCanvas);
 }
 function resizeCanvas(){
-  // Use setTimeout to let the DOM settle after screen switch
   setTimeout(()=>{
-    const rect=canvas.getBoundingClientRect();
-    canvas.width=rect.width>0?Math.floor(rect.width):window.innerWidth-200;
-    canvas.height=rect.height>0?Math.floor(rect.height):window.innerHeight-60;
-  },50);
+    canvas.width = canvas.offsetWidth || (window.innerWidth - 200);
+    canvas.height = canvas.offsetHeight || (window.innerHeight - 60);
+  }, 100);
 }
 function w2s(wx,wy){ return{ sx:(wx-camX)*TILE+canvas.width/2, sy:(wy-camY)*TILE+canvas.height/2 }; }
 
