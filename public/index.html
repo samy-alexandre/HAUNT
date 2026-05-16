@@ -8,112 +8,120 @@
 <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 
 <style>
-*{box-sizing:border-box;margin:0;padding:0;}
-:root{
-  --bg:#07070d;--panel:#0d0d1a;--border:#1a1a2e;
-  --accent:#00ff88;--danger:#ff3355;--warn:#ffcc00;
-  --text:#c8c8e0;--dim:#4a4a6a;
+body{
+  margin:0;
+  overflow:hidden;
+  background:#07070d;
+  color:#c8c8e0;
+  font-family:'Share Tech Mono',monospace;
 }
-html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;}
 
-/* MENU / LOBBY */
-.screen{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;gap:0.8rem;padding:1rem;overflow-y:auto;}
-.screen.active{display:flex;}
-h1{font-family:'Creepster',cursive;font-size:clamp(2.5rem,6vw,4rem);color:var(--accent);}
-input,button{font-family:'Share Tech Mono',monospace;}
+#menu{
+  position:fixed;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+}
 
-/* GAME */
-#gameScreen{display:none;position:fixed;inset:0;}
-#gameScreen.active{display:block;}
-canvas{position:absolute;top:0;left:0;width:100%;height:100%;}
+input,button{
+  padding:10px;
+  font-family:inherit;
+}
+
+canvas{
+  position:fixed;
+  inset:0;
+}
 </style>
 </head>
 
 <body>
 
-<!-- MENU -->
-<div id="menuScreen" class="screen active">
+<div id="menu">
   <h1>HAUNT</h1>
   <input id="nameInput" placeholder="Pseudo">
-  <button id="btnCreate">Créer</button>
-  <input id="codeInput" placeholder="Code">
-  <button id="btnJoin">Rejoindre</button>
+  <input id="codeInput" placeholder="Code salle">
+  <button id="createBtn">Créer</button>
+  <button id="joinBtn">Rejoindre</button>
 </div>
 
-<!-- GAME -->
-<div id="gameScreen">
-  <canvas id="canvas"></canvas>
-</div>
+<canvas id="canvas"></canvas>
 
 <script src="/socket.io/socket.io.js"></script>
 
 <script>
-/* =====================================================
-   🔥 FIX IMPORTANT RENDER SOCKET.IO
-===================================================== */
 
-// AVANT : const socket = io();
+/* =======================
+   🔥 FIX RENDER SOCKET
+======================= */
 const socket = io({
-  transports: ["polling", "websocket"]
+  transports: ["websocket"]
 });
 
-/* ===================================================== */
+let gameMap = null;
+let gameState = null;
+let myId = null;
 
-let gameMap=null;
-let gameState=null;
-let myId=null;
-
-/* SOCKET */
-socket.on('room_created',d=>{
-  myId=d.playerId;
+/* =======================
+   SOCKET EVENTS
+======================= */
+socket.on("room_created", d => {
+  myId = d.playerId;
+  document.getElementById("menu").style.display = "none";
 });
 
-socket.on('joined',d=>{
-  myId=d.playerId;
+socket.on("joined", d => {
+  myId = d.playerId;
+  document.getElementById("menu").style.display = "none";
 });
 
-socket.on('map',m=>{
-  gameMap=m;
+socket.on("map", m => {
+  gameMap = m;
 });
 
-socket.on('state',s=>{
-  gameState=s;
+socket.on("state", s => {
+  gameState = s;
 });
 
-/* INPUT */
-const keys={};
+/* =======================
+   INPUT
+======================= */
+const keys = {};
 
-document.addEventListener('keydown',e=>keys[e.code]=true);
-document.addEventListener('keyup',e=>keys[e.code]=false);
+document.addEventListener("keydown", e => keys[e.code] = true);
+document.addEventListener("keyup", e => keys[e.code] = false);
 
 function sendInput(){
   if(!gameState) return;
 
-  let dx=0,dy=0;
+  let dx = 0, dy = 0;
 
-  if(keys['KeyW']||keys['ArrowUp'])dy=-1;
-  if(keys['KeyS']||keys['ArrowDown'])dy=1;
-  if(keys['KeyA']||keys['ArrowLeft'])dx=-1;
-  if(keys['KeyD']||keys['ArrowRight'])dx=1;
+  if(keys["KeyW"] || keys["ArrowUp"]) dy = -1;
+  if(keys["KeyS"] || keys["ArrowDown"]) dy = 1;
+  if(keys["KeyA"] || keys["ArrowLeft"]) dx = -1;
+  if(keys["KeyD"] || keys["ArrowRight"]) dx = 1;
 
-  const action=keys['Space']||keys['KeyE'];
-
-  socket.emit('input',{dx,dy,action});
+  socket.emit("input",{dx,dy});
 }
 
-/* RENDER */
-const canvas=document.getElementById('canvas');
-const ctx=canvas.getContext('2d');
+/* =======================
+   RENDER
+======================= */
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
 
 function resize(){
-  canvas.width=window.innerWidth;
-  canvas.height=window.innerHeight;
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
 }
 resize();
-window.onresize=resize;
+window.onresize = resize;
 
 function render(){
-  if(!gameMap||!gameState) return;
+  if(!gameMap || !gameState) return;
 
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
@@ -134,7 +142,9 @@ function render(){
   });
 }
 
-/* LOOP */
+/* =======================
+   LOOP
+======================= */
 function loop(){
   sendInput();
   render();
@@ -142,17 +152,20 @@ function loop(){
 }
 loop();
 
-/* UI */
-document.getElementById('btnCreate').onclick=()=>{
-  socket.emit('create_room',{name:document.getElementById('nameInput').value});
+/* =======================
+   UI
+======================= */
+document.getElementById("createBtn").onclick=()=>{
+  socket.emit("create_room",{name:document.getElementById("nameInput").value});
 };
 
-document.getElementById('btnJoin').onclick=()=>{
-  socket.emit('join_room',{
-    roomId:document.getElementById('codeInput').value,
-    name:document.getElementById('nameInput').value
+document.getElementById("joinBtn").onclick=()=>{
+  socket.emit("join_room",{
+    roomId:document.getElementById("codeInput").value,
+    name:document.getElementById("nameInput").value
   });
 };
+
 </script>
 
 </body>
