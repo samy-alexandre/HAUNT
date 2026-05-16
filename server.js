@@ -97,6 +97,16 @@ function isWall(map,x,y) {
   if(ty<0||ty>=MAP_H||tx<0||tx>=MAP_W) return true;
   return map[ty][tx]===1;
 }
+
+// Check collision with player hitbox radius
+const PRAD = 0.3; // player radius
+function collidesWithWall(map, x, y) {
+  // Check 4 corners of the player hitbox
+  return isWall(map, x-PRAD, y-PRAD) ||
+         isWall(map, x+PRAD, y-PRAD) ||
+         isWall(map, x-PRAD, y+PRAD) ||
+         isWall(map, x+PRAD, y+PRAD);
+}
 function dist(a,b){return Math.sqrt((a.x-b.x)**2+(a.y-b.y)**2);}
 
 function updateRoom(room) {
@@ -230,9 +240,20 @@ io.on('connection',socket=>{
     const player=room.players[playerId];
     if(!player||player.dead||!room.started)return;
     const speed=0.09;
-    const nx=player.x+dx*speed,ny=player.y+dy*speed;
-    if(!isWall(room.map,nx,player.y))player.x=nx;
-    if(!isWall(room.map,player.x,ny))player.y=ny;
+    const R=0.32; // hitbox radius
+    const nx=player.x+dx*speed, ny=player.y+dy*speed;
+    // X axis
+    if(!isWall(room.map,nx+R,player.y) && !isWall(room.map,nx-R,player.y) &&
+       !isWall(room.map,nx+R,player.y+R) && !isWall(room.map,nx-R,player.y+R) &&
+       !isWall(room.map,nx+R,player.y-R) && !isWall(room.map,nx-R,player.y-R)) {
+      player.x=nx;
+    }
+    // Y axis
+    if(!isWall(room.map,player.x,ny+R) && !isWall(room.map,player.x,ny-R) &&
+       !isWall(room.map,player.x+R,ny+R) && !isWall(room.map,player.x-R,ny+R) &&
+       !isWall(room.map,player.x+R,ny-R) && !isWall(room.map,player.x-R,ny-R)) {
+      player.y=ny;
+    }
     if(player.carrying!==null){const item=room.items.find(i=>i.id===player.carrying);if(item){item.x=player.x;item.y=player.y;}}
     if(action){
       if(player.carrying!==null){
