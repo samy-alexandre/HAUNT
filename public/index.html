@@ -8,7 +8,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 
 <style>
-/* ====== TON CSS INCHANGÉ (je ne touche pas, il est déjà clean) ====== */
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
   --bg:#07070d;--panel:#0d0d1a;--border:#1a1a2e;
@@ -16,32 +15,32 @@
   --text:#c8c8e0;--dim:#4a4a6a;
 }
 html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;}
+
+/* MENU / LOBBY */
 .screen{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;gap:0.8rem;padding:1rem;overflow-y:auto;}
 .screen.active{display:flex;}
 h1{font-family:'Creepster',cursive;font-size:clamp(2.5rem,6vw,4rem);color:var(--accent);}
-canvas{position:absolute;top:0;left:0;width:100%;height:100%;display:block;}
+input,button{font-family:'Share Tech Mono',monospace;}
+
+/* GAME */
+#gameScreen{display:none;position:fixed;inset:0;}
+#gameScreen.active{display:block;}
+canvas{position:absolute;top:0;left:0;width:100%;height:100%;}
 </style>
 </head>
 
 <body>
 
-<!-- ===== MENU / LOBBY (inchangé) ===== -->
+<!-- MENU -->
 <div id="menuScreen" class="screen active">
   <h1>HAUNT</h1>
-  <input id="nameInput" placeholder="PSEUDO">
+  <input id="nameInput" placeholder="Pseudo">
   <button id="btnCreate">Créer</button>
-  <input id="codeInput" placeholder="CODE">
+  <input id="codeInput" placeholder="Code">
   <button id="btnJoin">Rejoindre</button>
-  <div id="menuError"></div>
 </div>
 
-<div id="lobbyScreen" class="screen">
-  <h1>HAUNT</h1>
-  <div id="displayCode">------</div>
-  <button id="btnStart">START</button>
-</div>
-
-<!-- ===== GAME ===== -->
+<!-- GAME -->
 <div id="gameScreen">
   <canvas id="canvas"></canvas>
 </div>
@@ -49,30 +48,24 @@ canvas{position:absolute;top:0;left:0;width:100%;height:100%;display:block;}
 <script src="/socket.io/socket.io.js"></script>
 
 <script>
-const socket = io();
+/* =====================================================
+   🔥 FIX IMPORTANT RENDER SOCKET.IO
+===================================================== */
+
+// AVANT : const socket = io();
+const socket = io({
+  transports: ["polling", "websocket"]
+});
+
+/* ===================================================== */
 
 let gameMap=null;
 let gameState=null;
 let myId=null;
 
-// ===================== FIX IMPORTANT =====================
-
-// EXIT dynamique (au lieu de hardcode)
-function getExit(){
-  if(gameState?.exit) return gameState.exit;
-  return {x:28.5,y:1.5};
-}
-
-// sécurité render
-function safeState(){
-  return gameMap && gameState && gameState.players;
-}
-
-// ===================== SOCKET =====================
-
+/* SOCKET */
 socket.on('room_created',d=>{
   myId=d.playerId;
-  document.getElementById('displayCode').textContent=d.roomId;
 });
 
 socket.on('joined',d=>{
@@ -87,15 +80,7 @@ socket.on('state',s=>{
   gameState=s;
 });
 
-socket.on('game_started',()=>{
-  document.getElementById('menuScreen').classList.remove('active');
-  document.getElementById('lobbyScreen').classList.remove('active');
-  document.getElementById('gameScreen').classList.add('active');
-  loop();
-});
-
-// ===================== INPUT =====================
-
+/* INPUT */
 const keys={};
 
 document.addEventListener('keydown',e=>keys[e.code]=true);
@@ -113,102 +98,51 @@ function sendInput(){
 
   const action=keys['Space']||keys['KeyE'];
 
-  if(dx||dy||action){
-    socket.emit('input',{dx,dy,action});
-  }
+  socket.emit('input',{dx,dy,action});
 }
 
-// ===================== RENDER =====================
-
+/* RENDER */
 const canvas=document.getElementById('canvas');
 const ctx=canvas.getContext('2d');
-
-let TILE=30;
-let camX=0,camY=0;
 
 function resize(){
   canvas.width=window.innerWidth;
   canvas.height=window.innerHeight;
 }
-window.onresize=resize;
 resize();
-
-function w2s(x,y){
-  const me=gameState?.players?.[myId];
-  const cx=me?me.x:15;
-  const cy=me?me.y:11;
-
-  camX+=(cx-camX)*0.15;
-  camY+=(cy-camY)*0.15;
-
-  return {
-    sx:(x-camX)*TILE+canvas.width/2,
-    sy:(y-camY)*TILE+canvas.height/2
-  };
-}
+window.onresize=resize;
 
 function render(){
-  if(!safeState()) return;
+  if(!gameMap||!gameState) return;
 
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
   // MAP
   for(let y=0;y<gameMap.length;y++){
     for(let x=0;x<gameMap[y].length;x++){
-      const {sx,sy}=w2s(x,y);
-
       if(gameMap[y][x]===1){
         ctx.fillStyle="#1a1a2e";
-        ctx.fillRect(sx,sy,TILE,TILE);
+        ctx.fillRect(x*20,y*20,20,20);
       }
     }
   }
 
-  // EXIT FIX
-  const exit=getExit();
-  const {sx:ex,sy:ey}=w2s(exit.x,exit.y);
-
-  ctx.fillStyle="rgba(0,255,136,0.2)";
-  ctx.fillRect(ex,ey,TILE,TILE);
-
-  ctx.fillStyle="#00ff88";
-  ctx.fillText("🚪",ex+TILE/2,ey+TILE/2);
-
   // PLAYERS
-  Object.values(gameState.players).forEach(p=>{
-    const {sx,sy}=w2s(p.x,p.y);
-    ctx.fillStyle=p.color||"#fff";
-    ctx.fillRect(sx,sy,TILE*0.6,TILE*0.6);
-  });
-
-  // ITEMS
-  gameState.items.forEach(i=>{
-    if(i.collected) return;
-    const {sx,sy}=w2s(i.x,i.y);
-    ctx.fillStyle="#ffcc00";
-    ctx.fillRect(sx,sy,10,10);
-  });
-
-  // MONSTERS
-  gameState.monsters.forEach(m=>{
-    const {sx,sy}=w2s(m.x,m.y);
-    ctx.fillStyle="#ff3355";
-    ctx.beginPath();
-    ctx.arc(sx,sy,10,0,Math.PI*2);
-    ctx.fill();
+  Object.values(gameState.players||{}).forEach(p=>{
+    ctx.fillStyle=p.color;
+    ctx.fillRect(p.x*20,p.y*20,15,15);
   });
 }
 
-// ===================== LOOP =====================
-
+/* LOOP */
 function loop(){
   sendInput();
   render();
   requestAnimationFrame(loop);
 }
+loop();
 
-// ===================== UI =====================
-
+/* UI */
 document.getElementById('btnCreate').onclick=()=>{
   socket.emit('create_room',{name:document.getElementById('nameInput').value});
 };
@@ -218,10 +152,6 @@ document.getElementById('btnJoin').onclick=()=>{
     roomId:document.getElementById('codeInput').value,
     name:document.getElementById('nameInput').value
   });
-};
-
-document.getElementById('btnStart').onclick=()=>{
-  socket.emit('start_game');
 };
 </script>
 
