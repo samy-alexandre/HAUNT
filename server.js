@@ -13,7 +13,13 @@ const server = http.createServer(app);
 app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
-    "default-src 'self' ws: wss: data: blob: 'unsafe-inline';"
+    [
+      "default-src 'self' data: blob:",
+      "script-src 'self' 'unsafe-inline' https://cdn.socket.io",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "connect-src 'self' ws: wss:",
+    ].join("; ")
   );
   next();
 });
