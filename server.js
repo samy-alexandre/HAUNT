@@ -281,7 +281,7 @@ function updateRoom(room){
   if(room.itemsDelivered>=room.totalItems&&!room.gameWon){
     room.gameWon=true;
     room.leaderboard=Object.values(room.players)
-      .map(p=>({name:p.name,score:p.score||0,deaths:p.deaths||0,color:p.color,lives:p.lives||0}))
+      .map(p=>({name:p.name,score:p.score||0,deaths:p.deaths||0,color:p.color,lives:p.lives||0,animal:p.animal||0}))
       .sort((a,b)=>b.score-a.score);
     io.to(room.id).emit('sound','win');
   }
@@ -305,13 +305,13 @@ setInterval(()=>{
 io.on('connection',socket=>{
   let currentRoom=null,playerId=socket.id;
 
-  socket.on('create_room',({name,color})=>{
+  socket.on('create_room',({name,color,animal})=>{
     const roomId=uuidv4().slice(0,6).toUpperCase();
     rooms[roomId]=createRoom(roomId,playerId);
     currentRoom=roomId;socket.join(roomId);
     rooms[roomId].players[playerId]={
       id:playerId,x:SPAWN_X,y:SPAWN_Y,name:name||'Joueur',
-      color:color||'#00ff88',carrying:null,dead:false,eliminated:false,
+      color:color||'#00ff88',animal:animal||0,carrying:null,dead:false,eliminated:false,
       respawnTimer:0,score:0,deaths:0,lives:MAX_LIVES,
       stamina:STAMINA_MAX,boosting:false,dir:'down'
     };
@@ -319,7 +319,7 @@ io.on('connection',socket=>{
     io.to(roomId).emit('lobby_state',{players:rooms[roomId].players,hostId:rooms[roomId].hostId});
   });
 
-  socket.on('join_room',({roomId,name,color})=>{
+  socket.on('join_room',({roomId,name,color,animal})=>{
     const room=rooms[roomId];
     if(!room){socket.emit('error','Salle introuvable !');return;}
     if(room.started){socket.emit('error','Partie déjà lancée !');return;}
@@ -328,7 +328,7 @@ io.on('connection',socket=>{
     const num=Object.keys(room.players).length;
     room.players[playerId]={
       id:playerId,x:SPAWN_X+num*0.7,y:SPAWN_Y,name:name||`Joueur ${num+1}`,
-      color:color||'#ff6b6b',carrying:null,dead:false,eliminated:false,
+      color:color||'#ff6b6b',animal:animal||1,carrying:null,dead:false,eliminated:false,
       respawnTimer:0,score:0,deaths:0,lives:MAX_LIVES,
       stamina:STAMINA_MAX,boosting:false,dir:'down'
     };
@@ -337,10 +337,10 @@ io.on('connection',socket=>{
     io.to(roomId).emit('lobby_state',{players:room.players,hostId:room.hostId});
   });
 
-  socket.on('update_color',({color})=>{
+  socket.on('update_color',({color,animal})=>{
     if(!currentRoom||!rooms[currentRoom])return;
     const p=rooms[currentRoom].players[playerId];
-    if(p){p.color=color;io.to(currentRoom).emit('lobby_state',{players:rooms[currentRoom].players,hostId:rooms[currentRoom].hostId});}
+    if(p){p.color=color;if(animal!==undefined)p.animal=animal;io.to(currentRoom).emit('lobby_state',{players:rooms[currentRoom].players,hostId:rooms[currentRoom].hostId});}
   });
 
   socket.on('start_game',()=>{
