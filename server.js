@@ -7,25 +7,37 @@ const path = require('path');
 const app = express();
 const server = http.createServer(app);
 
-app.use(express.static(path.join(__dirname, 'public')));
-
-// 🔥 FIX RENDER / SOCKET.IO
-const io = new Server(server, {
-  cors: {
-    origin: "*"
-  },
-  transports: ["polling", "websocket"]
+/* =======================
+   🔥 RENDER CSP SAFE
+======================= */
+app.use((req, res, next) => {
+  res.setHeader(
+    "Content-Security-Policy",
+    "default-src 'self' ws: wss: data: blob: 'unsafe-inline';"
+  );
+  next();
 });
 
-server.keepAliveTimeout = 65000;
-server.headersTimeout = 66000;
+app.use(express.static(path.join(__dirname, 'public')));
 
+/* =======================
+   🔥 SOCKET.IO FIX
+======================= */
+const io = new Server(server, {
+  cors: { origin: "*" },
+  transports: ["websocket"]
+});
+
+/* =======================
+   GAME DATA
+======================= */
 const rooms = {};
 const MAP_W = 30;
 const MAP_H = 22;
 
-/* ===== MAP ===== */
-
+/* =======================
+   MAP GENERATOR (SAFE)
+======================= */
 function generateMap() {
   const map = [];
 
@@ -33,114 +45,108 @@ function generateMap() {
     map[y] = [];
     for (let x = 0; x < MAP_W; x++) {
       map[y][x] =
-        (x === 0 || x === MAP_W - 1 || y === 0 || y === MAP_H - 1) ? 1 : 0;
+        (x === 0 || y === 0 || x === MAP_W - 1 || y === MAP_H - 1) ? 1 : 0;
     }
   }
 
-  // walls fixes
-  [[7,1,7,8],[7,10,7,21],[15,1,15,5],[15,7,15,13],[15,15,15,21],[22,1,22,9],[22,11,22,21]]
-  .forEach(([x1,y1,x2,y2])=>{
-    for(let y=y1;y<=y2;y++) map[y][x1]=1;
-  });
+  // murs internes simples MAIS PAS bloquants spawn/exit
+  for (let y = 4; y < 18; y++) {
+    if (y !== 8 && y !== 14) {
+      map[y][12] = 1;
+    }
+  }
 
-  [[1,8,5,8],[8,5,13,5],[8,13,13,13],[16,8,20,8],[16,15,20,15],[23,7,28,7],[23,15,28,15]]
-  .forEach(([x1,y1,x2,y2])=>{
-    for(let x=x1;x<=x2;x++) map[y1][x]=1;
-  });
+  for (let x = 6; x < 24; x++) {
+    if (x !== 10 && x !== 18) {
+      map[10][x] = 1;
+    }
+  }
 
-  // sécurité spawn + exit
+  // spawn safe
   map[1][1] = 0;
+
+  // exit safe
   map[1][28] = 0;
 
   return map;
 }
 
-/* ===== ROOM ===== */
-
-function createRoom(roomId) {
-  const level = 1;
-
+/* =======================
+   ROOM
+======================= */
+function createRoom(id) {
   return {
-    id: roomId,
+    id,
     players: {},
-    items: [],
-    monsters: [],
     map: generateMap(),
-
-    exit: {x:28.5,y:1.5},
-
-    started: false,
-    level,
-    score: 0,
-    itemsDelivered: 0,
-    totalItems: 10
+    started: false
   };
 }
 
-/* ===== LOOP ===== */
-
-setInterval(()=>{
-  Object.values(rooms).forEach(room=>{
-    io.to(room.id).emit('state', room);
+/* =======================
+   LOOP
+======================= */
+setInterval(() => {
+  Object.values(rooms).forEach(room => {
+    io.to(room.id).emit("state", room);
   });
-},1000/30);
+}, 1000 / 30);
 
-/* ===== SOCKET ===== */
+/* =======================
+   SOCKET LOGIC
+======================= */
+io.on("connection", (socket) => {
+  let roomId = null;
 
-io.on('connection',socket=>{
-  let roomId=null;
-
-  socket.on('create_room',({name})=>{
-    roomId = uuidv4().slice(0,6).toUpperCase();
+  socket.on("create_room", ({ name }) => {
+    roomId = uuidv4().slice(0, 6).toUpperCase();
 
     rooms[roomId] = createRoom(roomId);
     socket.join(roomId);
 
     rooms[roomId].players[socket.id] = {
-      id:socket.id,
-      x:1.5,
-      y:1.5,
-      name:name||"Player",
-      color:"#00ff88",
-      score:0
+      id: socket.id,
+      x: 1.5,
+      y: 1.5,
+      name: name || "Player",
+      color: "#00ff88"
     };
 
-    socket.emit('room_created',{roomId,playerId:socket.id});
-    socket.emit('map',rooms[roomId].map);
+    socket.emit("room_created", { roomId, playerId: socket.id });
+    socket.emit("map", rooms[roomId].map);
   });
 
-  socket.on('join_room',({roomId:nameRoom,name})=>{
-    const room = rooms[roomId];
+  socket.on("join_room", ({ roomId: joinId, name }) => {
+    const room = rooms[joinId];
+    if (!room) return socket.emit("error", "Room not found");
 
-    if(!room) return socket.emit('error',"Room not found");
-
+    roomId = joinId;
     socket.join(roomId);
 
     room.players[socket.id] = {
-      id:socket.id,
-      x:2.5,
-      y:2.5,
-      name:name||"Player",
-      color:"#00ff88",
-      score:0
+      id: socket.id,
+      x: 2.5,
+      y: 2.5,
+      name: name || "Player",
+      color: "#00ff88"
     };
 
-    socket.emit('joined',{roomId,playerId:socket.id});
-    socket.emit('map',room.map);
+    socket.emit("joined", { roomId, playerId: socket.id });
+    socket.emit("map", room.map);
   });
 
-  socket.on('start_game',()=>{
-    if(!roomId) return;
+  socket.on("start_game", () => {
+    if (!roomId || !rooms[roomId]) return;
     rooms[roomId].started = true;
-    io.to(roomId).emit('game_started');
+    io.to(roomId).emit("game_started");
   });
 
-  socket.on('input',({dx,dy})=>{
+  socket.on("input", ({ dx, dy }) => {
     const room = rooms[roomId];
-    if(!room) return;
+    if (!room) return;
 
     const p = room.players[socket.id];
-    if(!p) return;
+    if (!p) return;
 
     const speed = 0.1;
 
@@ -151,14 +157,17 @@ io.on('connection',socket=>{
     p.y = ny;
   });
 
-  socket.on('disconnect',()=>{
-    if(roomId && rooms[roomId]){
-      delete rooms[roomId].players[socket.id];
-    }
+  socket.on("disconnect", () => {
+    if (!roomId || !rooms[roomId]) return;
+    delete rooms[roomId].players[socket.id];
   });
 });
 
+/* =======================
+   START SERVER
+======================= */
 const PORT = process.env.PORT || 3000;
-server.listen(PORT,'0.0.0.0',()=>{
-  console.log("HAUNT running on",PORT);
+
+server.listen(PORT, "0.0.0.0", () => {
+  console.log("HAUNT running on port", PORT);
 });
