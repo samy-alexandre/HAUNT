@@ -3,161 +3,189 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HAUNT 3D</title>
+<title>HAUNTED NIGHTMARE 3D</title>
 <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 
-/* === THEME VARIABLES === */
-[data-theme="dark"]{
-  --bg:#07070d;--bg2:#0d0d1a;--border:#1a1a2e;
-  --accent:#00ff88;--danger:#ff3355;--warn:#ffcc00;
-  --text:#e0e0f0;--dim:#5a5a7a;--dim2:#9090b0;
-  --sp-bg:#0d0d1a;--sp-border:#1a1a2e;
-}
-[data-theme="light"]{
-  --bg:#f0f0f8;--bg2:#ffffff;--border:#d0d0e8;
-  --accent:#00aa55;--danger:#ee2244;--warn:#dd9900;
-  --text:#1a1a3a;--dim:#7070a0;--dim2:#5050a0;
-  --sp-bg:#ffffff;--sp-border:#d0d0e8;
+:root {
+  --bg: #030307;
+  --bg2: #090911;
+  --border: #1f1f3a;
+  --accent: #00ff88;
+  --danger: #ff2a5f;
+  --text: #e2e2f0;
+  --dim: #4a4a6a;
 }
 
-html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;user-select:none;}
 
-/* MENU */
-.screen{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;gap:0.9rem;padding:1.5rem;overflow-y:auto;background:var(--bg);z-index:10;}
+/* SCREEN MANAGEMENT */
+.screen{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;padding:2rem;background:radial-gradient(circle at center, #0a0a1c 0%, #030307 100%);z-index:10;}
 .screen.active{display:flex;}
-h1{font-family:'Creepster',cursive;font-size:clamp(2.8rem,6vw,4.5rem);color:var(--accent);text-shadow:0 0 30px rgba(0,255,136,0.5);letter-spacing:0.15em;}
-.sub{color:var(--dim);font-size:0.8rem;letter-spacing:0.3em;text-transform:uppercase;}
-.panel{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:1.3rem;width:100%;max-width:480px;}
-.ptitle{font-size:0.65rem;letter-spacing:0.3em;color:var(--dim);text-transform:uppercase;margin-bottom:0.8rem;}
-input[type=text]{background:var(--bg);border:1px solid var(--border);color:var(--accent);font-family:'Share Tech Mono',monospace;font-size:1.05rem;padding:0.55rem 0.9rem;width:100%;border-radius:4px;text-transform:uppercase;letter-spacing:0.15em;outline:none;}
+
+h1{font-family:'Creepster',cursive;font-size:clamp(3.5rem,8vw,6rem);color:var(--danger);text-shadow:0 0 25px rgba(255,42,95,0.6);letter-spacing:0.1em;animation:pulse 2s infinite alternate;}
+@keyframes pulse { 0% { transform: scale(0.98); filter: brightness(0.9); } 100% { transform: scale(1.02); filter: brightness(1.2); } }
+
+.panel{background:rgba(9,9,17,0.85);border:2px solid var(--border);border-radius:8px;padding:2rem;width:100%;max-width:500px;box-shadow:0 10px 30px rgba(0,0,0,0.7);}
+.ptitle{font-size:0.75rem;letter-spacing:0.25em;color:var(--accent);text-transform:uppercase;margin-bottom:1rem;font-weight:bold;}
+
+input[type=text]{background:#000;border:2px solid var(--border);color:#fff;font-family:inherit;font-size:1.2rem;padding:0.7rem 1rem;width:100%;border-radius:4px;text-transform:uppercase;letter-spacing:0.1em;outline:none;transition:border-color 0.3s;}
 input[type=text]:focus{border-color:var(--accent);}
-.btn{display:block;width:100%;padding:0.75rem 1.2rem;background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:'Share Tech Mono',monospace;font-size:0.88rem;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;border-radius:4px;margin-top:0.7rem;}
-.btn:hover{background:rgba(0,170,85,0.09);}
-.btn.primary{background:var(--accent);color:#000;font-weight:bold;}
-.btn.primary:hover{filter:brightness(1.1);}
-.divider{display:flex;align-items:center;gap:1rem;color:var(--dim);font-size:0.7rem;letter-spacing:0.2em;width:100%;max-width:480px;}
-.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
-.err{color:var(--danger);font-size:0.78rem;text-align:center;min-height:1.3em;}
 
-/* LOBBY */
-#lobbyScreen{display:none;position:fixed;inset:0;flex-direction:column;background:linear-gradient(135deg,#080814 0%,#0c1022 50%,#080814 100%);z-index:10;}
-#lobbyScreen.active{display:flex;}
-#lTop{display:flex;align-items:center;justify-content:space-between;padding:0.7rem 1.5rem;background:rgba(0,0,0,0.6);border-bottom:2px solid rgba(0,255,136,0.2);flex-shrink:0;}
-#lTop h2{font-family:'Creepster',cursive;font-size:2rem;color:var(--accent);letter-spacing:0.2em;}
-#lCodeVal{font-family:'Bebas Neue',cursive;font-size:1.8rem;color:var(--accent);letter-spacing:0.3em;}
-#lPanelLobby{flex:1;display:flex;flex-direction:column;min-height:0;position:relative;justify-content:center;align-items:center;}
-#lStage{color:var(--accent);font-size:1.2rem;margin-bottom:2rem;}
-.cgrid{display:flex;gap:0.5rem;}
-.cbtn{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:8px;border-radius:6px;border:2px solid transparent;background:rgba(255,255,255,0.05);}
-.cbtn.on{border-color:#fff;background:rgba(255,255,255,0.15);}
-.cbtn-dot{width:22px;height:22px;border-radius:50%;}
-.cbtn-emoji{font-size:1.5rem;}
-#lBot{display:flex;align-items:center;justify-content:space-between;padding:0.8rem 1.5rem;background:rgba(0,0,0,0.6);border-top:2px solid rgba(0,255,136,0.2);flex-shrink:0;}
-#readyBtn{font-family:'Bebas Neue',cursive;font-size:1.8rem;letter-spacing:0.15em;padding:0.5rem 2.8rem;background:var(--accent);color:#000;border:none;cursor:pointer;border-radius:4px;}
+.btn{display:block;width:100%;padding:0.9rem;background:transparent;border:2px solid var(--accent);color:var(--accent);font-family:inherit;font-size:1rem;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;border-radius:4px;font-weight:bold;transition:all 0.2s;}
+.btn:hover{background:var(--accent);color:#000;box-shadow:0 0 15px rgba(0,255,136,0.4);}
+.btn.primary{border-color:var(--danger);color:var(--danger);}
+.btn.primary:hover{background:var(--danger);color:#000;box-shadow:0 0 15px rgba(255,42,95,0.4);}
 
-/* GAME SCREEN & 3D VIEW */
-#gameScreen{display:none;position:fixed;inset:0;flex-direction:column;}
+.err{color:var(--danger);font-size:0.9rem;text-align:center;min-height:1.5em;font-weight:bold;}
+
+/* AVATAR SELECTOR */
+.cgrid{display:grid;grid-template-columns:repeat(3, 1fr);gap:0.7rem;margin-top:0.5rem;}
+.cbtn{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;padding:0.8rem;border-radius:6px;border:2px solid var(--border);background:rgba(255,255,255,0.02);transition:all 0.2s;}
+.cbtn:hover{border-color:var(--accent);background:rgba(0,255,136,0.05);}
+.cbtn.on{border-color:var(--accent);background:rgba(0,255,136,0.15);box-shadow:0 0 10px rgba(0,255,136,0.2);}
+.cbtn-emoji{font-size:1.8rem;}
+.cbtn-label{font-size:0.65rem;color:var(--text);letter-spacing:1px;}
+
+/* INTERFACE GAMEPLAY */
+#gameScreen{display:none;position:fixed;inset:0;background:#000;}
 #gameScreen.active{display:flex;}
-#hud{display:flex;justify-content:space-around;align-items:center;padding:0.5rem 1rem;background:rgba(0,0,0,0.8);border-bottom:2px solid var(--border);flex-shrink:0;z-index:5;position:absolute;top:0;width:100%;height:60px;}
-.hi{display:flex;flex-direction:column;align-items:center;}
-.hl{color:var(--dim);font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;}
-.hv{color:var(--accent);font-size:1rem;font-weight:bold;}
-#stBar{width:80px;height:9px;background:#222;border-radius:5px;overflow:hidden;}
-#stFill{height:100%;width:100%;background:var(--accent);}
-#gameBody{flex:1;display:flex;min-height:0;position:relative;margin-top:60px;}
-#cwrap{flex:1;position:relative;outline:none;}
-#gc3d{width:100%;height:100%;display:block;}
 
-/* RETICLE FOR FIRST PERSON VIEW */
-#reticle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:6px;height:6px;background:rgba(255,255,255,0.5);border-radius:50%;pointer-events:none;z-index:2;}
+#canvas3d_container {width:100%;height:100%;position:absolute;inset:0;z-index:1;}
 
-/* SIDEBAR / CHAT */
-#sidebar{width:220px;background:rgba(7,7,13,0.85);border-left:2px solid var(--border);display:flex;flex-direction:column;position:absolute;right:0;top:0;bottom:0;z-index:4;}
-.sbt{font-size:0.7rem;letter-spacing:0.22em;color:var(--accent);padding:0.5rem 0.8rem;border-bottom:1px solid var(--border);text-transform:uppercase;font-weight:bold;}
-#chatbox{flex:1;overflow-y:auto;padding:0.5rem;display:flex;flex-direction:column;gap:0.3rem;}
-.cm{font-size:0.72rem;color:#fff;}
-#chatform{display:flex;padding:0.3rem;gap:0.3rem;border-top:1px solid var(--border);}
-#chatinput{flex:1;background:rgba(0,0,0,0.5);border:1px solid var(--border);color:#fff;padding:0.3rem;font-family:inherit;font-size:0.75rem;}
-#scorebox{padding:0.5rem;font-size:0.75rem;}
+/* RETICLE HORRIFIQUE */
+#reticle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:10px;height:10px;pointer-events:none;z-index:5;}
+#reticle::before, #reticle::after {content:'';position:absolute;background:rgba(255,255,255,0.4);}
+#reticle::before{top:4px;left:-5px;width:20px;height:2px;}
+#reticle::after{top:-5px;left:4px;width:2px;height:20px;}
 
-/* MINIMAP HUD OVERLAY (2D Canvas overlaid on top of 3D) */
-#minimapCanvas{position:absolute;bottom:20px;left:20px;background:rgba(0,0,0,0.7);border:2px solid var(--accent);border-radius:6px;z-index:3;pointer-events:none;}
+/* HUD COMPLETEMENT IMMERSIF */
+#hud_overlay {position:absolute;inset:0;pointer-events:none;z-index:4;display:flex;flex-direction:column;justify-content:between;padding:1.5rem;}
+.hud_row {display:flex;justify-content:space-between;width:100%;}
+.hud_card {background:rgba(2,2,5,0.75);border:1px solid rgba(31,31,58,0.6);padding:0.8rem 1.2rem;border-radius:6px;backdrop-filter:blur(4px);display:flex;flex-direction:column;gap:2px;}
+.hud_lbl {font-size:0.6rem;color:var(--dim);letter-spacing:2px;text-transform:uppercase;}
+.hud_val {font-size:1.4rem;font-weight:bold;color:var(--accent);font-family:'Bebas Neue',sans-serif;letter-spacing:1px;}
+.hud_val.danger {color:var(--danger);}
 
-/* OVERLAYS */
-#ov{position:fixed;inset:0;background:rgba(0,0,0,0.9);display:none;align-items:center;justify-content:center;z-index:100;}
-#ov.on{display:flex;}
-#ovbox{background:var(--bg2);border:2px solid var(--accent);padding:2rem;text-align:center;border-radius:8px;}
-#ovtitle{font-family:'Creepster',cursive;font-size:2.5rem;color:var(--accent);}
+#stBar {width:120px;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;margin-top:5px;overflow:hidden;}
+#stFill {height:100%;width:100%;background:var(--accent);transition:width 0.1s linear;}
+
+/* LIVE FEED LOGS & CHAT */
+#ui_right {position:absolute;right:1.5rem;top:7.5rem;bottom:1.5rem;width:260px;pointer-events:auto;z-index:4;display:flex;flex-direction:column;gap:1rem;}
+#chat_panel {flex:1;background:rgba(2,2,5,0.75);border:1px solid rgba(31,31,58,0.6);border-radius:6px;backdrop-filter:blur(4px);display:flex;flex-direction:column;overflow:hidden;}
+#chat_logs {flex:1;overflow-y:auto;padding:0.8rem;display:flex;flex-direction:column;gap:0.4rem;font-size:0.75rem;}
+.msg_line {line-height:1.3;word-break:break-all;}
+#chat_form {display:flex;border-top:1px solid rgba(31,31,58,0.6);background:rgba(0,0,0,0.4);}
+#chat_input {flex:1;background:transparent;border:none;padding:0.6rem;color:#fff;font-family:inherit;font-size:0.8rem;outline:none;}
+
+#leaderboard {background:rgba(2,2,5,0.75);border:1px solid rgba(31,31,58,0.6);border-radius:6px;padding:0.8rem;font-size:0.75rem;}
+
+/* MINIMAP RADAR */
+#radarCanvas {background:rgba(0,0,0,0.8);border:2px solid var(--border);border-radius:50%;box-shadow:0 0 15px rgba(0,0,0,0.5);align-self:flex-end;}
+
+/* GAME OVER / LEVEL WIN OVERLAYS */
+#screen_msg {position:fixed;inset:0;background:rgba(0,0,0,0.95);display:none;flex-direction:column;align-items:center;justify-content:center;gap:2rem;z-index:100;}
+#screen_msg.on {display:flex;}
+#msg_title {font-family:'Creepster',cursive;font-size:4rem;}
+
+/* LOCK NOTICE INITIAL */
+#lock_notice {position:absolute;inset:0;background:rgba(0,0,0,0.8);z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;}
+#lock_notice p {font-size:1.5rem;color:var(--accent);letter-spacing:2px;animation:blink 1.5s infinite;}
+@keyframes blink { 0%, 100% { opacity:0.3; } 50% { opacity:1; } }
 </style>
 </head>
-<body data-theme="dark">
+<body>
 
 <div id="menuScreen" class="screen active">
-  <h1>HAUNT 3D</h1>
-  <p class="sub">Moteur 3D Première Personne (Three.js)</p>
-  <div class="panel"><div class="ptitle">▸ Ton pseudo</div>
-    <input type="text" id="nameIn" placeholder="PSEUDO" maxlength="16" value="Joueur3D"/>
+  <h1>HAUNTED 3D</h1>
+  <div class="sub" style="color:var(--dim); letter-spacing:5px;">MOTEUR TEMPS RÉEL INTERACTIF VUE SUBJECTIVE</div>
+  
+  <div class="panel">
+    <div class="ptitle">▸ Identité du Survivant</div>
+    <input type="text" id="nameIn" placeholder="Pseudo" maxlength="14" value="Survivor"/>
+    
+    <div class="ptitle" style="margin-top:1.5rem;">▸ Choix de l'Hôte Animal</div>
+    <div class="cgrid" id="avatarGrid"></div>
   </div>
-  <div class="panel"><div class="ptitle">▸ Créer une partie</div>
-    <button class="btn primary" id="btnCreate">Créer la partie</button>
-  </div>
-  <div class="divider">ou</div>
-  <div class="panel"><div class="ptitle">▸ Rejoindre une partie</div>
-    <input type="text" id="codeIn" placeholder="CODE" maxlength="6"/>
-    <button class="btn" id="btnJoin">Rejoindre</button>
+
+  <div style="display:flex; gap:1rem; width:100%; max-width:500px;">
+    <button class="btn primary" id="btnCreate" style="flex:1;">Créer Cauchemar</button>
+    <div style="display:flex; flex-direction:column; flex:1; gap:0.4rem;">
+      <input type="text" id="codeIn" placeholder="CODE SALLE" maxlength="6" style="text-align:center; font-size:1rem; padding:0.45rem;"/>
+      <button class="btn" id="btnJoin">Infiltrer</button>
+    </div>
   </div>
   <div class="err" id="menuErr"></div>
 </div>
 
-<div id="lobbyScreen">
-  <div id="lTop">
-    <h2>HAUNT 3D</h2>
-    <div><span id="lCodeVal">------</span></div>
+<div id="lobbyScreen" class="screen">
+  <h1>MANOIR PRIVÉ</h1>
+  <div class="panel" style="text-align:center;">
+    <div class="ptitle">Code d'accès universel</div>
+    <div id="lCodeVal" style="font-family:'Bebas Neue',sans-serif; font-size:3.5rem; color:var(--accent); letter-spacing:4px;">------</div>
+    <div id="lStage" style="margin-top:1.5rem; font-size:0.9rem; color:#888;">Connexion à l'asile en cours...</div>
   </div>
-  <div id="lPanelLobby">
-    <div id="lStage">En attente de l'hôte...</div>
-    <div class="cgrid" id="cgrid"></div>
-  </div>
-  <div id="lBot">
-    <div style="font-size:0.8rem; color: #888;">Contrôles : ZQSD / WASD pour bouger · Souris pour regarder · ESPACE pour ramasser · SHIFT pour sprinter</div>
-    <button id="readyBtn" style="display:none" onclick="socket.emit('start_game')">LANCER ▶</button>
+  <div style="width:100%; max-width:500px;">
+    <button id="readyBtn" class="btn primary" style="display:none;" onclick="socket.emit('start_game')">INITIALISER LA MATRICE 3D ▶</button>
   </div>
 </div>
 
 <div id="gameScreen">
-  <div id="hud">
-    <div class="hi"><span class="hl">Niveau</span><span class="hv" id="hLvl">1</span></div>
-    <div class="hi"><span class="hl">Colis</span><span class="hv" id="hItems">0/8</span></div>
-    <div class="hi"><span class="hl">Score</span><span class="hv" id="hScore">0</span></div>
-    <div class="hi"><span class="hl">Vies</span><span class="hv" id="hLives">❤️❤️❤️</span></div>
-    <div class="hi"><span class="hl">Sprint</span><div id="stBar"><div id="stFill"></div></div></div>
+  <div id="canvas3d_container"></div>
+  <div id="reticle"></div>
+
+  <div id="lock_notice">
+    <p>CLIQUEZ SUR L'ÉCRAN POUR ACTIVER LA CAMÉRA FPS</p>
+    <span style="font-size:0.8rem; margin-top:10px; color:#666;">Z,Q,S,D / Entrées Fléchées · SOURIS pour orienter la vue</span>
   </div>
 
-  <div id="gameBody">
-    <div id="cwrap">
-      <div id="reticle"></div>
-      <div id="gc3d"></div>
-      <canvas id="minimapCanvas" width="150" height="110"></canvas>
+  <div id="hud_overlay">
+    <div class="hud_row">
+      <div class="hud_card">
+        <span class="hud_lbl">Donjon</span>
+        <span class="hud_val" id="hLvl">NIVEAU 1</span>
+      </div>
+      <div class="hud_card">
+        <span class="hud_lbl">Cargaisons Sécurisées</span>
+        <span class="hud_val" id="hItems">0 / 0</span>
+      </div>
+      <div class="hud_card">
+        <span class="hud_lbl">Score d'Évasion</span>
+        <span class="hud_val" id="hScore">0000</span>
+      </div>
+      <div class="hud_card">
+        <span class="hud_lbl">Résistance Vitale</span>
+        <span class="hud_val danger" id="hLives">❤️❤️❤️</span>
+      </div>
+      <div class="hud_card">
+        <span class="hud_lbl">Adrénaline</span>
+        <div id="stBar"><div id="stFill"></div></div>
+      </div>
     </div>
 
-    <div id="sidebar">
-      <div class="sbt">💬 Chat</div>
-      <div id="chatbox"></div>
-      <form id="chatform"><input type="text" id="chatinput" placeholder="Message..."/><button type="submit" style="display:none"></button></form>
-      <div class="sbt">🏆 Scores</div>
-      <div id="scorebox"></div>
+    <div class="hud_row" style="flex:1; align-items:flex-end; justify-content:space-between; margin-top:20px;">
+      <canvas id="radarCanvas" width="130" height="130"></canvas>
+      
+      <div id="ui_right">
+        <div id="leaderboard"></div>
+        <div id="chat_panel">
+          <div id="chat_logs"></div>
+          <form id="chat_form">
+            <input type="text" id="chat_input" autocomplete="off" placeholder="Canal radio..." />
+          </form>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
-<div id="ov">
-  <div id="ovbox">
-    <div id="ovtitle">FIN DE NIVEAU</div>
-    <p id="ovsub" style="margin: 1rem 0; color:#888;"></p>
-    <button class="btn primary" id="btnNext" style="display:none">Niveau suivant</button>
-    <button class="btn" id="btnRestart" style="display:none" onclick="location.reload()">Retour au Menu</button>
+<div id="screen_msg">
+  <div id="msg_title">TITRE</div>
+  <p id="msg_sub" style="color:#aaa; font-size:1.1rem; text-align:center; max-width:600px;"></p>
+  <div style="display:flex; gap:1rem; width:100%; max-width:400px;">
+    <button class="btn primary" id="btnNext" style="display:none;">Prochain Étage</button>
+    <button class="btn" id="btnRestart" onclick="location.reload()">Réinitialiser</button>
   </div>
 </div>
 
@@ -165,423 +193,478 @@ input[type=text]:focus{border-color:var(--accent);}
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const socket = io({transports:['websocket','polling']});
-let myId=null, myRoom=null, gameMap=null, gameState=null, isHost=false;
-let gameStarted=false;
+let myId=null, myRoom=null, gameMap=null, gameState=null, isHost=false, gameStarted=false;
 
 const ANIMALS=[
-  {hex:'#8888 gray',emoji:'🐱',name:'Chat',color:0x888888},
-  {hex:'#cc8833',emoji:'🐵',name:'Singe',color:0xcc8833},
-  {hex:'#ff8844',emoji:'🦊',name:'Renard',color:0xff8844},
-  {hex:'#884422',emoji:'🐻',name:'Ours',color:0x884422},
-  {hex:'#44cc44',emoji:'🐸',name:'Grenouille',color:0x44cc44},
-  {hex:'#dddddd',emoji:'🐰',name:'Lapin',color:0xdddddd}
+  {hex:'#888888', emoji:'🐱', name:'Chat', color:0x888888},
+  {hex:'#cc8833', emoji:'🐵', name:'Singe', color:0xcc8833},
+  {hex:'#ff8844', emoji:'🦊', name:'Renard', color:0xff8844},
+  {hex:'#884422', emoji:'🐻', name:'Ours', color:0x884422},
+  {hex:'#44cc44', emoji:'🐸', name:'Grenouille', color:0x44cc44},
+  {hex:'#dddddd', emoji:'🐰', name:'Lapin', color:0xdddddd}
 ];
 let myAnimalIdx=0;
 
-// Génération sélecteur d'avatar
-const cgrid=document.getElementById('cgrid');
+// Peuplement de l'interface graphique de sélection d'avatars
+const avatarGrid=document.getElementById('avatarGrid');
 ANIMALS.forEach((a,i)=>{
-  const b=document.createElement('div');
-  b.className='cbtn'+(i===0?' on':''); b.id='cbtn'+i;
-  b.innerHTML=`<div class="cbtn-emoji">${a.emoji}</div>`;
-  b.addEventListener('click',()=>{
+  const d=document.createElement('div');
+  d.className='cbtn'+(i===0?' on':''); d.id='avatar_'+i;
+  d.innerHTML=`<div class="cbtn-emoji">${a.emoji}</div><div class="cbtn-label">${a.name}</div>`;
+  d.onclick=()=>{
     myAnimalIdx=i;
     document.querySelectorAll('.cbtn').forEach(x=>x.classList.remove('on'));
-    b.classList.add('on');
-    socket.emit('update_color',{color:a.hex,animal:i});
-  });
-  cgrid.appendChild(b);
+    d.classList.add('on');
+    socket.emit('update_color',{color:a.hex, animal:i});
+  };
+  avatarGrid.appendChild(d);
 });
 
-// Connexion d'entrée
+// Enclenchement réseau initial
 document.getElementById('btnCreate').onclick=()=>{
-  const name=document.getElementById('nameIn').value.trim()||'Joueur';
-  socket.emit('create_room',{name,animal:myAnimalIdx,color:ANIMALS[myAnimalIdx].hex});
+  const name=document.getElementById('nameIn').value.trim()||'Héros';
+  socket.emit('create_room',{name, animal:myAnimalIdx, color:ANIMALS[myAnimalIdx].hex});
 };
 document.getElementById('btnJoin').onclick=()=>{
-  const name=document.getElementById('nameIn').value.trim()||'Joueur';
+  const name=document.getElementById('nameIn').value.trim()||'Héros';
   const code=document.getElementById('codeIn').value.trim().toUpperCase();
-  if(code) socket.emit('join_room',{roomCode:code,name,animal:myAnimalIdx,color:ANIMALS[myAnimalIdx].hex});
+  if(code) socket.emit('join_room',{roomCode:code, name, animal:myAnimalIdx, color:ANIMALS[myAnimalIdx].hex});
 };
 
-socket.on('room_created',(data)=>{
-  myId=data.playerId; myRoom=data.roomCode; isHost=true;
-  showLobby(data);
-});
-socket.on('room_joined',(data)=>{
-  myId=data.playerId; myRoom=data.roomCode; isHost=false;
-  showLobby(data);
-});
-socket.on('lobby_state',(data)=>{
-  if(!gameStarted) updateLobby(data);
-});
+socket.on('room_created',(data)=>{ myId=data.playerId; myRoom=data.roomCode; isHost=true; setupLobbyView(); });
+socket.on('room_joined',(data)=>{ myId=data.playerId; myRoom=data.roomCode; isHost=false; setupLobbyView(); });
+socket.on('lobby_state',(data)=>{ if(!gameStarted) updateLobbyList(data); });
 socket.on('room_error',(msg)=>{ document.getElementById('menuErr').textContent=msg; });
 
-function showLobby(data){
+function setupLobbyView(){
   document.getElementById('menuScreen').classList.remove('active');
   document.getElementById('lobbyScreen').classList.add('active');
   document.getElementById('lCodeVal').textContent=myRoom;
   if(isHost) document.getElementById('readyBtn').style.display='block';
-  else document.getElementById('lStage').textContent="En attente du lancement par l'hôte...";
 }
-function updateLobby(data){
-  let list = Object.values(data.players).map(p=>p.name).join(', ');
-  document.getElementById('lStage').textContent = "Joueurs présents : " + list;
+function updateLobbyList(data){
+  let names=Object.values(data.players).map(p=>p.name).join(' · ');
+  document.getElementById('lStage').textContent="Survivants connectés : "+names;
 }
 
-// Input local variables
-const keys={};
-let mouseYaw = 0; // Rotation gauche/droite de la tête
-window.addEventListener('keydown',e=>{keys[e.code]=true;});
-window.addEventListener('keyup',e=>{keys[e.code]=false;});
+// MANAGEMENT DES CONTROLES DE CAPTURE POUR LE FPS SUR LA SOURIS
+const lockNotice = document.getElementById('lock_notice');
+const container3d = document.getElementById('canvas3d_container');
 
-// Pointer lock pour capturer le mouvement de la souris en première personne
-const cwrap = document.getElementById('cwrap');
-cwrap.addEventListener('click', () => {
-  if(gameStarted) cwrap.requestPointerLock();
-});
-window.addEventListener('mousemove', e => {
-  if (document.pointerLockElement === cwrap) {
-    mouseYaw -= e.movementX * 0.0025; // Sensibilité de la souris
+lockNotice.onclick = () => { container3d.requestPointerLock(); };
+document.addEventListener('pointerlockchange', () => {
+  if (document.pointerLockElement === container3d) {
+    lockNotice.style.display = 'none';
+  } else {
+    lockNotice.style.display = 'flex';
   }
 });
 
-// ===================== THREE.JS ENGINE SETUP =====================
+const keys={};
+let viewYaw = 0; // Rotation horizontale (regard)
+window.addEventListener('keydown', e => { keys[e.code] = true; });
+window.addEventListener('keyup', e => { keys[e.code] = false; });
+window.addEventListener('mousemove', e => {
+  if (document.pointerLockElement === container3d) {
+    viewYaw -= e.movementX * 0.0022; // Sensibilité angulaire horizontale
+  }
+});
+
+// ====================================================================
+//            MOTEUR GRAPHIQUE TECHNIQUE 3D (THREE.JS CORPUS)
+// ====================================================================
 let scene, camera, renderer;
-let wallMeshes = [];
-let itemMeshes = {};
-let monsterMeshes = {};
-let playerMeshes = {};
-let exitMesh = null;
+let wallsArray = [];
+let meshesItems = {};
+let meshesMonsters = {};
+let meshesPlayers = {};
+let meshExitPortal = null;
 
-function init3D() {
-  const container = document.getElementById('gc3d');
+function initThreeEngine() {
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x05050a);
-  // Brouillard pour donner une ambiance sombre de manoir hanté
-  scene.fog = new THREE.FogExp2(0x05050a, 0.15);
+  scene.background = new THREE.Color(0x020205);
+  // Brouillard volumétrique très dense pour cacher les limites de la carte
+  scene.fog = new THREE.FogExp2(0x020205, 0.18);
 
-  camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 100);
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(container.clientWidth, container.clientHeight);
-  container.appendChild(renderer.domElement);
+  camera = new THREE.PerspectiveCamera(70, container3d.clientWidth / container3d.clientHeight, 0.05, 100);
+  
+  renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+  renderer.setSize(container3d.clientWidth, container3d.clientHeight);
+  renderer.shadowMap.enabled = true;
+  container3d.appendChild(renderer.domElement);
 
-  // Lumières
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.12);
-  scene.add(ambientLight);
+  // Éclairage ambiant résiduel
+  const ambient = new THREE.AmbientLight(0x0b0d1a, 0.4);
+  scene.add(ambient);
 
-  // Lampe torche attachée au joueur
-  const flashLight = new THREE.SpotLight(0xfffaed, 1.5, 18, Math.PI/5, 0.5, 1);
-  flashLight.position.set(0, 0, 0);
-  camera.add(flashLight);
-  flashLight.target = new THREE.Object3D();
-  flashLight.target.position.set(0, 0, -1);
-  camera.add(flashLight.target);
+  // Projecteur directionnel attaché à la caméra (Effet Lampe Torche de poche)
+  const flashlight = new THREE.SpotLight(0xfff3db, 2.5, 22, Math.PI / 4.5, 0.6, 1.2);
+  flashlight.position.set(0, 0, 0);
+  camera.add(flashlight);
+  
+  const flashlightTarget = new THREE.Object3D();
+  flashlightTarget.position.set(0, 0, -1);
+  camera.add(flashlightTarget);
+  flashlight.target = flashlightTarget;
+
   scene.add(camera);
 
   window.addEventListener('resize', () => {
-    camera.aspect = container.clientWidth / container.clientHeight;
+    camera.aspect = container3d.clientWidth / container3d.clientHeight;
     camera.updateProjectionMatrix();
-    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setSize(container3d.clientWidth, container3d.clientHeight);
   });
 }
 
-function build3DMap() {
-  // Nettoyer les anciens murs
-  wallMeshes.forEach(m => scene.remove(m));
-  wallMeshes = [];
+function generate3DArchitecture() {
+  wallsArray.forEach(w => scene.remove(w));
+  wallsArray = [];
 
   if (!gameMap) return;
-  
-  const wallGeo = new THREE.BoxGeometry(1, 2.2, 1);
-  const wallMat = new THREE.MeshStandardMaterial({ color: 0x222530, roughness: 0.8 });
-  const floorGeo = new THREE.PlaneGeometry(50, 50);
-  const floorMat = new THREE.MeshStandardMaterial({ color: 0x111215, roughness: 0.9 });
-  
-  const floor = new THREE.Mesh(floorGeo, floorMat);
-  floor.rotation.x = -Math.PI / 2;
-  floor.position.y = 0;
-  scene.add(floor);
 
-  // Parcourir la grille de la map reçue du serveur
+  // Création du sol texturé via des facettes géométriques sombres
+  const floorGeo = new THREE.PlaneGeometry(60, 60, 30, 30);
+  // Légère distorsion du sol pour casser la monotonie plate
+  const pos = floorGeo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    let vx = pos.getX(i); let vy = pos.getY(i);
+    pos.setZ(i, Math.sin(vx*0.5)*Math.cos(vy*0.5)*0.06);
+  }
+  floorGeo.computeVertexNormals();
+
+  const floorMat = new THREE.MeshStandardMaterial({ color: 0x0a0b10, roughness: 0.9, metalness: 0.1 });
+  const floorMesh = new THREE.Mesh(floorGeo, floorMat);
+  floorMesh.rotation.x = -Math.PI / 2;
+  scene.add(floorMesh);
+
+  // Matériau des structures verticales du labyrinthe
+  const wallGeo = new THREE.BoxGeometry(1, 2.6, 1);
+  const wallMat = new THREE.MeshStandardMaterial({ color: 0x141622, roughness: 0.7, metalness: 0.2 });
+
   for (let y = 0; y < gameMap.length; y++) {
     for (let x = 0; x < gameMap[y].length; x++) {
       if (gameMap[y][x] === 1) {
         const wall = new THREE.Mesh(wallGeo, wallMat);
-        wall.position.set(x + 0.5, 1.1, y + 0.5);
+        wall.position.set(x + 0.5, 1.3, y + 0.5);
         scene.add(wall);
-        wallMeshes.push(wall);
+        wallsArray.push(wall);
       }
     }
   }
 
-  // Création visuelle de la porte de sortie
-  const exitGeo = new THREE.CylinderGeometry(0.8, 0.8, 0.1, 16);
+  // Portail de sortie tridimensionnel (Puits de lumière quantique)
+  const exitGeo = new THREE.TorusGeometry(0.6, 0.08, 8, 24);
   const exitMat = new THREE.MeshBasicMaterial({ color: 0x00ff88, wireframe: true });
-  exitMesh = new THREE.Mesh(exitGeo, exitMat);
-  scene.add(exitMesh);
+  meshExitPortal = new THREE.Mesh(exitGeo, exitMat);
+  meshExitPortal.rotation.x = Math.PI / 2;
+  scene.add(meshExitPortal);
 }
 
-// ===================== GAME LOOPS & SYNC =====================
-let lx=1.5, ly=1.5, lastAction=false;
+// ====================================================================
+//            MÉCANIQUE LOGIQUE COMPLÈTE & RENDER RUNTIME
+// ====================================================================
+let lx=1.5, ly=1.5, lastActionSent=false;
+let localStaminaPool = 120;
 
-socket.on('init_map',(data)=>{
+socket.on('init_map', (data) => {
   gameMap = data.map;
   gameStarted = true;
   document.getElementById('lobbyScreen').classList.remove('active');
   document.getElementById('gameScreen').classList.add('active');
   
-  init3D();
-  build3DMap();
-  cwrap.requestPointerLock();
-  animate();
+  initThreeEngine();
+  generate3DArchitecture();
+  container3d.requestPointerLock();
+  
+  // Lancement du cycle de rendu principal
+  runExecution3D();
 });
 
-socket.on('game_state',(state)=>{
+socket.on('game_state', (state) => {
   gameState = state;
-  // Synchronisation du HUD
   const me = state.players[myId];
   if(me){
-    document.getElementById('hLvl').textContent = state.level;
-    document.getElementById('hItems').textContent = `${state.collectedItems}/${state.totalItems}`;
-    document.getElementById('hScore').textContent = me.score;
+    document.getElementById('hLvl').textContent = "ÉTAGE " + state.level;
+    document.getElementById('hItems').textContent = `${state.collectedItems} / ${state.totalItems}`;
+    document.getElementById('hScore').textContent = String(me.score).padStart(4, '0');
     document.getElementById('hLives').textContent = '❤️'.repeat(Math.max(0, me.lives));
-    if(me.eliminated) document.getElementById('hStatus').innerHTML="<span style='color:red'>ÉLIMINÉ</span>";
-    else if(me.dead) document.getElementById('hStatus').innerHTML="<span style='color:orange'>MORT (👻)</span>";
-    else document.getElementById('hStatus').innerHTML="<span style='color:var(--accent)'>EN VIE</span>";
   }
 
-  // Mettre à jour les scores dans la sidebar
-  let shtml = Object.values(state.players)
+  // Rafraîchissement du Leaderboard
+  let lhtml = Object.values(state.players)
     .sort((a,b)=>b.score - a.score)
-    .map(p=>`<div style="color:${p.color}">${p.name}: ${p.score} pts ${p.carrying?'📦':''}</div>`)
+    .map(p=>`<div style="color:${p.color}; margin-bottom:2px;">${p.name}: ${p.score} ${p.carrying?'📦':''}</div>`)
     .join('');
-  document.getElementById('scorebox').innerHTML = shtml;
+  document.getElementById('leaderboard').innerHTML = lhtml;
 });
 
-// Gestion des overlays de fin de niveau / défaite
-socket.on('level_win',(data)=>{
+// Écrans de transition de session
+socket.on('level_win', (data) => {
   document.exitPointerLock();
-  document.getElementById('ov').classList.add('on');
-  document.getElementById('ovtitle').textContent = "NIVEAU RÉUSSI ! 🎉";
-  document.getElementById('ovsub').textContent = "Tous les colis ont été sécurisés ! Ready pour la suite ?";
-  if(isHost) {
-    const nextBtn = document.getElementById('btnNext');
-    nextBtn.style.display = 'inline-block';
-    nextBtn.onclick = () => {
+  const scr = document.getElementById('screen_msg');
+  scr.style.display = 'flex';
+  document.getElementById('msg_title').textContent = "ZÔNE PURGÉE";
+  document.getElementById('msg_title').style.color = "var(--accent)";
+  document.getElementById('msg_sub').textContent = "Tous les fragments ont été sécurisés. Progression vers le vecteur suivant autorisée.";
+  if (isHost) {
+    const nxt = document.getElementById('btnNext');
+    nxt.style.display = 'inline-block';
+    nxt.onclick = () => {
       socket.emit('next_level');
-      document.getElementById('ov').classList.remove('on');
-      nextBtn.style.display = 'none';
+      scr.style.display = 'none';
+      nxt.style.display = 'none';
     };
   }
 });
 
-socket.on('game_over',(data)=>{
+socket.on('game_over', (data) => {
   document.exitPointerLock();
-  document.getElementById('ov').classList.add('on');
-  document.getElementById('ovtitle').textContent = "GAME OVER 👻";
-  document.getElementById('ovsub').textContent = "L'équipe a perdu toutes ses vies dans le manoir.";
-  document.getElementById('btnRestart').style.display = 'inline-block';
+  const scr = document.getElementById('screen_msg');
+  scr.style.display = 'flex';
+  document.getElementById('msg_title').textContent = "ÉLIMINATION IMMINENTE";
+  document.getElementById('msg_title').style.color = "var(--danger)";
+  document.getElementById('msg_sub').textContent = "La force vitale de l'équipe de récupération a été entièrement siphonnée par les entités.";
 });
 
-// Dessin de la minimap 2D en superposition (HUD)
-function drawMinimap() {
-  const canvas = document.getElementById('minimapCanvas');
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  if (!gameMap || !gameState) return;
-
-  const cellW = canvas.width / 28;
-  const cellH = canvas.height / 20;
-
-  // Dessin des murs en petit
-  ctx.fillStyle = 'rgba(255,255,255,0.15)';
-  for(let y=0; y<gameMap.length; y++){
-    for(let x=0; x<gameMap[y].length; x++){
-      if(gameMap[y][x]===1) ctx.fillRect(x*cellW, y*cellH, cellW, cellH);
-    }
-  }
-
-  // Sortie
-  if(gameState.exitPoint) {
-    ctx.fillStyle = '#00ff88';
-    ctx.fillRect(gameState.exitPoint.x*cellW - cellW, gameState.exitPoint.y*cellH - cellH, cellW*2, cellH*2);
-  }
-
-  // Colis
-  ctx.fillStyle = '#ffcc00';
-  gameState.items.forEach(item => {
-    if(!item.collected && item.carriedBy === null) {
-      ctx.fillRect(item.x*cellW, item.y*cellH, cellW, cellH);
-    }
-  });
-
-  // Fantômes
-  ctx.fillStyle = '#ff3355';
-  gameState.monsters.forEach(m => {
-    ctx.fillRect(m.x*cellW, m.y*cellH, cellW, cellH);
-  });
-
-  // Joueurs
-  Object.values(gameState.players).forEach(p => {
-    if(p.eliminated) return;
-    ctx.fillStyle = p.id === myId ? '#00ff88' : p.color;
-    ctx.beginPath();
-    ctx.arc(p.x*cellW, p.y*cellH, cellW*0.6, 0, Math.PI*2);
-    ctx.fill();
-  });
-}
-
-// Variables de stamina locales simplifiées pour le HUD
-let localStamina = 120;
-
-function animate() {
-  requestAnimationFrame(animate);
+function runExecution3D() {
+  requestAnimationFrame(runExecution3D);
   if (!gameStarted || !gameState) return;
 
   const me = gameState.players[myId];
+  
   if (me && !me.dead && !me.eliminated) {
-    // 1. CALCUL DU DEPLACEMENT LOCAL (Envoyé au serveur 2D)
-    let moveX = 0, moveY = 0;
-    if (keys['KeyW'] || keys['ArrowUp']) moveY = -1;
-    if (keys['KeyS'] || keys['ArrowDown']) moveY = 1;
-    if (keys['KeyA'] || keys['ArrowLeft']) moveX = -1;
-    if (keys['KeyD'] || keys['ArrowRight']) moveX = 1;
+    // 1. DÉPLACEMENT LOCAL FPS CALCULÉ RELATIVEMENT À LA SOURIS
+    let forward = 0, sideways = 0;
+    if (keys['KeyW'] || keys['ArrowUp'] || keys['KeyZ']) forward = -1;
+    if (keys['KeyS'] || keys['ArrowDown']) forward = 1;
+    if (keys['KeyA'] || keys['ArrowLeft'] || keys['KeyQ']) sideways = -1;
+    if (keys['KeyD'] || keys['ArrowRight']) sideways = 1;
 
-    // Orientation basée sur la souris
-    let speed = 0.07; 
-    if (keys['ShiftLeft'] && (moveX !== 0 || moveY !== 0) && localStamina > 0) {
-      speed = 0.12;
-      localStamina -= 1.5;
+    let movementSpeed = 0.065;
+    const isMoving = (forward !== 0 || sideways !== 0);
+
+    // Contrôle d'endurance
+    if ((keys['ShiftLeft'] || keys['ShiftRight']) && isMoving && localStaminaPool > 0) {
+      movementSpeed = 0.11;
+      localStaminaPool -= 1.6;
     } else {
-      if (localStamina < 120) localStamina += 0.4;
+      if (localStaminaPool < 120) localStaminaPool += 0.5;
     }
-    document.getElementById('stFill').style.width = `${(localStamina/120)*100}%`;
+    document.getElementById('stFill').style.width = `${(localStaminaPool / 120) * 100}%`;
 
-    if (moveX !== 0 || moveY !== 0) {
-      // Adapter la direction 2D par rapport à l'angle de vue de la caméra 3D
-      const angle = mouseYaw;
-      let targetX = moveX * Math.cos(angle) - moveY * Math.sin(angle);
-      let targetY = moveX * Math.sin(angle) + moveY * Math.cos(angle);
-      
-      let nx = lx + targetX * speed;
-      let ny = ly + targetY * speed;
+    if (isMoving) {
+      // Transformation vectorielle par rapport à la rotation Yaw de la caméra
+      let cosY = Math.cos(viewYaw);
+      let sinY = Math.sin(viewYaw);
 
-      // Fonction simplifiée de collision murale locale
-      const canMove = (tx, ty) => {
+      // Calcul des directions absolues sur la grille 2D du serveur
+      let targetDx = sideways * cosY - forward * sinY;
+      let targetDy = sideways * sinY + forward * cosY;
+
+      let nextX = lx + targetDx * movementSpeed;
+      let nextY = ly + targetDy * movementSpeed;
+
+      // Résolution simple des collisions locales avec la carte
+      const testCollision = (tx, ty) => {
         let mx = Math.floor(tx); let my = Math.floor(ty);
-        if(mx<0||mx>=28||my<0||my>=20) return false;
+        if (mx < 0 || mx >= 28 || my < 0 || my >= 20) return false;
         return gameMap[my][mx] !== 1;
       };
 
-      if (canMove(nx, ly)) lx = nx;
-      if (canMove(lx, ny)) ly = ny;
+      if (testCollision(nextX, ly)) lx = nextX;
+      if (testCollision(lx, nextY)) ly = nextY;
 
-      // Envoi de la position résolue au serveur
+      // Émission réseau immédiate vers la boucle du serveur
       socket.emit('move', { x: lx, y: ly, dir: 'up' });
     }
 
-    // Bouton d'action (Espace / E) pour colis
-    const act = !!(keys['Space'] || keys['KeyE']);
-    if (act && !lastAction) { socket.emit('action'); }
-    lastAction = act;
+    // Gestion du ramassage (Espace / E)
+    const actionKeyActive = !!(keys['Space'] || keys['KeyE']);
+    if (actionKeyActive && !lastActionSent) {
+      socket.emit('action');
+    }
+    lastActionSent = actionKeyActive;
 
-    // Positionner les yeux de la caméra sur notre avatar
-    camera.position.set(lx, 1.0, ly);
-    camera.rotation.set(0, mouseYaw, 0, 'YXZ');
+    // Positionnement de la vision première personne
+    camera.position.set(lx, 1.15, ly);
+    camera.rotation.set(0, viewYaw, 0, 'YXZ');
+
   } else if (me && (me.dead || me.eliminated)) {
-    // Mode spectateur passif si mort
-    camera.position.set(14, 12, 10);
-    camera.lookAt(14, 0, 10);
+    // Mode caméra spectateur orbitale automatique si mort clinique
+    let elapsed = Date.now() * 0.0004;
+    camera.position.set(14 + Math.sin(elapsed)*10, 14, 10 + Math.cos(elapsed)*10);
+    camera.lookAt(14, 1, 10);
   }
 
-  // 2. SYNCHRONISATION DES OBJETS 3D DE LA SCÈNE AVEC LE SERVEUR
+  // 2. SYNCHRONISATION DES ACTEURS ET OBJETS DANS LA SCÈNE 3D
   
-  // Position de la sortie
-  if(gameState.exitPoint && exitMesh) {
-    exitMesh.position.set(gameState.exitPoint.x, 0.05, gameState.exitPoint.y);
-    exitMesh.rotation.y += 0.02;
+  // Portail d'Évacuation
+  if (gameState.exitPoint && meshExitPortal) {
+    meshExitPortal.position.set(gameState.exitPoint.x, 0.1, gameState.exitPoint.y);
+    meshExitPortal.rotation.z += 0.02;
   }
 
-  // Colis 3D (petits cubes jaunes ou violets)
+  // Colis Complexes 3D (Formes géométriques imbriquées avec rotation inverse)
   gameState.items.forEach(item => {
     if (item.collected || item.carriedBy !== null) {
-      if (itemMeshes[item.id]) {
-        scene.remove(itemMeshes[item.id]);
-        delete itemMeshes[item.id];
+      if (meshesItems[item.id]) {
+        scene.remove(meshesItems[item.id]);
+        delete meshesItems[item.id];
       }
     } else {
-      if (!itemMeshes[item.id]) {
-        let itemColor = item.type === 'gold' ? 0xffcc00 : (item.type === 'cursed' ? 0xaa44ff : 0x00aaff);
-        const geo = new THREE.BoxGeometry(0.35, 0.35, 0.35);
-        const mat = new THREE.MeshStandardMaterial({ color: itemColor, roughness: 0.3, metalness: 0.2 });
-        const mesh = new THREE.Mesh(geo, mat);
-        scene.add(mesh);
-        itemMeshes[item.id] = mesh;
+      if (!meshesItems[item.id]) {
+        let col = item.type === 'gold' ? 0xffcc00 : (item.type === 'cursed' ? 0xcc22ff : 0x00aaff);
+        const gGroup = new THREE.Group();
+        
+        const coreGeo = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+        const coreMat = new THREE.MeshStandardMaterial({ color: col, roughness: 0.2, metalness: 0.8 });
+        const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+        gGroup.add(coreMesh);
+
+        const ringGeo = new THREE.TorusGeometry(0.26, 0.03, 4, 16);
+        const ringMat = new THREE.MeshBasicMaterial({ color: col, wireframe: true });
+        const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+        ringMesh.rotation.x = Math.PI/2;
+        gGroup.add(ringMesh);
+
+        scene.add(gGroup);
+        meshesItems[item.id] = gGroup;
       }
-      itemMeshes[item.id].position.set(item.x, 0.3 + Math.sin(Date.now()*0.003)*0.05, item.y);
-      itemMeshes[item.id].rotation.x += 0.01;
-      itemMeshes[item.id].rotation.y += 0.01;
+      let targetMesh = meshesItems[item.id];
+      targetMesh.position.set(item.x, 0.45 + Math.sin(Date.now()*0.004 + item.id)*0.08, item.y);
+      targetMesh.children[0].rotation.y += 0.02;
+      targetMesh.children[1].rotation.z -= 0.01;
     }
   });
 
-  // Fantômes 3D (Sphères rouges/violettes flottantes lumineuses)
+  // Fantômes Complexes (Spectres flottants à structure pyramidale inversée cristalline)
   gameState.monsters.forEach(m => {
-    if (!monsterMeshes[m.id]) {
-      let mColor = m.type === 'hunter' ? 0xff2222 : (m.type === 'twins' ? 0xcc22ff : 0xffaa00);
-      const geo = new THREE.SphereGeometry(0.35, 8, 8);
-      const mat = new THREE.MeshBasicMaterial({ color: mColor, wireframe: true });
-      const mesh = new THREE.Mesh(geo, mat);
-      scene.add(mesh);
-      monsterMeshes[m.id] = mesh;
+    if (!meshesMonsters[m.id]) {
+      let fCol = m.type === 'hunter' ? 0xff1144 : (m.type === 'twins' ? 0xaa00ff : 0xffaa00);
+      const ghostGeo = new THREE.ConeGeometry(0.32, 0.7, 5);
+      const ghostMat = new THREE.MeshBasicMaterial({ color: fCol, wireframe: true });
+      const mMesh = new THREE.Mesh(ghostGeo, ghostMat);
+      mMesh.rotation.x = Math.PI; // Inversion du cône vers le bas
+      scene.add(mMesh);
+      meshesMonsters[m.id] = mMesh;
     }
-    monsterMeshes[m.id].position.set(m.x, 0.9 + Math.sin(Date.now()*0.005 + m.id)*0.1, m.y);
+    meshesMonsters[m.id].position.set(m.x, 1.0 + Math.sin(Date.now()*0.006 + m.id)*0.12, m.y);
+    meshesMonsters[m.id].rotation.y += 0.03;
   });
 
-  // Autres joueurs connectés (Cylindres colorés)
+  // Autres Survivants connectés (Modélisés sous forme de Cristaux d'énergie cinétique)
   Object.values(gameState.players).forEach(p => {
     if (p.id === myId || p.eliminated || p.dead) {
-      if (playerMeshes[p.id]) {
-        scene.remove(playerMeshes[p.id]);
-        delete playerMeshes[p.id];
-      }
+      if (meshesPlayers[p.id]) { scene.remove(meshesPlayers[p.id]); delete meshesPlayers[p.id]; }
       return;
     }
-    if (!playerMeshes[p.id]) {
-      const geo = new THREE.CylinderGeometry(0.3, 0.3, 1.2, 8);
-      const mat = new THREE.MeshStandardMaterial({ color: ANIMALS[p.animal||0].color });
-      const mesh = new THREE.Mesh(geo, mat);
-      scene.add(mesh);
-      playerMeshes[p.id] = mesh;
+    if (!meshesPlayers[p.id]) {
+      let pColor = ANIMALS[p.animal||0].color;
+      const charGeo = new THREE.OctahedronGeometry(0.4, 0);
+      const charMat = new THREE.MeshStandardMaterial({ color: pColor, roughness: 0.4, metalness: 0.5 });
+      const charMesh = new THREE.Mesh(charGeo, charMat);
+      scene.add(charMesh);
+      meshesPlayers[p.id] = charMesh;
     }
-    playerMeshes[p.id].position.set(p.x, 0.6, p.y);
+    meshesPlayers[p.id].position.set(p.x, 0.8, p.y);
+    meshesPlayers[p.id].rotation.y += 0.01;
   });
 
-  // Rendu de la caméra de Three.js
+  // Exécution du moteur graphique
   renderer.render(scene, camera);
 
-  // Rafraîchir l'incrustation Minimap
-  drawMinimap();
+  // Mise à jour du sous-système Radar Tactique
+  renderRadarMap();
 }
 
-// Gestion basique du Chat
-const chatform = document.getElementById('chatform');
-chatform.onsubmit=(e)=>{
-  e.preventDefault();
-  const input = document.getElementById('chatinput');
-  const txt = input.value.trim();
-  if(txt) {
-    socket.emit('chat_msg', txt);
-    input.value = '';
+// ====================================================================
+//                 SOUS-SYSTÈME RADAR DE PROXIMITÉ (HUD)
+// ====================================================================
+function renderRadarMap() {
+  const rad = document.getElementById('radarCanvas');
+  const rctx = rad.getContext('2d');
+  rctx.clearRect(0, 0, rad.width, rad.height);
+  if (!gameMap || !gameState) return;
+
+  const center = rad.width / 2;
+  const radarRange = 7.0; // Distance max visible sur le balayage radar
+
+  // Fond du radar ciculaire
+  rctx.fillStyle = 'rgba(4, 5, 12, 0.75)';
+  rctx.beginPath(); rctx.arc(center, center, center - 2, 0, Math.PI*2); rctx.fill();
+  rctx.strokeStyle = '#1f1f3a'; rctx.lineWidth = 1.5; rctx.stroke();
+
+  // Cercles concentriques d'intervalles
+  rctx.strokeStyle = 'rgba(0, 255, 136, 0.08)';
+  rctx.beginPath(); rctx.arc(center, center, center * 0.5, 0, Math.PI*2); rctx.stroke();
+
+  // Récupération de ma position pour faire le décalage relatif
+  const me = gameState.players[myId];
+  if (!me) return;
+  const px = lx; const py = ly;
+
+  // Dessin des murs environnants sur le radar
+  rctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+  for (let y = 0; y < gameMap.length; y++) {
+    for (let x = 0; x < gameMap[y].length; x++) {
+      if (gameMap[y][x] === 1) {
+        let dx = (x + 0.5) - px; let dy = (y + 0.5) - py;
+        if (Math.abs(dx) < radarRange && Math.abs(dy) < radarRange) {
+          // Transformation de l'espace monde vers le repère écran du radar
+          let rx = center + (dx / radarRange) * center;
+          let ry = center + (dy / radarRange) * center;
+          rctx.fillRect(rx - 3, ry - 3, 6, 6);
+        }
+      }
+    }
   }
+
+  // Colis (Points Jaunes)
+  rctx.fillStyle = '#ffcc00';
+  gameState.items.forEach(item => {
+    if (!item.collected && item.carriedBy === null) {
+      let dx = item.x - px; let dy = item.y - py;
+      let rx = center + (dx / radarRange) * center; let ry = center + (dy / radarRange) * center;
+      if (Math.hypot(dx, dy) < radarRange) rctx.fillRect(rx - 2, ry - 2, 4, 4);
+    }
+  });
+
+  // Monstres / Spectres (Points rouges clignotants)
+  rctx.fillStyle = `rgba(255, 42, 95, ${0.6 + Math.sin(Date.now()*0.01)*0.4})`;
+  gameState.monsters.forEach(m => {
+    let dx = m.x - px; let dy = m.y - py;
+    let rx = center + (dx / radarRange) * center; let ry = center + (dy / radarRange) * center;
+    if (Math.hypot(dx, dy) < radarRange) {
+      rctx.beginPath(); rctx.arc(rx, ry, 3.5, 0, Math.PI*2); rctx.fill();
+    }
+  });
+
+  // Flèche centrale de mon orientation (Survivant)
+  rctx.save();
+  rctx.translate(center, center);
+  rctx.rotate(-viewYaw); // Aligner la flèche avec la direction du regard de la caméra
+  rctx.fillStyle = '#00ff88';
+  rctx.beginPath();
+  rctx.moveTo(0, -6); rctx.lineTo(-4, 4); rctx.lineTo(4, 4);
+  rctx.closePath(); rctx.fill();
+  rctx.restore();
+}
+
+// MANAGEMENT DU MODULE CHAT RESEAU
+const chatForm = document.getElementById('chat_form');
+chatForm.onsubmit=(e)=>{
+  e.preventDefault();
+  const inp = document.getElementById('chat_input');
+  const txt = inp.value.trim();
+  if(txt) { socket.emit('chat_msg', txt); inp.value=''; }
 };
 socket.on('msg',(data)=>{
-  const box = document.getElementById('chatbox');
-  const d = document.createElement('div');
-  d.className = 'cm';
-  d.textContent = `${data.name}: ${data.text}`;
-  box.appendChild(d);
-  box.scrollTop = box.scrollHeight;
+  const logs = document.getElementById('chat_logs');
+  const el = document.createElement('div');
+  el.className = 'msg_line';
+  el.innerHTML = `<span style="color:var(--accent)">${data.name}:</span> <span style="color:#fff">${data.text}</span>`;
+  logs.appendChild(el);
+  logs.scrollTop = logs.scrollHeight;
 });
 </script>
 </body>
