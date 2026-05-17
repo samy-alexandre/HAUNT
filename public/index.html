@@ -48,7 +48,7 @@ input[type=text]:focus{border-color:#00ff88;box-shadow:0 0 15px rgba(0,255,136,0
 #lock_notice h2{font-family:'Bebas Neue',sans-serif;font-size:2.5rem;color:#00ff88;letter-spacing:3px;}
 #lock_notice p{color:#606280;font-size:0.85rem;margin-top:8px;}
 
-/* BANDEAU SUPÉRIEUR HUD - LIÉ DIRECTEMENT AUX STATS SERVEUR */
+/* BANDEAU SUPÉRIEUR HUD */
 #hud{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-around;align-items:center;padding:0.8rem;background:linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, transparent 100%);z-index:5;pointer-events:none;}
 .hi{display:flex;flex-direction:column;align-items:center;background:rgba(4,5,10,0.75);padding:0.4rem 1.2rem;border-radius:6px;border:1px solid rgba(255,255,255,0.02);backdrop-filter:blur(4px);}
 .hl{color:#606280;font-size:0.55rem;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:2px;}
@@ -66,7 +66,7 @@ input[type=text]:focus{border-color:#00ff88;box-shadow:0 0 15px rgba(0,255,136,0
 #scorebox{border-top:1px solid #141625;max-height:180px;overflow-y:auto;}
 .sr{display:flex;justify-content:space-between;padding:0.4rem 0.7rem;font-size:0.7rem;border-bottom:1px solid rgba(255,255,255,0.01);}
 
-/* PANNEAU DE FIN D'ÉTAGE (VICTOIRE / DÉFAITE OUVERTE) */
+/* PANNEAU DE FIN */
 #toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#05060c;border:1px solid #00ff88;color:#00ff88;padding:0.6rem 1.4rem;border-radius:6px;font-size:0.8rem;z-index:200;opacity:0;transition:opacity 0.2s;pointer-events:none;}
 #toast.on{opacity:1;}
 
@@ -159,13 +159,15 @@ input[type=text]:focus{border-color:#00ff88;box-shadow:0 0 15px rgba(0,255,136,0
   </div>
 </div>
 
+<div id="toast"></div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const socket = io();
 let myId = null, myRoom = null, gameMap = null, isHost = false, gameStarted = false;
 
-// Variables pour le calcul de la trajectoire locale fluide
+// Positions locales fluides (X, Y) calquées sur le serveur
 let lx = 1.5, ly = 1.5; 
 let serverPlayersData = {};
 let viewYaw = 0, viewPitch = 0;
@@ -173,7 +175,6 @@ let viewYaw = 0, viewPitch = 0;
 const COLORS = ['#00ff88', '#ff4d4d', '#ffaa00', '#9b5de5', '#00bbf9', '#f15bb5'];
 let myColor = COLORS[0];
 
-// Construction dynamique des options de couleurs du lobby
 const cgrid = document.getElementById('cgrid');
 COLORS.forEach((col, i) => {
   const b = document.createElement('div'); b.className = 'cbtn' + (i === 0 ? ' on' : '');
@@ -187,7 +188,6 @@ COLORS.forEach((col, i) => {
   cgrid.appendChild(b);
 });
 
-// Événements d'envoi d'interfaces
 document.getElementById('btnCreate').onclick = () => {
   socket.emit('create_room', {name: document.getElementById('nameIn').value || 'AGENT_R', color: myColor, animal: 0});
 };
@@ -200,7 +200,6 @@ document.getElementById('readyBtn').onclick = () => { socket.emit('start_game');
 document.getElementById('btnNext').onclick = () => { socket.emit('next_level'); };
 document.getElementById('btnRestart').onclick = () => { socket.emit('restart_game'); };
 
-// Écouteurs de salons Socket.io
 socket.on('room_created', (data) => { myId = data.playerId; myRoom = data.roomId; isHost = true; enterLobby(); });
 socket.on('joined', (data) => { myId = data.playerId; myRoom = data.roomId; isHost = false; enterLobby(); });
 socket.on('error', (msg) => { showToast(msg, '#ff4d4d'); });
@@ -219,7 +218,6 @@ function enterLobby() {
   document.getElementById('lCodeVal').textContent = myRoom;
 }
 
-// Gestion de verrouillage du curseur (Pointer Lock)
 const container3d = document.getElementById('canvas3d_container');
 const lockNotice = document.getElementById('lock_notice');
 lockNotice.onclick = () => { container3d.requestPointerLock(); };
@@ -227,20 +225,18 @@ document.addEventListener('pointerlockchange', () => {
   lockNotice.style.display = (document.pointerLockElement === container3d) ? 'none' : 'flex'; 
 });
 
-// Inputs claviers réactifs pour le calcul directionnel
 const keys = {};
 window.addEventListener('keydown', e => { keys[e.code] = true; });
 window.addEventListener('keyup', e => { keys[e.code] = false; });
 
 window.addEventListener('mousemove', e => {
   if (document.pointerLockElement === container3d) {
-    viewYaw -= e.movementX * 0.0022;
-    viewPitch -= e.movementY * 0.0022;
-    viewPitch = Math.max(-1.3, Math.min(1.3, viewPitch)); // Bloque les yeux vers le ciel/sol
+    viewYaw -= e.movementX * 0.0025;
+    viewPitch -= e.movementY * 0.0025;
+    viewPitch = Math.max(-1.3, Math.min(1.3, viewPitch));
   }
 });
 
-// Gestion du Chat d'origine du serveur
 document.getElementById('chatform').onsubmit = (e) => {
   e.preventDefault();
   const inp = document.getElementById('chatinput');
@@ -252,48 +248,35 @@ socket.on('chat_msg', (data) => {
   m.innerHTML = `<span style="color:${data.color}"><b>${data.name}</b>:</span> ${data.msg}`;
   box.appendChild(m); box.scrollTop = box.scrollHeight;
 });
-socket.on('chat_history', (msgs) => {
-  const box = document.getElementById('chatbox'); box.innerHTML = '';
-  msgs.forEach(data => {
-    const m = document.createElement('div'); m.className = 'cm';
-    m.innerHTML = `<span style="color:${data.color}"><b>${data.name}</b>:</span> ${data.msg}`;
-    box.appendChild(m);
-  });
-  box.scrollTop = box.scrollHeight;
-});
 
-// INITIALISATION DU MOTEUR GRAPHIQUE THREE.JS
+// ENGINE THREE.JS
 let scene, camera, renderer, wallMat, floorMat, exitMat;
 let wallMeshes = [], itemsMeshes = {}, monstersMeshes = {}, playersMeshes = {};
 let spotLight, ambientLight;
 
 function buildMaterials() {
-  // Texture procédurale pour les murs
   const wCanvas = document.createElement('canvas'); wCanvas.width = 256; wCanvas.height = 256;
   const wCtx = wCanvas.getContext('2d');
   wCtx.fillStyle = '#111422'; wCtx.fillRect(0,0,256,256);
-  wCtx.strokeStyle = '#090a12'; wCtx.lineWidth = 4;
-  for(let i=0; i<1500; i++) {
-    wCtx.fillStyle = Math.random() > 0.5 ? 'rgba(0,255,136,0.02)' : 'rgba(0,0,0,0.4)';
-    wCtx.fillRect(Math.random()*256, Math.random()*256, 2, 3);
+  wCtx.strokeStyle = '#1d223a'; wCtx.lineWidth = 4;
+  for(let i=0; i<800; i++) {
+    wCtx.fillStyle = 'rgba(0,255,136,0.03)';
+    wCtx.fillRect(Math.random()*256, Math.random()*256, 2, 2);
   }
   for(let y=0; y<256; y+=32) {
     wCtx.beginPath(); wCtx.moveTo(0, y); wCtx.lineTo(256, y); wCtx.stroke();
   }
-  const wallTex = new THREE.CanvasTexture(wCanvas);
-  wallMat = new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.4, metalness: 0.2 });
+  wallMat = new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(wCanvas), roughness: 0.5 });
 
-  // Texture procédurale pour le sol
-  const fCanvas = document.createElement('canvas'); fCanvas.width = 128; fCanvas.height = 128;
+  const fCanvas = document.createElement('canvas'); fCanvas.width = 64; fCanvas.height = 64;
   const fCtx = fCanvas.getContext('2d');
-  fCtx.fillStyle = '#05060b'; fCtx.fillRect(0,0,128,128);
-  for(let i=0; i<400; i++){ fCtx.fillStyle = 'rgba(0,0,0,0.6)'; fCtx.fillRect(Math.random()*128, Math.random()*128, 2, 2); }
+  fCtx.fillStyle = '#05060b'; fCtx.fillRect(0,0,64,64);
+  fCtx.strokeStyle = '#0e111f'; fCtx.strokeRect(0,0,64,64);
   const floorTex = new THREE.CanvasTexture(fCanvas);
-  floorTex.wrapS = THREE.RepeatWrapping; floorTex.wrapT = THREE.RepeatWrapping; floorTex.repeat.set(40, 40);
-  floorMat = new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.6 });
+  floorTex.wrapS = THREE.RepeatWrapping; floorTex.wrapT = THREE.RepeatWrapping; floorTex.repeat.set(32, 32);
+  floorMat = new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.7 });
 
-  // Matériau lumineux de la porte de sortie
-  exitMat = new THREE.MeshStandardMaterial({ color: 0x00ff88, emissive: 0x00ff88, emissiveIntensity: 2.0 });
+  exitMat = new THREE.MeshStandardMaterial({ color: 0x00ff88, emissive: 0x00ff88, emissiveIntensity: 1.5 });
 }
 
 function initThreeEngine() {
@@ -301,21 +284,20 @@ function initThreeEngine() {
   buildMaterials();
 
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x010103);
-  scene.fog = new THREE.FogExp2(0x010103, 0.22); // Brume volumétrique d'ambiance
+  scene.background = new THREE.Color(0x020205);
+  scene.fog = new THREE.FogExp2(0x020205, 0.25);
 
-  camera = new THREE.PerspectiveCamera(75, container3d.clientWidth/container3d.clientHeight, 0.05, 45);
+  camera = new THREE.PerspectiveCamera(75, container3d.clientWidth/container3d.clientHeight, 0.1, 50);
   
-  renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+  renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(container3d.clientWidth, container3d.clientHeight);
   renderer.shadowMap.enabled = true;
   container3d.appendChild(renderer.domElement);
 
-  ambientLight = new THREE.AmbientLight(0x0c1020, 0.15);
+  ambientLight = new THREE.AmbientLight(0x0f1424, 0.2);
   scene.add(ambientLight);
 
-  // Lampe torche directionnelle attachée à l'axe de vision de la caméra
-  spotLight = new THREE.SpotLight(0xfff3db, 14, 22, Math.PI/5.5, 0.4, 1.2);
+  spotLight = new THREE.SpotLight(0xfff5df, 10, 20, Math.PI/5, 0.5, 1.0);
   spotLight.castShadow = true;
   camera.add(spotLight);
 
@@ -325,35 +307,34 @@ function initThreeEngine() {
   scene.add(camera);
 
   window.addEventListener('resize', () => {
+    if(!camera || !renderer) return;
     camera.aspect = container3d.clientWidth / container3d.clientHeight; camera.updateProjectionMatrix();
     renderer.setSize(container3d.clientWidth, container3d.clientHeight);
   });
 }
 
-// Reconstruction de la géométrie tridimensionnelle des murs d'après la carte du serveur
 function build3DLabyrinth(mapData) {
   if(!scene) return;
   wallMeshes.forEach(w => scene.remove(w)); wallMeshes = [];
   
-  const wGeo = new THREE.BoxGeometry(1, 2.6, 1);
+  const wGeo = new THREE.BoxGeometry(1, 2.5, 1);
   for(let y=0; y<mapData.length; y++) {
     for(let x=0; x<mapData[y].length; x++) {
       if(mapData[y][x] === 1) {
         const block = new THREE.Mesh(wGeo, wallMat);
-        // Alignement strict : Grille X/Y Serveur -> Axe X/Z Three.js
-        block.position.set(x + 0.5, 1.3, y + 0.5);
+        // Liaison stricte avec la grille : X serveur -> X Three.js, Y serveur -> Z Three.js
+        block.position.set(x + 0.5, 1.25, y + 0.5);
         scene.add(block); wallMeshes.push(block);
       }
     }
   }
 
-  // Sol infini sous le labyrinthe
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), floorMat);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), floorMat);
   ground.rotation.x = -Math.PI/2;
   scene.add(ground);
 }
 
-// Réception des événements globaux du serveur
+// Interception de l'événement unique de carte
 socket.on('map', (map) => {
   gameMap = map;
   initThreeEngine();
@@ -366,7 +347,6 @@ socket.on('game_started', () => {
   document.getElementById('gameScreen').classList.add('active');
   document.getElementById('ov').classList.remove('on');
   
-  // Placement à la position du Spawn
   lx = 1.5; ly = 1.5;
   camera.position.set(lx, 1.2, ly);
   runRenderLoop();
@@ -384,47 +364,37 @@ socket.on('back_to_lobby', () => {
   document.getElementById('lobbyScreen').classList.add('active');
 });
 
-// Événements d'ambiance / Toasts traduits du serveur
 socket.on('sound', (type) => {
-  if(type === 'death') showToast("💀 Un agent s'est fait neutraliser !", "#ff4d4d");
-  if(type === 'score') showToast("📦 Colis sécurisé à la zone d'extraction !", "#00ff88");
-  if(type === 'golden_score') showToast("✨ INCROYABLE ! Colis de grande valeur extrait !", "#ffaa00");
-  if(type === 'cursed') showToast("👿 MALÉDICTION ! Activité paranormale décuplée !", "#9b5de5");
-  if(type === 'pickup') showToast("🎒 Colis récupéré. Fuyez vers la sortie !", "#00bbf9");
-  if(type === 'drop') showToast("⚠️ Colis abandonné sur le terrain.", "#ffaa00");
+  if(type === 'death') showToast("💀 Agent neutralisé !", "#ff4d4d");
+  if(type === 'score') showToast("📦 Colis sécurisé !", "#00ff88");
+  if(type === 'golden_score') showToast("✨ Colis Doré extrait !", "#ffaa00");
+  if(type === 'cursed') showToast("👿 Malédiction active !", "#9b5de5");
+  if(type === 'pickup') showToast("🎒 Colis ramassé !", "#00bbf9");
+  if(type === 'drop') showToast("⚠️ Colis lâché.", "#ffaa00");
 });
 
-socket.on('player_eliminated', (data) => { showToast(`❌ Élimination définitive de ${data.name}.`, '#ff4d4d'); });
-socket.on('cursed_activated', (data) => { showToast(`⚠️ ${data.name} a déclenché une relique maudite !`, '#9b5de5'); });
-socket.on('combo_activated', (data) => { showToast(`🔥 Multiplicateur actif pour ${data.name} !`, data.color); });
-socket.on('rush_hour', (data) => {
-  if(data.active) showToast("🚨 HEURE DE POINTE ! Tout l'inventaire réapparaît !", "#ff4d4d");
-  else showToast("⏰ Fin du pic d'activité.", "#606280");
-});
-
-// TRAITEMENT DU TICK PRINCIPAL DU SERVEUR (STATE @ 30 FPS)
+// ÉCOUTEUR DU TICK D'ÉTAT DU SERVEUR (@30 FPS)
 socket.on('state', (state) => {
+  if(!scene) return; // Sécurité : évite de planter si Three.js n'a pas fini d'initialiser la scène
   serverPlayersData = state.players;
   
-  // Données textuelles du HUD
   document.getElementById('hLvl').textContent = state.level;
   document.getElementById('hItems').textContent = `${state.itemsDelivered} / ${state.totalItems}`;
   document.getElementById('hScore').textContent = state.score;
-  document.getElementById('hSeason').textContent = state.season.toUpperCase() + (state.cursedActive ? " 💀" : "");
-  if(state.rushActive) document.getElementById('hSeason').textContent = "🚨 RUSH HOUR !";
+  document.getElementById('hSeason').textContent = state.season.toUpperCase();
 
   const me = state.players[myId];
   if(me) {
-    document.getElementById('hLives').textContent = me.eliminated ? "ÉLIMINÉ" : (me.dead ? `⚠️ RÉANIMATION (${Math.ceil(me.respawnTimer/30)}s)` : '❤️'.repeat(Math.max(0, me.lives)));
+    document.getElementById('hLives').textContent = me.eliminated ? "ÉLIMINÉ" : (me.dead ? `RÉANIMATION (${Math.ceil(me.respawnTimer/30)}s)` : '❤️'.repeat(Math.max(0, me.lives)));
     document.getElementById('stFill').style.width = `${(me.stamina / 120) * 100}%`;
     
-    // Forcer le recalage de position si le serveur nous réanime ou nous décale brutalement
-    if(me.dead || Math.hypot(lx - me.x, ly - me.y) > 2.2) {
+    // Si mort ou désynchronisé de plus de 2 cases, recalage instantané sur la position validée du serveur
+    if(me.dead || Math.hypot(lx - me.x, ly - me.y) > 2.0) {
       lx = me.x; ly = me.y;
     }
   }
 
-  // Zone d'extraction (Porte de sortie)
+  // Porte de Sortie / Extraction
   if(state.exit) {
     if(!itemsMeshes['exit_gate']) {
       const eMesh = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.4, 0.1), exitMat);
@@ -433,45 +403,38 @@ socket.on('state', (state) => {
     itemsMeshes['exit_gate'].position.set(state.exit.x, 1.2, state.exit.y);
   }
 
-  // Synchronisation dynamique des Colis (Items)
+  // Colis (Items)
   state.items.forEach(item => {
     if(item.collected) {
       if(itemsMeshes[item.id]) { scene.remove(itemsMeshes[item.id]); delete itemsMeshes[item.id]; }
     } else {
       if(!itemsMeshes[item.id]) {
         let col = item.type === 'golden' ? 0xffaa00 : (item.type === 'cursed' ? 0x9b5de5 : 0x00ff88);
-        const itemMesh = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.32, 0.32), new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.6 }));
+        const itemMesh = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.35, 0.35), new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.5 }));
         scene.add(itemMesh); itemsMeshes[item.id] = itemMesh;
       }
-      // Si quelqu'un le porte, on l'aligne en hauteur (style sac à dos)
-      itemsMeshes[item.id].position.set(item.x, item.carriedBy !== null ? 0.9 : 0.3, item.y);
+      itemsMeshes[item.id].position.set(item.x, item.carriedBy !== null ? 1.0 : 0.2, item.y);
       itemsMeshes[item.id].rotation.y += 0.02;
     }
   });
-  // Nettoyage des colis obsolètes ou ramassés
-  Object.keys(itemsMeshes).forEach(id => {
-    if(id !== 'exit_gate' && !state.items.some(i => i.id == id)) { scene.remove(itemsMeshes[id]); delete itemsMeshes[id]; }
-  });
 
-  // Synchronisation dynamique des Monstres (Fantômes)
+  // Fantômes
   state.monsters.forEach(m => {
     if(!monstersMeshes[m.id]) {
       const group = new THREE.Group();
-      let mCol = m.type === 'hunter' ? 0xff1133 : (m.type === 'twin' ? 0x9b5de5 : 0xffaa00);
-      const mMesh = new THREE.Mesh(new THREE.SphereGeometry(0.24, 16, 16), new THREE.MeshStandardMaterial({ color: mCol, emissive: mCol, emissiveIntensity: 2.0 }));
-      mMesh.position.y = 0.6; group.add(mMesh);
-      
-      const pLight = new THREE.PointLight(mCol, 2.2, 5); pLight.position.y = 0.6; group.add(pLight);
+      let mCol = m.type === 'hunter' ? 0xff2222 : (m.type === 'twin' ? 0xaa44ff : 0xffaa00);
+      const mMesh = new THREE.Mesh(new THREE.SphereGeometry(0.25, 16, 16), new THREE.MeshStandardMaterial({ color: mCol, emissive: mCol, emissiveIntensity: 1.5 }));
+      mMesh.position.y = 0.7; group.add(mMesh);
+      const pLight = new THREE.PointLight(mCol, 1.5, 4); pLight.position.y = 0.7; group.add(pLight);
       scene.add(group); monstersMeshes[m.id] = group;
     }
-    // L'axe vertical Y reçoit un effet de lévitation sinusoïdal
-    monstersMeshes[m.id].position.set(m.x, 0.5 + Math.sin(Date.now()*0.005 + m.id)*0.06, m.y);
+    monstersMeshes[m.id].position.set(m.x, 0.6 + Math.sin(Date.now()*0.004 + m.id)*0.05, m.y);
   });
   Object.keys(monstersMeshes).forEach(mid => {
     if(!state.monsters.some(m => m.id == mid)) { scene.remove(monstersMeshes[mid]); delete monstersMeshes[mid]; }
   });
 
-  // Coéquipiers de l'escouade
+  // Coéquipiers
   Object.keys(state.players).forEach(pid => {
     if(pid === myId) return;
     const p = state.players[pid];
@@ -479,36 +442,34 @@ socket.on('state', (state) => {
       if(playersMeshes[pid]) { scene.remove(playersMeshes[pid]); delete playersMeshes[pid]; }
     } else {
       if(!playersMeshes[pid]) {
-        const pMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.2, 1.3, 12), new THREE.MeshStandardMaterial({ color: p.color, roughness: 0.3 }));
+        const pMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 1.4, 8), new THREE.MeshStandardMaterial({ color: p.color }));
         scene.add(pMesh); playersMeshes[pid] = pMesh;
       }
-      playersMeshes[pid].position.set(p.x, 0.65, p.y);
+      playersMeshes[pid].position.set(p.x, 0.7, p.y);
     }
   });
   Object.keys(playersMeshes).forEach(pid => {
     if(!state.players[pid]) { scene.remove(playersMeshes[pid]); delete playersMeshes[pid]; }
   });
 
-  // Affichage du Classement en direct
+  // Classement live
   if(state.leaderboard) {
     document.getElementById('scorebox').innerHTML = state.leaderboard.map((p, idx) => `
       <div class="sr" style="color:${p.color}">
-        <span>${idx+1}. ${p.name} ${p.comboActive ? '🔥' : ''}</span>
+        <span>${idx+1}. ${p.name}</span>
         <span>${p.score} pts</span>
       </div>
     `).join('');
   }
 
-  // Écran de récapitulatif global
+  // Fin de partie
   if(state.gameOver || state.gameWon) {
     document.exitPointerLock();
     document.getElementById('ov').classList.add('on');
-    document.getElementById('ovtitle').textContent = state.gameWon ? "STAGE SÉCURISÉ ✨" : "ESCOUADE ÉLIMINÉE 💀";
+    document.getElementById('ovtitle').textContent = state.gameWon ? "STAGE RÉUSSI !" : "MISSION ÉCHOUÉE";
     document.getElementById('ovtitle').style.color = state.gameWon ? "#00ff88" : "#ff4d4d";
-    
     document.getElementById('btnNext').style.display = (isHost && state.gameWon) ? 'block' : 'none';
     document.getElementById('btnRestart').style.display = isHost ? 'block' : 'none';
-
     if(state.leaderboard) {
       document.getElementById('statsTbody').innerHTML = state.leaderboard.map(p => `
         <tr><td><b style="color:${p.color}">${p.name}</b></td><td>${p.score}</td><td>${p.itemsDelivered}</td><td>${p.deaths}</td><td>${p.maxCombo}</td></tr>
@@ -517,7 +478,7 @@ socket.on('state', (state) => {
   }
 });
 
-// Équivalent local sécurisé de collision du serveur (canMove) pour la fluidité
+// Collision boite locale (Miroir exact de la fonction canMove du server.js)
 const RADIUS_C = 0.28;
 function checkMoveLocal(x, y) {
   if(!gameMap) return true;
@@ -529,47 +490,44 @@ function checkMoveLocal(x, y) {
 }
 
 let spaceDebounce = false;
-let bobbingValue = 0;
+let bobbing = 0;
 
-// BOUCLE PRINCIPALE DE RENDU ET CALCULS FPS
+// BOUCLE PRINCIPALE DE RENDU FPS (60+ FPS LOCALEMENT)
 function runRenderLoop() {
-  requestAnimationFrame(runRenderLoop);
   if(!gameStarted) return;
+  requestAnimationFrame(runRenderLoop);
 
   const me = serverPlayersData[myId];
   
   if(me && !me.dead && !me.eliminated) {
     let dx = 0, dy = 0;
-    if(keys['KeyW'] || keys['KeyZ'] || keys['ArrowUp']) dy = 1;
-    if(keys['KeyS'] || keys['ArrowDown']) dy = -1;
-    if(keys['KeyA'] || keys['KeyQ'] || keys['ArrowLeft']) dx = -1;
-    if(keys['KeyD'] || keys['ArrowRight']) dx = 1;
+    if(keys['KeyW'] || keys['KeyZ'] || keys['ArrowUp']) dy = 1;  // Avancer
+    if(keys['KeyS'] || keys['ArrowDown']) dy = -1;             // Reculer
+    if(keys['KeyA'] || keys['KeyQ'] || keys['ArrowLeft']) dx = -1; // Gauche
+    if(keys['KeyD'] || keys['ArrowRight']) dx = 1;             // Droite
 
-    // Calcul de la projection vectorielle de marche liée à l'orientation Yaw de la souris
+    // Transformation trigonométrique de l'axe caméra vers la grille du serveur
     let moveX = -dy * Math.sin(viewYaw) + dx * Math.cos(viewYaw);
     let moveY = -dy * Math.cos(viewYaw) - dx * Math.sin(viewYaw);
     
     if(dx !== 0 || dy !== 0) {
       let len = Math.hypot(moveX, moveY); moveX /= len; moveY /= len;
       
-      // Extraction exacte de la vitesse autorisée par ton server.js (boost ou classique)
       const wantsBoost = !!keys['ShiftLeft'];
-      const currentSpeed = (wantsBoost && me.stamina > 0) ? 0.18 : 0.11;
+      const speed = (wantsBoost && me.stamina > 0) ? 0.18 : 0.11;
       
-      let targetX = lx + moveX * currentSpeed;
-      let targetY = ly + moveY * currentSpeed;
+      let targetX = lx + moveX * speed;
+      let targetY = ly + moveY * speed;
       
       if(checkMoveLocal(targetX, ly)) lx = targetX;
       if(checkMoveLocal(lx, targetY)) ly = targetY;
 
-      // Effet d'oscillation immersive de la tête (Head bobbing)
-      bobbingValue += wantsBoost ? 0.15 : 0.08;
-      camera.position.y = 1.2 + Math.sin(bobbingValue) * 0.03;
+      bobbing += wantsBoost ? 0.14 : 0.08;
+      camera.position.y = 1.2 + Math.sin(bobbing) * 0.03;
     } else {
       camera.position.y += (1.2 - camera.position.y) * 0.1;
     }
 
-    // Gestion propre de l'appui impulsionnel unique sur Espace
     let actionTriggered = false;
     if(keys['Space']) {
       if(!spaceDebounce) { actionTriggered = true; spaceDebounce = true; }
@@ -577,7 +535,7 @@ function runRenderLoop() {
       spaceDebounce = false;
     }
 
-    // ENVOI SÉCURISÉ DES COORDONNÉES ABSOLUES LX / LY COMPATIBLES TICK SERVEUR
+    // Émission instantanée des mouvements au serveur
     socket.emit('input', {
       dx: moveX,
       dy: moveY,
@@ -587,19 +545,20 @@ function runRenderLoop() {
       ly: ly
     });
 
-    // Amortissement géométrique de la caméra pour lisser les paquets réseau (Zéro micro-saccade)
-    camera.position.x = camera.position.x * 0.15 + lx * 0.85;
-    camera.position.z = camera.position.z * 0.15 + ly * 0.85;
+    // Lissage par interpolation linéaire pour détruire l'effet de saccade réseau
+    camera.position.x = camera.position.x * 0.2 + lx * 0.8;
+    camera.position.z = camera.position.z * 0.2 + ly * 0.8;
   }
 
-  // Application matricielle de la rotation de la tête
   camera.rotation.set(viewPitch, viewYaw, 0, 'YXZ');
-  renderer.render(scene, camera);
+  if(renderer && scene && camera) {
+    renderer.render(scene, camera);
+  }
 }
 
 function showToast(msg, color='#00ff88') {
   const t = document.getElementById('toast'); t.textContent = msg; t.style.borderColor = color; t.style.color = color;
-  t.classList.add('on'); clearTimeout(t._tm); t._tm = setTimeout(() => t.classList.remove('on'), 3000);
+  t.classList.add('on'); clearTimeout(t._tm); t._tm = setTimeout(() => t.classList.remove('on'), 2500);
 }
 </script>
 </body>
