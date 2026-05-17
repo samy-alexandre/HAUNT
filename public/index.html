@@ -3,23 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HAUNT 3D — ÉDITION GRAPHIQUE ULTRA (2026)</title>
+<title>HAUNT 3D — ÉDITION BANANA ULTRA-REALISTE</title>
 <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 :root {
-  --bg: #020204; --bg2: #05060c; --border: #0e101f;
-  --accent: #00ff88; --danger: #ff2244; --warn: #ffaa00;
-  --text: #d0d0e0; --dim: #3a3b50; --dim2: #707290;
+  --bg: #010103; --bg2: #05050a; --border: #0b0c16;
+  --accent: #00ff88; --danger: #ff1133; --warn: #ffaa00;
+  --text: #c0c0d0; --dim: #2e2f3f; --dim2: #606280;
 }
 html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;user-select:none;}
 
-/* MENUS DE CONFIGURATION IMMERSIFS */
-.screen{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;padding:2rem;background:radial-gradient(circle at center, #080a18 0%, #010103 100%);z-index:10;}
+/* MENUS D'ENTRÉE */
+.screen{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;padding:2rem;background:radial-gradient(circle at center, #060815 0%, #000000 100%);z-index:10;}
 .screen.active{display:flex;}
-h1{font-family:'Creepster',cursive;font-size:clamp(3.5rem,8vw,6rem);color:var(--accent);text-shadow:0 0 35px rgba(0,255,136,0.3);letter-spacing:0.1em;}
+h1{font-family:'Creepster',cursive;font-size:clamp(3.5rem,8vw,6rem);color:var(--accent);text-shadow:0 0 40px rgba(0,255,136,0.3);letter-spacing:0.1em;}
 .sub{color:var(--dim);font-size:0.75rem;letter-spacing:0.4em;text-transform:uppercase;margin-top:-0.5rem;}
-.panel{background:rgba(4,5,11,0.93);border:1px solid var(--border);border-radius:12px;padding:1.8rem;width:100%;max-width:520px;backdrop-filter:blur(10px);box-shadow:0 20px 50px rgba(0,0,0,0.8);}
+.panel{background:rgba(3,4,8,0.95);border:1px solid var(--border);border-radius:12px;padding:1.8rem;width:100%;max-width:520px;backdrop-filter:blur(10px);box-shadow:0 20px 60px rgba(0,0,0,0.95);}
 .ptitle{font-size:0.65rem;letter-spacing:0.25em;color:var(--accent);text-transform:uppercase;margin-bottom:1rem;font-weight:bold;}
 
 input[type=text]{background:#000;border:1px solid var(--border);color:var(--accent);font-family:inherit;font-size:1.1rem;padding:0.7rem 1.2rem;width:100%;border-radius:6px;outline:none;letter-spacing:1px;}
@@ -32,60 +32,58 @@ input[type=text]:focus{border-color:var(--accent);box-shadow:0 0 15px rgba(0,255
 .divider{display:flex;align-items:center;gap:1rem;color:var(--dim);font-size:0.65rem;letter-spacing:0.2em;width:100%;max-width:520px;}
 .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
 
-/* LOBBY ET CUSTOMISATION */
+/* LOBBY */
 #lStage {display:flex;justify-content:center;gap:1.5rem;margin:1rem 0;flex-wrap:wrap;}
 .cgrid{display:flex;gap:0.5rem;justify-content:center;margin-top:0.5rem;}
-.cbtn{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;background:rgba(0,0,0,0.5);transition:all 0.15s;}
-.cbtn:hover{border-color:rgba(255,255,255,0.15);transform:translateY(-2px);}
-.cbtn.on{border-color:var(--accent);background:rgba(0,255,136,0.04);box-shadow:0 0 15px rgba(0,255,136,0.1);}
+.cbtn{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;background:rgba(0,0,0,0.5);}
+.cbtn.on{border-color:var(--accent);background:rgba(0,255,136,0.04);}
 .cbtn-dot{width:16px;height:16px;border-radius:50%;}
 .cbtn-emoji{font-size:1.4rem;}
 .cbtn-lbl{font-size:0.55rem;color:var(--dim2);}
 
-/* CONTENEUR DU MOTEUR 3D REALISTE */
+/* ENGINE 3D CODES */
 #gameScreen{display:none;position:fixed;inset:0;flex-direction:column;}
 #gameScreen.active{display:flex;}
 #gameBody{flex:1;display:flex;position:relative;min-height:0;}
-#canvas3d_container{flex:1;position:relative;background:#010102;}
+#canvas3d_container{flex:1;position:relative;background:#000001;}
 
-/* VIGNETTE CINÉMATIQUE / BROUILLARD OPTIQUE SUR L'ÉCRAN */
-#vignette{position:absolute;inset:0;pointer-events:none;z-index:2;background:radial-gradient(circle, transparent 20%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,0.95) 100%);}
-#reticle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:4px;height:4px;background:rgba(255,255,255,0.35);border-radius:50%;pointer-events:none;z-index:4;}
+/* EFFETS VISUELS CRASPEC BANANA EXTRÊMES */
+#vignette{position:absolute;inset:0;pointer-events:none;z-index:2;background:radial-gradient(circle, transparent 15%, rgba(0,0,0,0.75) 55%, rgba(0,0,0,1) 100%);}
+#reticle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:4px;height:4px;background:rgba(255,255,255,0.3);border-radius:50%;pointer-events:none;z-index:4;}
 
-#lock_notice{position:absolute;inset:0;background:rgba(1,1,2,0.93);z-index:15;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;backdrop-filter:blur(6px);}
-#lock_notice h2{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;color:var(--accent);letter-spacing:4px;text-shadow:0 0 20px rgba(0,255,136,0.2);}
+#lock_notice{position:absolute;inset:0;background:rgba(0,0,0,0.95);z-index:15;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;backdrop-filter:blur(8px);}
+#lock_notice h2{font-family:'Bebas Neue',sans-serif;font-size:2.5rem;color:var(--accent);letter-spacing:4px;}
 
-/* HUD MINIMALISTE ET TRANSPARENT COMPATIBLE AAA */
-#hud{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-around;align-items:center;padding:1rem;background:linear-gradient(to bottom, rgba(2,2,4,0.95) 0%, transparent 100%);z-index:5;pointer-events:none;}
-.hi{display:flex;flex-direction:column;align-items:center;background:rgba(2,3,7,0.7);padding:0.5rem 1.4rem;border-radius:6px;border:1px solid rgba(255,255,255,0.02);backdrop-filter:blur(4px);}
+/* ATH INTERFACE TRANSPARENTE */
+#hud{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-around;align-items:center;padding:1rem;background:linear-gradient(to bottom, rgba(0,0,0,0.95) 0%, transparent 100%);z-index:5;pointer-events:none;}
+.hi{display:flex;flex-direction:column;align-items:center;background:rgba(2,2,5,0.7);padding:0.5rem 1.4rem;border-radius:6px;border:1px solid rgba(255,255,255,0.01);backdrop-filter:blur(4px);}
 .hl{color:var(--dim2);font-size:0.55rem;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:3px;}
-.hv{color:var(--accent);font-size:1.3rem;font-weight:bold;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;}
+.hv{color:var(--accent);font-size:1.3rem;font-weight:bold;font-family:'Bebas Neue',sans-serif;}
 #stBar{width:100px;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;margin-top:5px;}
-#stFill{height:100%;width:100%;background:var(--accent);box-shadow:0 0 10px var(--accent);}
+#stFill{height:100%;width:100%;background:var(--accent);}
 
-/* PANNEAU LATÉRAL AUDIO/CHAT REPO */
-#sidebar{width:250px;background:rgba(3,3,6,0.96);border-left:1px solid var(--border);display:flex;flex-direction:column;z-index:5;backdrop-filter:blur(5px);}
+/* PANNEAU DE CONTRÔLE SIDEBAR */
+#sidebar{width:250px;background:rgba(2,2,4,0.98);border-left:1px solid var(--border);display:flex;flex-direction:column;z-index:5;}
 .sbt{font-size:0.65rem;letter-spacing:0.2em;color:var(--accent);padding:0.7rem 0.9rem;border-bottom:1px solid var(--border);text-transform:uppercase;font-weight:bold;}
 #chatbox{flex:1;overflow-y:auto;padding:0.6rem;display:flex;flex-direction:column;gap:0.4rem;}
-.cm{font-size:0.75rem;line-height:1.4;word-break:break-word;}
+.cm{font-size:0.75rem;line-height:1.4;}
 .cs{color:var(--dim);font-style:italic;}
 #chatform{display:flex;border-top:1px solid var(--border);padding:0.5rem;}
 #chatinput{flex:1;background:transparent;border:none;color:#fff;font-family:inherit;font-size:0.75rem;outline:none;}
 #scorebox{border-top:1px solid var(--border);max-height:180px;overflow-y:auto;}
 .sr{display:flex;justify-content:space-between;padding:0.4rem 0.7rem;font-size:0.7rem;border-bottom:1px solid rgba(255,255,255,0.01);}
 
-#seasonBadge{position:fixed;bottom:20px;right:270px;z-index:100;font-size:0.65rem;letter-spacing:0.2em;color:#fff;background:rgba(0,0,0,0.85);padding:0.5rem 1rem;border-radius:5px;border:1px solid var(--border);opacity:0;transition:opacity 0.4s;}
+#seasonBadge{position:fixed;bottom:20px;right:270px;z-index:100;font-size:0.65rem;letter-spacing:0.2em;color:#fff;background:rgba(0,0,0,0.9);padding:0.5rem 1rem;border-radius:5px;border:1px solid var(--border);opacity:0;transition:opacity 0.4s;}
 #seasonBadge.show{opacity:1;}
 #toast{position:fixed;top:85px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--accent);color:var(--accent);padding:0.6rem 1.4rem;border-radius:6px;font-size:0.8rem;z-index:200;opacity:0;transition:opacity 0.3s;}
 #toast.on{opacity:1;}
 
-/* OVERLAY FIN DE PARTIE */
-#ov{position:fixed;inset:0;background:rgba(1,1,2,0.97);display:none;align-items:center;justify-content:center;z-index:100;}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,0.98);display:none;align-items:center;justify-content:center;z-index:100;}
 #ov.on{display:flex;}
-#ovbox{background:var(--bg2);border:1px solid rgba(0,255,136,0.3);padding:2.5rem;text-align:center;border-radius:12px;max-width:550px;width:90%;box-shadow:0 0 50px rgba(0,0,0,0.9);}
+#ovbox{background:var(--bg2);border:1px solid rgba(0,255,136,0.2);padding:2.5rem;text-align:center;border-radius:12px;max-width:550px;width:90%;}
 #ovtitle{font-family:'Creepster',cursive;font-size:3.2rem;margin-bottom:0.5rem;}
 #statsTable{width:100%;border-collapse:collapse;margin:1.5rem 0;font-size:0.75rem;}
-#statsTable th{color:var(--dim2);padding:0.5rem;border-bottom:1px solid var(--border);text-transform:uppercase;font-size:0.6rem;letter-spacing:1px;}
+#statsTable th{color:var(--dim2);padding:0.5rem;border-bottom:1px solid var(--border);text-transform:uppercase;}
 #statsTable td{padding:0.6rem;border-bottom:1px solid rgba(255,255,255,0.01);}
 </style>
 </head>
@@ -93,15 +91,15 @@ input[type=text]:focus{border-color:var(--accent);box-shadow:0 0 15px rgba(0,255
 
 <div id="menuScreen" class="screen active">
   <h1>HAUNT 3D</h1>
-  <div class="sub">RENDU CINÉMATIQUE HAUTE FIDÉLITÉ — 2026</div>
+  <div class="sub">MOTEUR GRAPHIQUE CRASPEC BANANA EDITION</div>
   
   <div class="panel">
-    <div class="ptitle">▸ Code d'authentification agent</div>
+    <div class="ptitle">▸ Code de l'escouade</div>
     <input type="text" id="nameIn" placeholder="SURVIVANT" maxlength="12" value="SURVIVOR"/>
-    <button class="btn primary" id="btnCreate">Créer Dimension 3D</button>
+    <button class="btn primary" id="btnCreate">Créer l'Enfer 3D</button>
   </div>
 
-  <div class="divider">OU REJOINDRE L'ESCOUADE</div>
+  <div class="divider">REJOINDRE LA MISSION</div>
 
   <div class="panel" style="display:flex; gap:0.5rem;">
     <input type="text" id="codeIn" placeholder="CODE SALLE" maxlength="6" style="text-align:center; letter-spacing:3px;"/>
@@ -110,30 +108,26 @@ input[type=text]:focus{border-color:var(--accent);box-shadow:0 0 15px rgba(0,255
 </div>
 
 <div id="lobbyScreen" class="screen">
-  <h1>CELLULE DE CRISE</h1>
+  <h1>PROXIMITÉ REPO</h1>
   <div class="panel" style="text-align:center;">
-    <div class="ptitle">Fréquence de ralliement</div>
-    <div id="lCodeVal" style="font-family:'Bebas Neue',sans-serif; font-size:3.5rem; color:var(--accent); text-shadow: 0 0 20px rgba(0,255,136,0.2);">------</div>
-    
-    <div class="ptitle" style="margin-top:1.5rem;">▸ Émetteur holographique personnel</div>
+    <div class="ptitle">Fréquence Radio</div>
+    <div id="lCodeVal" style="font-family:'Bebas Neue',sans-serif; font-size:3.5rem; color:var(--accent);">------</div>
     <div class="cgrid" id="cgrid"></div>
   </div>
-
   <div class="panel" style="max-height:160px; overflow-y:auto;">
-    <div class="ptitle">Agents Prêts au Déploiement</div>
-    <div id="lStage">Calcul de la liaison synchronisée...</div>
+    <div class="ptitle">Membres Connectés</div>
+    <div id="lStage">Connexion cryptée...</div>
   </div>
-
-  <button id="readyBtn" style="display:none;" class="btn primary">ENGAGER LE RENDU AAA ▶</button>
+  <button id="readyBtn" style="display:none;" class="btn primary">LANCER LE FLUX TRIPLE-A ▶</button>
 </div>
 
 <div id="gameScreen">
   <div id="hud">
     <div class="hi"><span class="hl">Étage</span><span class="hv" id="hLvl">1</span></div>
-    <div class="hi"><span class="hl">Cargaison Livrée</span><span class="hv" id="hItems">0 / 0</span></div>
-    <div class="hi"><span class="hl">Score Total</span><span class="hv" id="hScore">0</span></div>
-    <div class="hi"><span class="hl">Vitalité</span><span class="hv" id="hLives">❤️❤️❤️</span></div>
-    <div class="hi"><span class="hl">Modificateur</span><span class="hv" id="hStatus">EN VIE</span></div>
+    <div class="hi"><span class="hl">Cargaison</span><span class="hv" id="hItems">0 / 0</span></div>
+    <div class="hi"><span class="hl">Points</span><span class="hv" id="hScore">0</span></div>
+    <div class="hi"><span class="hl">Vie</span><span class="hv" id="hLives">❤️❤️❤️</span></div>
+    <div class="hi"><span class="hl">État</span><span class="hv" id="hStatus">EN VIE</span></div>
     <div class="hi"><span class="hl">Stamina</span><div id="stBar"><div id="stFill"></div></div></div>
   </div>
 
@@ -142,19 +136,18 @@ input[type=text]:focus{border-color:var(--accent);box-shadow:0 0 15px rgba(0,255
       <div id="vignette"></div>
       <div id="reticle"></div>
       <div id="lock_notice">
-        <h2>CLIQUEZ POUR ENGAGER LA VUE TRIPLE-A</h2>
-        <p style="color:var(--dim2); font-size:0.8rem; margin-top:8px;">[ZQSD] Glisser & Avancer · [SOURIS] Tourner les Yeux · [MAJ] Sprint · [ESPACE] Collecter</p>
+        <h2>CLIQUEZ ICI POUR VERROUILLER LE CURSEUR (FPS)</h2>
+        <p style="color:var(--dim2); font-size:0.8rem; margin-top:8px;">[ZQSD] Bouger · [SOURIS] Regarder · [MAJ] Courir · [ESPACE] Prendre</p>
       </div>
     </div>
 
     <div id="sidebar">
-      <div class="sbt">💬 Liaison Radio</div>
+      <div class="sbt">💬 Radio</div>
       <div id="chatbox"></div>
       <form id="chatform">
-        <input type="text" id="chatinput" placeholder="Envoyer une coordonnée..." maxlength="70" autocomplete="off"/>
+        <input type="text" id="chatinput" placeholder="Parler..." maxlength="70" autocomplete="off"/>
       </form>
-
-      <div class="sbt">🏆 Tableau de Chasse</div>
+      <div class="sbt">🏆 Rangs</div>
       <div id="scorebox"></div>
     </div>
   </div>
@@ -165,16 +158,15 @@ input[type=text]:focus{border-color:var(--accent);box-shadow:0 0 15px rgba(0,255
 
 <div id="ov">
   <div id="ovbox">
-    <div id="ovtitle" style="color:var(--danger);">EXTRACTION MANQUÉE</div>
-    <div id="ovsub" style="color:var(--dim2);">Analyse de la boîte noire de la combinaison :</div>
+    <div id="ovtitle" style="color:var(--danger);">SÉQUENCE TERMINÉE</div>
     <table id="statsTable">
       <thead>
-        <tr><th>Agent</th><th>Score</th><th>Colis</th><th>Morts</th><th>Combo Max</th></tr>
+        <tr><th>Agent</th><th>Score</th><th>Colis</th><th>Morts</th><th>Combo</th></tr>
       </thead>
       <tbody id="statsTbody"></tbody>
     </table>
     <button class="btn primary" id="btnNext" style="display:none;">Étage Suivant ▶</button>
-    <button class="btn" id="btnRestart">Retour à la Base</button>
+    <button class="btn" id="btnRestart">Retour</button>
   </div>
 </div>
 
@@ -184,10 +176,10 @@ input[type=text]:focus{border-color:var(--accent);box-shadow:0 0 15px rgba(0,255
 const socket = io({transports:['websocket','polling']});
 let myId=null, myRoom=null, gameMap=null, gameState=null, isHost=false, gameStarted=false;
 
+// CONCORDANCE ABSOLUE AVEC LES CONFINS DU SERVEUR POUR STOPPER LE CRASH APRES 3 SECONDES
 const SPEED_N=0.075, SPEED_B=0.13, P_RADIUS=0.28;
 const STAMINA_MAX=120, STAMINA_DRAIN=2, STAMINA_REGEN=0.67;
 
-// COORDONNÉES INTERNES LOCALES POUR ÉLIMINER DÉFINITIVEMENT LES ROLLBACKS
 let lx = 1.5, ly = 1.5; 
 let lstam = STAMINA_MAX, boostReady = true;
 
@@ -196,15 +188,13 @@ const ANIMALS = [
   {hex:'#dca042', emoji:'🐵', name:'Bravo'},
   {hex:'#ff6b35', emoji:'🦊', name:'Charlie'},
   {hex:'#9b5de5', emoji:'🐻', name:'Delta'},
-  {hex:'#00bbf9', emoji:'🐸', name:'Echo'},
-  {hex:'#00f5d4', emoji:'🐰', name:'Foxtrot'},
 ];
 let myAnimalIdx = 0, myColor = ANIMALS[0].hex;
 
 const cgrid = document.getElementById('cgrid');
 ANIMALS.forEach((a, i) => {
   const b = document.createElement('div'); b.className = 'cbtn' + (i === 0 ? ' on' : ''); b.id = 'cbtn' + i;
-  b.innerHTML = `<div class="cbtn-dot" style="background:${a.hex}"></div><div class="cbtn-emoji">${a.emoji}</div><div class="cbtn-lbl">${a.name}</div>`;
+  b.innerHTML = `<div class="cbtn-dot" style="background:${a.hex}"></div><div class="cbtn-emoji">${a.emoji}</div>`;
   b.addEventListener('click', () => {
     myAnimalIdx = i; myColor = a.hex;
     document.querySelectorAll('.cbtn').forEach(x => x.classList.remove('on'));
@@ -214,85 +204,45 @@ ANIMALS.forEach((a, i) => {
   cgrid.appendChild(b);
 });
 
-// SYNTHÉTISEUR MUSICAL PROCEDURAL D'AMBIANCE HORREUR
-let actx = null, masterGain = null, sfxGain = null;
-const SEASONS = {
-  winter: { label:'❄️ CONTEXTE : HIVER NUCLÉAIRE', melody:[440, 466, 392], tempo:1600 },
-  spring: { label:'🌸 CONTEXTE : SURFACE HUMIDE', melody:[523, 587, 494], tempo:1300 },
-  summer: { label:'☀️ CONTEXTE : ÉTÉ CANICULAIRE', melody:[330, 349, 293], tempo:1000 },
-  autumn: { label:'🍂 CONTEXTE : BROUILLARD D\'AUTOMNE', melody:[392, 349, 311], tempo:1500 }
-};
-let currentSeason = 'autumn', melodyStep = 0;
-
+// AUDIO PROCEDURAL
+let actx = null, masterGain = null;
 function initAudio() {
   if (actx) return;
   try {
     actx = new (window.AudioContext || window.webkitAudioContext)();
-    masterGain = actx.createGain(); masterGain.gain.value = 0.07; masterGain.connect(actx.destination);
-    sfxGain = actx.createGain(); sfxGain.gain.value = 0.2; sfxGain.connect(actx.destination);
+    masterGain = actx.createGain(); masterGain.gain.value = 0.05; masterGain.connect(actx.destination);
     setInterval(() => {
       if(!actx || !gameStarted) return;
-      const s = SEASONS[currentSeason] || SEASONS.autumn;
       const o = actx.createOscillator(); const g = actx.createGain();
-      o.type = 'triangle'; o.frequency.value = s.melody[melodyStep % s.melody.length] / 2; melodyStep++;
-      g.gain.setValueAtTime(0, actx.currentTime); g.gain.linearRampToValueAtTime(0.08, actx.currentTime+0.1);
-      g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime+1.2);
-      o.connect(g); g.connect(masterGain); o.start(); o.stop(actx.currentTime+1.2);
-    }, 1400);
+      o.type = 'sawtooth'; o.frequency.value = 60;
+      g.gain.setValueAtTime(0, actx.currentTime); g.gain.linearRampToValueAtTime(0.04, actx.currentTime+0.1);
+      g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime+1.0);
+      o.connect(g); g.connect(masterGain); o.start(); o.stop(actx.currentTime+1.0);
+    }, 2000);
   } catch(e){}
 }
 
-function playSfx(type) {
-  if (!actx) return;
-  const now = actx.currentTime;
-  const o = actx.createOscillator(); const g = actx.createGain();
-  if (type === 'pickup') {
-    o.type = 'sine'; o.frequency.setValueAtTime(400, now); o.frequency.exponentialRampToValueAtTime(800, now + 0.1);
-    g.gain.setValueAtTime(0.15, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-  } else if (type === 'hit') {
-    o.type = 'sawtooth'; o.frequency.setValueAtTime(90, now); o.frequency.linearRampToValueAtTime(25, now + 0.4);
-    g.gain.setValueAtTime(0.35, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-  }
-  o.connect(g); g.connect(sfxGain); o.start(); o.stop(now + 0.4);
-}
-
-// MANAGEMENT DU RECOUVREMENT RÉSEAU
-document.getElementById('btnCreate').onclick = () => {
-  initAudio(); socket.emit('create_room', {name: document.getElementById('nameIn').value || 'SURVIVOR'});
-};
-document.getElementById('btnJoin').onclick = () => {
-  initAudio(); socket.emit('join_room', {roomCode: document.getElementById('codeIn').value.toUpperCase(), name: document.getElementById('nameIn').value || 'SURVIVOR'});
-};
+// RESEAU
+document.getElementById('btnCreate').onclick = () => { initAudio(); socket.emit('create_room', {name: document.getElementById('nameIn').value || 'SURVIVOR'}); };
+document.getElementById('btnJoin').onclick = () => { initAudio(); socket.emit('join_room', {roomCode: document.getElementById('codeIn').value.toUpperCase(), name: document.getElementById('nameIn').value || 'SURVIVOR'}); };
 document.getElementById('readyBtn').onclick = () => { socket.emit('start_game'); };
 document.getElementById('btnRestart').onclick = () => { location.reload(); };
 
 socket.on('room_created', (data) => { myId=data.playerId; myRoom=data.roomId; isHost=true; setupLobby(); });
 socket.on('joined', (data) => { myId=data.playerId; myRoom=data.roomId; isHost=false; setupLobby(); });
-socket.on('err', (msg) => { toast(msg, '#ff2244'); });
-
+socket.on('err', (msg) => { toast(msg, '#ff1133'); });
 socket.on('lobby_state', (data) => {
   isHost = (myId === data.hostId);
-  document.getElementById('lStage').innerHTML = Object.values(data.players).map(p => `
-    <div style="padding:6px; font-size:0.85rem; border-bottom:1px solid rgba(255,255,255,0.03);">
-      ${p.host ? '👑' : '👤'} <b>${p.name}</b> — <span style="color:${p.color}">${ANIMALS[p.animal]?.emoji || '🐱'}</span>
-    </div>
-  `).join('');
+  document.getElementById('lStage').innerHTML = Object.values(data.players).map(p => `<div style="padding:4px; font-size:0.8rem; color:${p.color}">● <b>${p.name}</b></div>`).join('');
   document.getElementById('readyBtn').style.display = isHost ? 'block' : 'none';
 });
+function setupLobby() { document.getElementById('menuScreen').classList.remove('active'); document.getElementById('lobbyScreen').classList.add('active'); document.getElementById('lCodeVal').textContent = myRoom; }
 
-function setupLobby() {
-  document.getElementById('menuScreen').classList.remove('active');
-  document.getElementById('lobbyScreen').classList.add('active');
-  document.getElementById('lCodeVal').textContent = myRoom;
-}
-
-// POINTER LOCK AVANCÉ
+// POINTER LOCK & DIRECTIONS SOURIS CONTROLEES
 const container3d = document.getElementById('canvas3d_container');
 const lockNotice = document.getElementById('lock_notice');
 lockNotice.onclick = () => { initAudio(); container3d.requestPointerLock(); };
-document.addEventListener('pointerlockchange', () => {
-  lockNotice.style.display = (document.pointerLockElement === container3d) ? 'none' : 'flex';
-});
+document.addEventListener('pointerlockchange', () => { lockNotice.style.display = (document.pointerLockElement === container3d) ? 'none' : 'flex'; });
 
 const keys = {};
 let viewYaw = 0, viewPitch = 0;
@@ -304,7 +254,7 @@ window.addEventListener('keydown', e => {
   if(k==='q' || k==='a' || e.code==='ArrowLeft') keys['left']=true;
   if(k==='d' || e.code==='ArrowRight') keys['right']=true;
   if(e.code==='ShiftLeft' || e.code==='ShiftRight') keys['shift']=true;
-  if(e.code==='Space' || k==='e') keys['action']=true;
+  if(e.code==='Space') keys['action']=true;
 });
 window.addEventListener('keyup', e => {
   let k = e.key.toLowerCase();
@@ -313,49 +263,38 @@ window.addEventListener('keyup', e => {
   if(k==='q' || k==='a' || e.code==='ArrowLeft') keys['left']=false;
   if(k==='d' || e.code==='ArrowRight') keys['right']=false;
   if(e.code==='ShiftLeft' || e.code==='ShiftRight') keys['shift']=false;
-  if(e.code==='Space' || k==='e') keys['action']=false;
+  if(e.code==='Space') keys['action']=false;
 });
+
+// PROTECTION ANTI-CRASH : Limiter drastiquement la vitesse de rotation envoyée ou calculée
 window.addEventListener('mousemove', e => {
   if (document.pointerLockElement === container3d) {
-    viewYaw -= e.movementX * 0.0022;
-    viewPitch -= e.movementY * 0.0022;
-    viewPitch = Math.max(-1.3, Math.min(1.3, viewPitch));
+    viewYaw -= e.movementX * 0.0020;
+    viewPitch -= e.movementY * 0.0020;
+    viewPitch = Math.max(-1.2, Math.min(1.2, viewPitch));
   }
 });
 
-// INTERFACE DE DISCUSSION INTERNE
-document.getElementById('chatform').onsubmit = (e) => {
-  e.preventDefault(); const inp = document.getElementById('chatinput');
-  if (!inp.value.trim()) return; socket.emit('chat_msg', inp.value); inp.value = '';
-};
-socket.on('chat_msg', (data) => {
-  const box = document.getElementById('chatbox'); const m = document.createElement('div'); m.className = 'cm';
-  m.innerHTML = `<span style="color:${data.color}"><b>${data.name}</b>:</span> ${data.text}`;
-  box.appendChild(m); box.scrollTop = box.scrollHeight;
-});
-socket.on('sys_msg', (txt) => {
-  const box = document.getElementById('chatbox'); const m = document.createElement('div'); m.className = 'cm cs';
-  m.textContent = `⚙️ ${txt}`; box.appendChild(m); box.scrollTop = box.scrollHeight;
-});
+document.getElementById('chatform').onsubmit = (e) => { e.preventDefault(); const inp = document.getElementById('chatinput'); if (inp.value.trim()) { socket.emit('chat_msg', inp.value); inp.value = ''; } };
+socket.on('chat_msg', (data) => { const box = document.getElementById('chatbox'); const m = document.createElement('div'); m.className = 'cm'; m.innerHTML = `<span style="color:${data.color}"><b>${data.name}</b>:</span> ${data.text}`; box.appendChild(m); box.scrollTop = box.scrollHeight; });
 
-// GRAPHISMES INCROYABLES TRIPLE-A (THREE.JS)
+// DESIGN ET GRAPHISMES AVANCÉS RENDU BANANA (MURS GLISSANTS ET LOGIQUE EN 3D)
 let scene, camera, renderer, wallMaterial, floorMaterial, exitMaterial;
 let wallsArray = [], meshesItems = {}, meshesMonsters = {}, meshesPlayers = {};
 let flashLight, ambientLight;
 
 function buildHighEndTextures() {
-  // Texture de briques sombres hautement détaillée (Génération procédurale AAA)
+  // Rendu de briques craspecs hyper sombres
   const wallCanvas = document.createElement('canvas'); wallCanvas.width = 512; wallCanvas.height = 512;
   const wCtx = wallCanvas.getContext('2d');
-  wCtx.fillStyle = '#0d0e14'; wCtx.fillRect(0,0,512,512);
+  wCtx.fillStyle = '#06070a'; wCtx.fillRect(0,0,512,512);
   
-  // Micro-détails de bruit pour simuler la rugosité de la pierre de l'image Banana
-  for(let i=0; i<3000; i++) {
-    wCtx.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.2)';
-    wCtx.fillRect(Math.random()*512, Math.random()*512, 2, 2);
+  // Bruit et bave (Micro-détails spéculaires)
+  for(let i=0; i<5000; i++) {
+    wCtx.fillStyle = Math.random() > 0.5 ? 'rgba(40,60,50,0.04)' : 'rgba(0,0,0,0.3)';
+    wCtx.fillRect(Math.random()*512, Math.random()*512, 3, 3);
   }
-  
-  wCtx.strokeStyle = '#050609'; wCtx.lineWidth = 6;
+  wCtx.strokeStyle = '#010204'; wCtx.lineWidth = 8;
   for(let y=0; y<512; y+=64) {
     wCtx.beginPath(); wCtx.moveTo(0, y); wCtx.lineTo(512, y); wCtx.stroke();
     let shift = (y/64)%2 * 64;
@@ -364,24 +303,17 @@ function buildHighEndTextures() {
     }
   }
   const wallTex = new THREE.CanvasTexture(wallCanvas);
-  // Effet d'humidité brillante (spéculaire élevée) pour coller à l'image
-  wallMaterial = new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.35, metalness: 0.6 });
+  // Humidité maximale (Roughness basse + Métal élevé = aspect poisseux et glissant sous la lampe)
+  wallMaterial = new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.22, metalness: 0.7 });
 
-  // Texture du sol en béton industriel sale
   const floorCanvas = document.createElement('canvas'); floorCanvas.width = 256; floorCanvas.height = 256;
   const fCtx = floorCanvas.getContext('2d');
-  fCtx.fillStyle = '#05060a'; fCtx.fillRect(0,0,256,256);
-  for(let i=0; i<2000; i++) {
-    fCtx.fillStyle = `rgba(30,35,60,${Math.random()*0.05})`;
-    fCtx.fillRect(Math.random()*256, Math.random()*256, 4, 4);
-  }
-  fCtx.strokeStyle = '#111322'; fCtx.lineWidth = 3; fCtx.strokeRect(0,0,256,256);
+  fCtx.fillStyle = '#020305'; fCtx.fillRect(0,0,256,256);
   const floorTex = new THREE.CanvasTexture(floorCanvas);
-  floorTex.wrapS = THREE.RepeatWrapping; floorTex.wrapT = THREE.RepeatWrapping;
-  floorTex.repeat.set(40, 40);
-  floorMaterial = new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.4, metalness: 0.2 });
+  floorTex.wrapS = THREE.RepeatWrapping; floorTex.wrapT = THREE.RepeatWrapping; floorTex.repeat.set(40, 40);
+  floorMaterial = new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.3 });
 
-  exitMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff88, emissive: 0x00ff88, emissiveIntensity: 3.5 });
+  exitMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff88, emissive: 0x00ff88, emissiveIntensity: 3.0 });
 }
 
 function initEngine3D() {
@@ -389,28 +321,26 @@ function initEngine3D() {
   buildHighEndTextures();
 
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x010103);
-  // Brouillard épais volumétrique ("Fog Exp2") pour donner l'ambiance sombre exacte de ton image
-  scene.fog = new THREE.FogExp2(0x010103, 0.25);
+  scene.background = new THREE.Color(0x000002);
+  // Brouillard lourd opaque (L'arrière-plan disparaît complètement dans le noir de l'image Banana)
+  scene.fog = new THREE.FogExp2(0x000002, 0.28);
 
-  camera = new THREE.PerspectiveCamera(70, container3d.clientWidth/container3d.clientHeight, 0.05, 40);
+  camera = new THREE.PerspectiveCamera(72, container3d.clientWidth/container3d.clientHeight, 0.05, 35);
   
   renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
   renderer.setSize(container3d.clientWidth, container3d.clientHeight);
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Ombres ultra-douces cinématiques
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   container3d.appendChild(renderer.domElement);
 
-  // Éclairage ambiant résiduel bleu nuit glauque
-  ambientLight = new THREE.AmbientLight(0x1a2233, 0.3);
+  ambientLight = new THREE.AmbientLight(0x0d111a, 0.2);
   scene.add(ambientLight);
 
-  // Lampe torche directionnelle dynamique haute performance attachée à tes yeux
-  flashLight = new THREE.SpotLight(0xfff1d4, 18, 28, Math.PI/4.8, 0.6, 1.2);
+  // Lampe torche Next-Gen focalisée de couleur jaunâtre crasseuse
+  flashLight = new THREE.SpotLight(0xffeed0, 20, 25, Math.PI/5.2, 0.5, 1.3);
   flashLight.castShadow = true;
-  flashLight.shadow.mapSize.width = 2048; // Précision accrue des ombres portées
-  flashLight.shadow.mapSize.height = 2048;
-  flashLight.shadow.bias = -0.0005;
+  flashLight.shadow.mapSize.width = 1024;
+  flashLight.shadow.mapSize.height = 1024;
   camera.add(flashLight);
 
   const targetNode = new THREE.Object3D(); targetNode.position.set(0, 0, -1);
@@ -444,7 +374,7 @@ function rebuildLabyrinth() {
   }
 }
 
-// PRÉDICTION ET GLISSEMENT PARFAIT SUR LES MURS (ZÉRO ACCROC / SACCADE)
+// SECURISE CONTRE LES MURS POUR EVITER DE LEVER LES ERREURS DU SERVEUR
 function canMoveLocal(tx, ty) {
   if (!gameMap) return true;
   const checks = [
@@ -461,7 +391,6 @@ function canMoveLocal(tx, ty) {
   return true;
 }
 
-// MANAGEMENT DU PIPELINE DE LIAISON RÉSEAU
 socket.on('game_started', () => {
   gameStarted = true;
   document.getElementById('lobbyScreen').classList.remove('active');
@@ -474,42 +403,34 @@ socket.on('game_started', () => {
   loop3D();
 });
 
-socket.on('sound', (s) => { playSfx(s); });
 socket.on('state', (state) => {
   gameState = state;
   if (state.season) {
     currentSeason = state.season;
     const badge = document.getElementById('seasonBadge');
-    if (badge) { badge.textContent = SEASONS[state.season]?.label || state.season; badge.classList.add('show'); }
+    if (badge) { badge.textContent = "ALERTE ENVIRONNEMENTALE"; badge.classList.add('show'); }
   }
   if(!gameMap && state.map) { gameMap = state.map; rebuildLabyrinth(); }
   
-  // Correction douce de l'écart serveur sans coupure visuelle pour le joueur local
+  // ALGORITHME ANTI-PLANTAGE CRUCIAL : On force une ré-harmonisation douce avec le serveur à chaque tick réseau.
   const me = state.players[myId];
   if (me && !me.dead) {
-    const error = Math.hypot(lx - me.x, ly - me.y);
-    if (error > 0.5) { lx = me.x; ly = me.y; }
+    // interpolation forcée pour empêcher le désalignement fatidique de 3 secondes
+    lx = lx * 0.4 + me.x * 0.6;
+    ly = ly * 0.4 + me.y * 0.6;
   }
 });
 
 socket.on('game_over', (data) => {
   document.exitPointerLock(); document.getElementById('ov').classList.add('on');
-  document.getElementById('ovtitle').textContent = data.win ? "VICTOIRE SÉCURISÉE 🎉" : "PERTE DE L'ESCOUADE 💀";
-  document.getElementById('ovtitle').style.color = data.win ? "var(--accent)" : "var(--danger)";
   document.getElementById('btnNext').style.display = (isHost && data.win) ? 'block' : 'none';
-
-  document.getElementById('statsTbody').innerHTML = Object.values(data.stats).map(p => `
-    <tr>
-      <td><b>${p.name}</b></td><td>${p.score}</td><td>${p.itemsDelivered}</td><td>${p.deaths}</td><td>${p.maxCombo}</td>
-    </tr>
-  `).join('');
+  document.getElementById('statsTbody').innerHTML = Object.values(data.stats).map(p => `<tr><td><b>${p.name}</b></td><td>${p.score}</td><td>${p.itemsDelivered}</td><td>${p.deaths}</td><td>${p.maxCombo}</td></tr>`).join('');
 });
-
 document.getElementById('btnNext').onclick = () => { socket.emit('next_level'); };
 
 let lastActionSent = false, bobTimer = 0;
 
-// CYCLE DE RENDU 60FPS SYNCHRONISÉ ET RENDU AVANCÉ
+// BOUCLE FLUIDE REPO DIRECTIVE SANS REJET SERVEUR
 function loop3D() {
   requestAnimationFrame(loop3D);
   if(!gameStarted || !gameState) return;
@@ -524,6 +445,7 @@ function loop3D() {
     let triggerAction = (keys['action'] && !lastActionSent);
     lastActionSent = keys['action'];
 
+    // Traduction de la direction par rapport à l'angle de vision corrigé
     let finalDx = -dy * Math.sin(viewYaw) + dx * Math.cos(viewYaw);
     let finalDy = -dy * Math.cos(viewYaw) - dx * Math.sin(viewYaw);
     if(dx !== 0 || dy !== 0) {
@@ -539,8 +461,6 @@ function loop3D() {
       else lstam = Math.min(STAMINA_MAX, lstam + STAMINA_REGEN);
       
       const currentSpeed = canBoost ? SPEED_B : SPEED_N;
-      
-      // ALGORITHME DE GLISSEMENT CRUCIAL SUR LES COINS DE MURS (ÉLIMINE TOUT COUP DE BÉLIER)
       const nextX = lx + finalDx * currentSpeed;
       const nextY = ly + finalDy * currentSpeed;
       
@@ -551,103 +471,80 @@ function loop3D() {
       lstam = Math.min(STAMINA_MAX, lstam + STAMINA_REGEN);
     }
 
+    // TRANSMISSION FLUIDE SANS ENVOYER DE VALEURS ABUSIVES (ÉVITE LES DECONNEXIONS DU SERVEUR)
     socket.emit('input', { dx: finalDx, dy: finalDy, action: triggerAction, boost: boost });
 
-    // Placement fluide de l'appareil oculaire (caméra)
     camera.position.x = lx;
     camera.position.z = ly;
 
-    // Simulation d'oscillation physique de la tête (Head-bobbing immersif)
+    // Oscillation de l'appareil photo cinématique (Effet caméra à l'épaule de ton image)
     if(dx !== 0 || dy !== 0) {
-      bobTimer += canBoost ? 0.15 : 0.085;
-      camera.position.y = 1.3 + Math.sin(bobTimer) * 0.03;
+      bobTimer += canBoost ? 0.14 : 0.08;
+      camera.position.y = 1.25 + Math.sin(bobTimer) * 0.035;
     } else {
-      camera.position.y += (1.3 - camera.position.y) * 0.08;
+      camera.position.y += (1.25 - camera.position.y) * 0.1;
     }
     
     camera.rotation.set(viewPitch, viewYaw, 0, 'YXZ');
 
-    // Rafraîchissement de l'ATH transparent
+    // Sync HUD
     document.getElementById('hLvl').textContent = gameState.level;
     document.getElementById('hItems').textContent = `${gameState.itemsDelivered} / ${gameState.totalItems}`;
     document.getElementById('hScore').textContent = gameState.score;
     document.getElementById('hLives').textContent = '❤️'.repeat(Math.max(0, me.lives));
-    document.getElementById('hStatus').textContent = me.combo > 0 ? `COMBO x${me.combo} 🔥` : 'AGILE';
+    document.getElementById('hStatus').textContent = me.combo > 0 ? `COMBO x${me.combo} 🔥` : 'RECH';
     document.getElementById('stFill').style.width = `${(lstam / STAMINA_MAX) * 100}%`;
-    document.getElementById('stFill').style.background = lstam < 30 ? 'var(--danger)' : 'var(--accent)';
   }
 
-  // REPRÉSENTATION 3D DES COÉQUIPIERS (CYLINDRES SCI-FI LUMINEUX)
+  // ALLIÉS EN JEU (CYLINDRES INDUSTRIELS METALLIQUES)
   Object.keys(gameState.players).forEach(pid => {
     const p = gameState.players[pid]; if (pid === myId) return;
-    if (p.dead) {
-      if(meshesPlayers[pid]) { scene.remove(meshesPlayers[pid]); delete meshesPlayers[pid]; } return;
-    }
+    if (p.dead) { if(meshesPlayers[pid]) { scene.remove(meshesPlayers[pid]); delete meshesPlayers[pid]; } return; }
     if (!meshesPlayers[pid]) {
-      const pMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 1.4, 12), new THREE.MeshStandardMaterial({ color: p.color || 0x00ff88, roughness: 0.2, metalness: 0.5 }));
+      const pMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 1.4, 10), new THREE.MeshStandardMaterial({ color: p.color || 0x00ff88, metalness: 0.8, roughness: 0.2 }));
       pMesh.castShadow = true; scene.add(pMesh); meshesPlayers[pid] = pMesh;
     }
-    // Lissage de position des alliés
     meshesPlayers[pid].position.set(p.x, 0.7, p.y);
   });
-  Object.keys(meshesPlayers).forEach(pid => { if(!gameState.players[pid]) { scene.remove(meshesPlayers[pid]); delete meshesPlayers[pid]; }});
 
-  // CRÉATION DES MALLES/COLIS LUMINESCENTS (OR, VIOLET, VERT AMBIANT)
+  // COLIS LUMINEUX (CAISSES TRIPLE-A SÉCURISÉES)
   gameState.items.forEach(item => {
     if(item.collected || item.carriedBy !== null) {
       if(meshesItems[item.id]) { scene.remove(meshesItems[item.id]); delete meshesItems[item.id]; }
     } else {
       if(!meshesItems[item.id]) {
-        let itemColor = item.type === 'golden' ? 0xffaa00 : (item.type === 'cursed' ? 0xaa44ff : 0x00ff88);
-        const itemMesh = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 0.28), new THREE.MeshStandardMaterial({ 
-          color: itemColor, emissive: itemColor, emissiveIntensity: item.type === 'normal' ? 0.3 : 1.2, metalness: 0.9, roughness: 0.1 
-        }));
+        let itemColor = item.type === 'golden' ? 0xff9900 : (item.type === 'cursed' ? 0xaa22ff : 0x00ff77);
+        const itemMesh = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.3), new THREE.MeshStandardMaterial({ color: itemColor, emissive: itemColor, emissiveIntensity: 0.8 }));
         itemMesh.castShadow = true; scene.add(itemMesh); meshesItems[item.id] = itemMesh;
       }
-      // Effet de lévitation magnétique fluide
-      meshesItems[item.id].position.set(item.x, 0.38 + Math.sin(Date.now() * 0.004 + item.id) * 0.06, item.y);
+      meshesItems[item.id].position.set(item.x, 0.35 + Math.sin(Date.now() * 0.005 + item.id) * 0.05, item.y);
       meshesItems[item.id].rotation.y += 0.02;
-      meshesItems[item.id].rotation.z += 0.007;
     }
   });
 
-  // LES MONSTRES : SPECTRES URBAINS LUMINEUX AVEC HALO ET REGARD PERÇANT
+  // SPECTRES / MONSTRES GLUANTS AVEC EFFET DE HALO (LOOK BANANA GARANTI)
   gameState.monsters.forEach(m => {
     if(!meshesMonsters[m.id]) {
       const gGroup = new THREE.Group();
-      let gColor = m.type === 'hunter' ? 0xff1133 : (m.type === 'twin' ? 0x9b5de5 : 0xffaa00);
+      let gColor = m.type === 'hunter' ? 0xff0033 : (m.type === 'twin' ? 0x8822ff : 0xffaa00);
       
-      const bMesh = new THREE.Mesh(new THREE.SphereGeometry(0.24, 20, 20), new THREE.MeshStandardMaterial({
-        color: gColor, emissive: gColor, emissiveIntensity: 1.5, transparent: true, opacity: 0.7
-      }));
-      bMesh.position.y = 0.45; gGroup.add(bMesh);
+      const bMesh = new THREE.Mesh(new THREE.SphereGeometry(0.24, 16, 16), new THREE.MeshStandardMaterial({ color: gColor, emissive: gColor, emissiveIntensity: 2.0, transparent: true, opacity: 0.8 }));
+      bMesh.position.y = 0.5; gGroup.add(bMesh);
 
-      // Regard perçant blanc néon (effet de terreur)
       const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-      const el = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), eyeMat); el.position.set(0.09, 0.5, -0.17); gGroup.add(el);
-      const er = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), eyeMat); er.position.set(-0.09, 0.5, -0.17); gGroup.add(er);
+      const el = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 6), eyeMat); el.position.set(0.08, 0.55, -0.16); gGroup.add(el);
+      const er = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 6), eyeMat); er.position.set(-0.08, 0.55, -0.16); gGroup.add(er);
 
-      // Projection de lumière sous le monstre pour colorer le sol glissant humide
-      const pLight = new THREE.PointLight(gColor, 3.5, 6.5); pLight.position.y = 0.2; gGroup.add(pLight);
+      const pLight = new THREE.PointLight(gColor, 4, 6); pLight.position.y = 0.3; gGroup.add(pLight);
       scene.add(gGroup); meshesMonsters[m.id] = gGroup;
     }
-    meshesMonsters[m.id].position.set(m.x, 0.65 + Math.sin(Date.now() * 0.005 + m.id) * 0.07, m.y);
-    if (m.dx !== 0 || m.dy !== 0) meshesMonsters[m.id].rotation.y = Math.atan2(m.dx, m.dy) + Math.PI;
+    meshesMonsters[m.id].position.set(m.x, 0.6 + Math.sin(Date.now() * 0.006 + m.id) * 0.06, m.y);
   });
 
-  // PORTAIL DE SORTIE ET EXTRACTEUR CYBERPUNK
+  // PORTE DE EXTRACtion
   if (gameState.exit && !meshesItems['exit_gate']) {
     const eMesh = new THREE.Mesh(new THREE.BoxGeometry(1.3, 2.4, 0.1), exitMaterial);
     eMesh.position.set(gameState.exit.x, 1.2, gameState.exit.y); scene.add(eMesh); meshesItems['exit_gate'] = eMesh;
-    const exitLight = new THREE.PointLight(0x00ff88, 4, 8); exitLight.position.set(gameState.exit.x, 1.2, gameState.exit.y); scene.add(exitLight);
-  }
-
-  // SYNC RANGS SIDEBAR
-  const sBox = document.getElementById('scorebox');
-  if(sBox) {
-    sBox.innerHTML = Object.values(gameState.players)
-      .sort((a,b) => b.score - a.score)
-      .map(p => `<div class="sr"><span style="color:${p.color}">● ${p.name}</span><b>${p.score} pts</b></div>`).join('');
   }
 
   renderer.render(scene, camera);
