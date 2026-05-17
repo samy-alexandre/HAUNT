@@ -454,7 +454,7 @@ function applySettings(){
     document.getElementById('mm'+k).classList.toggle('on',S.minimap===m);
   });
   // Apply music vol
-  if(masterGain)masterGain.gain.value=S.music?(S.musicVol/100)*0.15:0;
+  if(masterGain)masterGain.gain.value=S.music?(S.musicVol/100)*0.45:0;
   if(sfxGain)sfxGain.gain.value=S.sfxVol/100;
   // Apply chat
   const sb=document.getElementById('sidebar');
@@ -467,7 +467,7 @@ function closeSettings(){document.getElementById('settingsPanel').classList.remo
 function toggleSetting(key){S[key]=!S[key];saveSettings();applySettings();}
 function setTheme(t){S.theme=t;saveSettings();applySettings();}
 function setMinimap(s){S.minimap=s;saveSettings();applySettings();}
-function updateMusicVol(v){S.musicVol=parseInt(v);saveSettings();if(masterGain&&S.music)masterGain.gain.value=(v/100)*0.15;}
+function updateMusicVol(v){S.musicVol=parseInt(v);saveSettings();if(masterGain&&S.music)masterGain.gain.value=(v/100)*0.45;}
 function updateSfxVol(v){S.sfxVol=parseInt(v);saveSettings();if(sfxGain)sfxGain.gain.value=v/100;}
 function copyInviteLink(){
   if(!myRoom){toast('Rejoins une salle d\'abord !','#ff8822');return;}
@@ -504,48 +504,45 @@ function getAC(){
 // === SEASONAL MUSIC ENGINE ===
 const SEASONS={
   winter:{
-    label:'❄️ Hiver', icon:'❄️',
-    scale:[110,123,130,146,164],  // sparse minor
-    tempo:3000, bassFreq:55, waveform:'triangle', padFreq:82,
-    wallColor:'#5588ee'
+    label:'❄️ Hiver',
+    // Am pentatonic — notes audibles, éerie et froid
+    scale:[440,523,587,659,392,349],
+    tempo:2600, bassFreq:55, waveform:'triangle', padFreq:110,
+    dark:'#5588ee', light:'#88aaff'
   },
   spring:{
-    label:'🌸 Printemps', icon:'🌸',
-    scale:[130,164,196,220,261],  // bright major
-    tempo:1000, bassFreq:65, waveform:'sine', padFreq:130,
-    wallColor:'#ee5599'
+    label:'🌸 Printemps',
+    // C major pentatonic — vif et joyeux
+    scale:[523,587,659,784,880,440],
+    tempo:850, bassFreq:65, waveform:'sine', padFreq:130,
+    dark:'#dd4488', light:'#ff88bb'
   },
   summer:{
-    label:'☀️ Été', icon:'☀️',
-    scale:[174,220,261,293,349],  // warm, full
-    tempo:750, bassFreq:87, waveform:'sine', padFreq:174,
-    wallColor:'#33bb77'
+    label:'☀️ Été',
+    // F major pentatonic — chaud et énergique
+    scale:[349,392,440,523,587,659],
+    tempo:650, bassFreq:87, waveform:'sine', padFreq:174,
+    dark:'#22aa66', light:'#44ddaa'
   },
   autumn:{
-    label:'🍂 Automne', icon:'🍂',
-    scale:[146,174,196,220,261],  // melancholic
-    tempo:2000, bassFreq:73, waveform:'triangle', padFreq:110,
-    wallColor:'#dd6622'
+    label:'🍂 Automne',
+    // D minor pentatonic — mélancolique
+    scale:[293,349,392,440,523,392],
+    tempo:1900, bassFreq:73, waveform:'triangle', padFreq:146,
+    dark:'#cc5511', light:'#ff9944'
   }
 };
 
-let currentSeason='winter', pendingSeason='winter', seasonStayMs=0, lastSeasonCheck=0;
+// Season driven by server (one season per map)
+let roomSeason='autumn';
+let currentSeason='autumn';
 let melodyTimeout=null, bassTimeout=null, padTimeout=null;
 
-function detectSeason(x){
-  if(x<7)return'winter';
-  if(x<14)return'spring';
-  if(x<21)return'summer';
-  return'autumn';
-}
-
-function updateSeason(x){
-  const s=detectSeason(x);
-  if(s!==pendingSeason){pendingSeason=s;seasonStayMs=0;}
-  else{seasonStayMs+=33;}
-  if(seasonStayMs>1500&&s!==currentSeason){
-    currentSeason=s;
-    showSeasonBadge(SEASONS[s].label);
+function updateSeasonFromServer(season){
+  if(season&&season!==currentSeason){
+    currentSeason=season;
+    roomSeason=season;
+    showSeasonBadge(SEASONS[season]?.label||season);
   }
 }
 
@@ -562,11 +559,20 @@ function playMelodyNote(){
   try{
     const o=actx.createOscillator(),g=actx.createGain();
     o.type=s.waveform;o.frequency.value=f;
-    const dur=currentSeason==='winter'?3.5:currentSeason==='spring'?1.2:1.0;
+    const dur={winter:3.0,spring:1.0,summer:0.8,autumn:2.2}[currentSeason]||1.5;
     g.gain.setValueAtTime(0,actx.currentTime);
-    g.gain.linearRampToValueAtTime(0.22,actx.currentTime+0.2);
+    g.gain.linearRampToValueAtTime(0.38,actx.currentTime+0.08);
     g.gain.exponentialRampToValueAtTime(0.001,actx.currentTime+dur);
     o.connect(g);g.connect(masterGain);o.start();o.stop(actx.currentTime+dur);
+    // Add harmony note (5th interval)
+    if(Math.random()>0.4){
+      const o2=actx.createOscillator(),g2=actx.createGain();
+      o2.type=s.waveform;o2.frequency.value=f*1.5;
+      g2.gain.setValueAtTime(0,actx.currentTime+0.05);
+      g2.gain.linearRampToValueAtTime(0.15,actx.currentTime+0.15);
+      g2.gain.exponentialRampToValueAtTime(0.001,actx.currentTime+dur*0.7);
+      o2.connect(g2);g2.connect(masterGain);o2.start();o2.stop(actx.currentTime+dur*0.7);
+    }
   }catch(e){}
   const s2=SEASONS[currentSeason];
   melodyTimeout=setTimeout(playMelodyNote, s2.tempo+Math.random()*s2.tempo*0.6);
@@ -579,7 +585,7 @@ function playBass(){
     const o=actx.createOscillator(),g=actx.createGain();
     o.type='sine';o.frequency.value=s.bassFreq;
     g.gain.setValueAtTime(0,actx.currentTime);
-    g.gain.linearRampToValueAtTime(0.45,actx.currentTime+2.5);
+    g.gain.linearRampToValueAtTime(0.55,actx.currentTime+2);
     g.gain.linearRampToValueAtTime(0,actx.currentTime+11);
     o.connect(g);g.connect(masterGain);o.start();o.stop(actx.currentTime+11);
   }catch(e){}
@@ -594,7 +600,7 @@ function playPad(){
     o.type='sine';o.frequency.value=s.padFreq;
     const dur=7+Math.random()*4;
     g.gain.setValueAtTime(0,actx.currentTime);
-    g.gain.linearRampToValueAtTime(0.1,actx.currentTime+2);
+    g.gain.linearRampToValueAtTime(0.2,actx.currentTime+2);
     g.gain.linearRampToValueAtTime(0,actx.currentTime+dur);
     o.connect(g);g.connect(masterGain);o.start();o.stop(actx.currentTime+dur);
   }catch(e){}
@@ -604,7 +610,7 @@ function playPad(){
 function startMusic(){
   if(musicOn)return;musicOn=true;
   const a=getAC();if(!a)return;
-  masterGain.gain.value=S.music?(S.musicVol/100)*0.15:0;
+  if(masterGain)masterGain.gain.value=S.music?(S.musicVol/100)*0.45:0;
   setTimeout(playBass,500);
   setTimeout(playMelodyNote,2000);
   setTimeout(playPad,1000);
@@ -810,14 +816,16 @@ socket.on('map',map=>{gameMap=map;});
 socket.on('game_started',()=>{
   lx=SPAWN_X;ly=SPAWN_Y;lstam=STAMINA_MAX;gameStarted=true;
   show('game');setTimeout(initCanvas,100);startGameLoop();startMusic();
+  if(gameState?.season)updateSeasonFromServer(gameState.season);
 });
 socket.on('chat_msg',msg=>addChat(msg));
 socket.on('chat_history',msgs=>msgs.forEach(m=>addChat(m)));
-socket.on('level_start',()=>{document.getElementById('ov').classList.remove('on');lx=SPAWN_X;ly=SPAWN_Y;lstam=STAMINA_MAX;});
+socket.on('level_start',({season})=>{document.getElementById('ov').classList.remove('on');lx=SPAWN_X;ly=SPAWN_Y;lstam=STAMINA_MAX;if(season)updateSeasonFromServer(season);});
 socket.on('error',msg=>{document.getElementById('menuErr').textContent='⚠ '+msg;});
 
 socket.on('state',state=>{
   gameState=state;
+  if(state.season)updateSeasonFromServer(state.season);
   const me=state.players[myId];
   if(me){
     if(prevDead&&!me.dead&&!me.eliminated){lx=SPAWN_X;ly=SPAWN_Y;}
@@ -899,12 +907,10 @@ function initCanvas(){
 
 function w2s(wx,wy){return{sx:(wx-camX)*TILE+canvas.width/2,sy:(wy-camY)*TILE+canvas.height/2};}
 
-function seasonWallColor(x){
+function seasonWallColor(){
   const isDark=S.theme==='dark';
-  if(x<7) return isDark?'#5588ee':'#88aaff';
-  if(x<14)return isDark?'#ee5599':'#ff88bb';
-  if(x<21)return isDark?'#33bb77':'#55ddaa';
-  return isDark?'#dd6622':'#ffaa44';
+  const s=SEASONS[currentSeason]||SEASONS.autumn;
+  return isDark?s.dark:s.light;
 }
 
 function render(){
@@ -912,9 +918,6 @@ function render(){
   tick++;
 
   camX+=(lx-camX)*0.08;camY+=(ly-camY)*0.08;
-
-  // Update season music
-  updateSeason(lx);
 
   const isDark=S.theme==='dark';
   const bg=isDark?'#060610':'#e0e2f0';
@@ -927,7 +930,7 @@ function render(){
       const{sx,sy}=w2s(x,y);
       if(sx<-TILE||sx>canvas.width+TILE||sy<-TILE||sy>canvas.height+TILE)continue;
       if(gameMap[y][x]===1){
-        const wc=seasonWallColor(x);
+        const wc=seasonWallColor();
         ctx.fillStyle=wc;ctx.beginPath();ctx.roundRect(sx+1,sy+1,TILE-2,TILE-2,Math.min(5,TILE*0.18));ctx.fill();
         ctx.fillStyle=isDark?'rgba(0,0,0,0.42)':'rgba(255,255,255,0.35)';
         ctx.beginPath();ctx.roundRect(sx+3,sy+3,TILE-6,TILE-6,Math.min(4,TILE*0.14));ctx.fill();
@@ -985,7 +988,7 @@ function render(){
     if(mx<-TILE||mx>canvas.width+TILE)return;
     const fl=0.8+0.2*Math.sin(tick*0.15+m.id*2.5);
     const bob2=Math.sin(tick*0.07+m.id)*2.5;
-    const baseColor=seasonWallColor(Math.floor(m.x));
+    const baseColor=seasonWallColor());
     ctx.save();ctx.globalAlpha=fl;
     const gx=mx+TILE/2,gy=my2+TILE/2+bob2,gr=TILE*0.42;
     ctx.fillStyle=baseColor;
@@ -1073,14 +1076,14 @@ function drawMM(){
   ctx.fillText('CARTE',ox+mW*s/2,oy-5);
 
   for(let y=0;y<mH;y++)for(let x=0;x<mW;x++){
-    if(gameMap[y][x]===1){ctx.fillStyle=seasonWallColor(x)+'66';ctx.fillRect(ox+x*s,oy+y*s,s,s);}
+    if(gameMap[y][x]===1){ctx.fillStyle=seasonWallColor()+'66';ctx.fillRect(ox+x*s,oy+y*s,s,s);}
     else{ctx.fillStyle=isDark?'#0a0a18':'#eeeeff';ctx.fillRect(ox+x*s,oy+y*s,s,s);}
   }
 
   const ep=gameState.exit||{x:25.5,y:1.5};
   ctx.fillStyle='#00ff88';ctx.fillRect(ox+(ep.x-0.5)*s-1,oy+(ep.y-0.5)*s-1,s*2+2,s*2+2);
   gameState.items.forEach(item=>{if(!item.collected){ctx.fillStyle=item.carriedBy?'#ffcc00':'#886600';ctx.fillRect(ox+(item.x-0.5)*s,oy+(item.y-0.5)*s,s,s);}});
-  gameState.monsters.forEach(m=>{ctx.fillStyle=seasonWallColor(Math.floor(m.x));ctx.fillRect(ox+(m.x-0.5)*s-1,oy+(m.y-0.5)*s-1,s+2,s+2);});
+  gameState.monsters.forEach(m=>{ctx.fillStyle=seasonWallColor());ctx.fillRect(ox+(m.x-0.5)*s-1,oy+(m.y-0.5)*s-1,s+2,s+2);});
   Object.values(gameState.players).forEach(p=>{
     const rx=p.id===myId?lx:p.x,ry=p.id===myId?ly:p.y;
     ctx.fillStyle=p.id===myId?'#ffffff':p.color;ctx.fillRect(ox+(rx-0.5)*s-1,oy+(ry-0.5)*s-1,s+2,s+2);
