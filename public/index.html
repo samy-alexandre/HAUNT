@@ -20,7 +20,7 @@
 
 html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;user-select:none;}
 
-/* SCREEN MANAGEMENT */
+/* GESTION DES ÉCRANS */
 .screen{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;padding:2rem;background:radial-gradient(circle at center, #0a0a1c 0%, #030307 100%);z-index:10;}
 .screen.active{display:flex;}
 
@@ -40,7 +40,7 @@ input[type=text]:focus{border-color:var(--accent);}
 
 .err{color:var(--danger);font-size:0.9rem;text-align:center;min-height:1.5em;font-weight:bold;}
 
-/* AVATAR SELECTOR */
+/* SÉLECTEUR AVATAR */
 .cgrid{display:grid;grid-template-columns:repeat(3, 1fr);gap:0.7rem;margin-top:0.5rem;}
 .cbtn{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;padding:0.8rem;border-radius:6px;border:2px solid var(--border);background:rgba(255,255,255,0.02);transition:all 0.2s;}
 .cbtn:hover{border-color:var(--accent);background:rgba(0,255,136,0.05);}
@@ -48,13 +48,13 @@ input[type=text]:focus{border-color:var(--accent);}
 .cbtn-emoji{font-size:1.8rem;}
 .cbtn-label{font-size:0.65rem;color:var(--text);letter-spacing:1px;}
 
-/* INTERFACE GAMEPLAY */
+/* INTERFACE DU JEU */
 #gameScreen{display:none;position:fixed;inset:0;background:#000;}
 #gameScreen.active{display:flex;}
 
 #canvas3d_container {width:100%;height:100%;position:absolute;inset:0;z-index:1;}
 
-/* RETICLE */
+/* RÉTICULE FPS */
 #reticle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:10px;height:10px;pointer-events:none;z-index:5;}
 #reticle::before, #reticle::after {content:'';position:absolute;background:rgba(255,255,255,0.4);}
 #reticle::before{top:4px;left:-5px;width:20px;height:2px;}
@@ -205,7 +205,7 @@ const ANIMALS=[
 ];
 let myAnimalIdx=0;
 
-// Sélection des hôtes
+// Sélection de l'avatar
 const avatarGrid=document.getElementById('avatarGrid');
 ANIMALS.forEach((a,i)=>{
   const d=document.createElement('div');
@@ -247,7 +247,7 @@ function updateLobbyList(data){
   document.getElementById('lStage').textContent="Survivants connectés : "+names;
 }
 
-// GESTION DU VERROUILLAGE ET LECTURE SOURIS
+// GESTION POINTERLOCK SOURIS
 const lockNotice = document.getElementById('lock_notice');
 const container3d = document.getElementById('canvas3d_container');
 
@@ -260,7 +260,7 @@ document.addEventListener('pointerlockchange', () => {
   }
 });
 
-// Système de capture des touches (Optimisé AZERTY avec e.key)
+// Capture AZERTY + Flèches directionnelles
 const keys={};
 let viewYaw = 0; 
 window.addEventListener('keydown', e => { 
@@ -301,7 +301,7 @@ let meshExitPortal = null;
 function initThreeEngine() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x020205);
-  scene.fog = new THREE.FogExp2(0x020205, 0.18);
+  scene.fog = new THREE.FogExp2(0x020205, 0.22); // Brouillard volumétrique pour l'ambiance sombre
 
   camera = new THREE.PerspectiveCamera(70, container3d.clientWidth / container3d.clientHeight, 0.05, 100);
   
@@ -309,9 +309,10 @@ function initThreeEngine() {
   renderer.setSize(container3d.clientWidth, container3d.clientHeight);
   container3d.appendChild(renderer.domElement);
 
-  const ambient = new THREE.AmbientLight(0x0b0d1a, 0.5);
+  const ambient = new THREE.AmbientLight(0x0b0d1a, 0.4);
   scene.add(ambient);
 
+  // Lampe torche attachée à la caméra
   const flashlight = new THREE.SpotLight(0xfff3db, 3.0, 25, Math.PI / 4.5, 0.6, 1.2);
   flashlight.position.set(0, 0, 0);
   camera.add(flashlight);
@@ -449,14 +450,14 @@ function runExecution3D() {
   const me = gameState.players[myId];
   
   if (me && !me.dead && !me.eliminated) {
-    // CALCUL EN COMPOSANTES : AVANCE/RECUL ET STRRAFE GAUCHE/DROITE
-    let fb = 0; // Forward-Backward
-    let lr = 0; // Left-Right
+    // RESOLUTION DES INTENTIONS DE DEPLACEMENT DU JOUEUR
+    let F = 0; // Forward (Avance = 1, Recule = -1)
+    let R = 0; // Right (Droite = 1, Gauche = -1)
 
-    if (keys['up']) fb = -1;
-    if (keys['down']) fb = 1;
-    if (keys['left']) lr = -1;
-    if (keys['right']) lr = 1;
+    if (keys['up']) F = 1;
+    if (keys['down']) F = -1;
+    if (keys['left']) R = -1;
+    if (keys['right']) R = 1;
 
     const boost = !!keys['shift'];
     const action = !!keys['action'];
@@ -464,14 +465,12 @@ function runExecution3D() {
     let finalDx = 0;
     let finalDy = 0;
     
-    if (fb !== 0 || lr !== 0) {
-      let cosY = Math.cos(viewYaw);
-      let sinY = Math.sin(viewYaw);
+    // MATRICE TRIGO CORRIGÉE : Projette parfaitement les entrées clavier relatives à la direction du regard (Yaw)
+    if (F !== 0 || R !== 0) {
+      finalDx = -F * Math.sin(viewYaw) + R * Math.cos(viewYaw);
+      finalDy = -F * Math.cos(viewYaw) - R * Math.sin(viewYaw);
       
-      // Matrice de rotation : combine l'orientation caméra avec les vecteurs de poussée
-      finalDx = lr * cosY - fb * sinY;
-      finalDy = lr * sinY + fb * cosY;
-      
+      // Normalisation pour garder la même vitesse en diagonale
       let len = Math.hypot(finalDx, finalDy);
       finalDx /= len;
       finalDy /= len;
@@ -483,31 +482,33 @@ function runExecution3D() {
     }
     lastActionSent = action;
 
-    // Envoi des directions absolues calculées au serveur
+    // Transmission en temps réel des forces absolues au serveur
     socket.emit('input', {
       dx: finalDx,
       dy: finalDy,
       action: actionTrigger,
       boost: boost,
-      dir: fb < 0 ? 'up' : (fb > 0 ? 'down' : (lr < 0 ? 'left' : 'right'))
+      dir: F > 0 ? 'up' : (F < 0 ? 'down' : (R < 0 ? 'left' : 'right'))
     });
 
+    // Liaison de la position serveur à la caméra client 3D (l'axe Y du serveur est l'axe Z en 3D)
     camera.position.set(clientPosition.x, 1.15, clientPosition.y);
     camera.rotation.set(0, viewYaw, 0, 'YXZ');
 
   } else if (me && (me.dead || me.eliminated)) {
+    // Mode spectateur orbital autour du niveau en cas de mort
     let elapsed = Date.now() * 0.0005;
     camera.position.set(14 + Math.sin(elapsed)*8, 12, 10 + Math.cos(elapsed)*8);
     camera.lookAt(14, 1, 10);
   }
 
-  // Portail
+  // Portail de sortie
   if (gameState.exit && meshExitPortal) {
     meshExitPortal.position.set(gameState.exit.x, 0.1, gameState.exit.y);
     meshExitPortal.rotation.z += 0.02;
   }
 
-  // Objets
+  // Objets et colis
   gameState.items.forEach(item => {
     if (item.collected || item.carriedBy !== null) {
       if (meshesItems[item.id]) {
@@ -540,22 +541,113 @@ function runExecution3D() {
     }
   });
 
-  // Monstres
+  // MONSTRES (Vrai modèle 3D stylisé, particules ectoplasmiques et pointlights)
   gameState.monsters.forEach(m => {
     if (!meshesMonsters[m.id]) {
       let fCol = m.type === 'hunter' ? 0xff1144 : (m.type === 'twin' ? 0xaa00ff : 0xffaa00);
-      const ghostGeo = new THREE.ConeGeometry(0.32, 0.7, 5);
-      const ghostMat = new THREE.MeshBasicMaterial({ color: fCol, wireframe: true });
-      const mMesh = new THREE.Mesh(ghostGeo, ghostMat);
-      mMesh.rotation.x = Math.PI;
-      scene.add(mMesh);
-      meshesMonsters[m.id] = mMesh;
+      
+      const ghostGroup = new THREE.Group();
+
+      // 1. Tête du spectre
+      const headGeo = new THREE.SphereGeometry(0.22, 16, 16);
+      const headMat = new THREE.MeshStandardMaterial({ 
+        color: fCol, 
+        emissive: fCol, 
+        emissiveIntensity: 0.5,
+        roughness: 0.2 
+      });
+      const headMesh = new THREE.Mesh(headGeo, headMat);
+      headMesh.position.y = 0.4;
+      ghostGroup.add(headMesh);
+
+      // 2. Regard sombre (Yeux creux)
+      const eyeGeo = new THREE.SphereGeometry(0.04, 8, 8);
+      const eyeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+      
+      const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+      leftEye.position.set(0.08, 0.42, -0.18);
+      ghostGroup.add(leftEye);
+      
+      const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
+      rightEye.position.set(-0.08, 0.42, -0.18);
+      ghostGroup.add(rightEye);
+
+      // 3. Corps drapé texturé
+      const bodyGeo = new THREE.CylinderGeometry(0.2, 0.35, 0.6, 12, 4, true);
+      const bodyMat = new THREE.MeshStandardMaterial({
+        color: fCol,
+        wireframe: false,
+        transparent: true,
+        opacity: 0.85,
+        roughness: 0.5,
+        side: THREE.DoubleSide
+      });
+      const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
+      bodyMesh.position.y = 0.05;
+      ghostGroup.add(bodyMesh);
+
+      // 4. Lumière dynamique projetée sur le décor
+      const ghostLight = new THREE.PointLight(fCol, 1.8, 4.5);
+      ghostLight.position.set(0, 0.4, 0);
+      ghostGroup.add(ghostLight);
+
+      // 5. Système d'émission ectoplasmique (Traînée)
+      const pCount = 15;
+      const pGeo = new THREE.BufferGeometry();
+      const pPos = new Float32Array(pCount * 3);
+      for(let i=0; i<pCount*3; i++) { pPos[i] = (Math.random() - 0.5) * 0.3; }
+      pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+      
+      const pMat = new THREE.PointsMaterial({
+        color: fCol,
+        size: 0.06,
+        transparent: true,
+        opacity: 0.6,
+        blending: THREE.AdditiveBlending
+      });
+      const pSystem = new THREE.Points(pGeo, pMat);
+      ghostGroup.add(pSystem);
+
+      scene.add(ghostGroup);
+      meshesMonsters[m.id] = {
+        group: ghostGroup,
+        body: bodyMesh,
+        particles: pSystem,
+        pData: pPos
+      };
     }
-    meshesMonsters[m.id].position.set(m.x, 1.0 + Math.sin(Date.now()*0.006 + m.id)*0.12, m.y);
-    meshesMonsters[m.id].rotation.y += 0.03;
+
+    // Mises à jour des animations du monstre
+    const mData = meshesMonsters[m.id];
+    const time = Date.now() * 0.005;
+    
+    const floatY = 0.9 + Math.sin(time + m.id) * 0.08;
+    mData.group.position.set(m.x, floatY, m.y);
+
+    // Orientation automatique du monstre vers son vecteur de marche
+    if (m.dx !== 0 || m.dy !== 0) {
+      let angle = Math.atan2(m.dx, m.dy) + Math.PI; 
+      mData.group.rotation.y = angle;
+    }
+
+    // Ondulation organique du drapé
+    mData.body.rotation.z = Math.sin(time * 1.5) * 0.05;
+    mData.body.rotation.x = Math.cos(time * 1.2) * 0.05;
+
+    // Déplacement des fluides ectoplasmiques
+    const positions = mData.particles.geometry.attributes.position.array;
+    for (let i = 0; i < positions.length; i += 3) {
+      positions[i+1] -= 0.003;
+      if (positions[i+1] < -0.4) {
+        positions[i] = (Math.random() - 0.5) * 0.2;
+        positions[i+1] = 0.2 + (Math.random() - 0.5) * 0.1;
+        positions[i+2] = (Math.random() - 0.5) * 0.2;
+      }
+    }
+    mData.particles.geometry.attributes.position.needsUpdate = true;
   });
 
-  // Joueurs
+  // Joueurs distants
   Object.values(gameState.players).forEach(p => {
     if (p.id === myId || p.eliminated || p.dead) {
       if (meshesPlayers[p.id]) { scene.remove(meshesPlayers[p.id]); delete meshesPlayers[p.id]; }
@@ -577,7 +669,7 @@ function runExecution3D() {
   renderRadarMap();
 }
 
-// Radar
+// Rendu Radar 2D boussole
 function renderRadarMap() {
   const rad = document.getElementById('radarCanvas');
   const rctx = rad.getContext('2d');
@@ -638,7 +730,7 @@ function renderRadarMap() {
   rctx.restore();
 }
 
-// Chat
+// Module de discussion instantanée (Chat)
 const chatForm = document.getElementById('chat_form');
 chatForm.onsubmit=(e)=>{
   e.preventDefault();
