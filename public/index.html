@@ -54,14 +54,14 @@ input[type=text]:focus{border-color:var(--accent);}
 
 #canvas3d_container {width:100%;height:100%;position:absolute;inset:0;z-index:1;}
 
-/* RETICLE HORRIFIQUE */
+/* RETICLE */
 #reticle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:10px;height:10px;pointer-events:none;z-index:5;}
 #reticle::before, #reticle::after {content:'';position:absolute;background:rgba(255,255,255,0.4);}
 #reticle::before{top:4px;left:-5px;width:20px;height:2px;}
 #reticle::after{top:-5px;left:4px;width:2px;height:20px;}
 
-/* HUD COMPLETEMENT IMMERSIF */
-#hud_overlay {position:absolute;inset:0;pointer-events:none;z-index:4;display:flex;flex-direction:column;justify-content:between;padding:1.5rem;}
+/* HUD IMMERSIF */
+#hud_overlay {position:absolute;inset:0;pointer-events:none;z-index:4;display:flex;flex-direction:column;justify-content:space-between;padding:1.5rem;}
 .hud_row {display:flex;justify-content:space-between;width:100%;}
 .hud_card {background:rgba(2,2,5,0.75);border:1px solid rgba(31,31,58,0.6);padding:0.8rem 1.2rem;border-radius:6px;backdrop-filter:blur(4px);display:flex;flex-direction:column;gap:2px;}
 .hud_lbl {font-size:0.6rem;color:var(--dim);letter-spacing:2px;text-transform:uppercase;}
@@ -69,9 +69,9 @@ input[type=text]:focus{border-color:var(--accent);}
 .hud_val.danger {color:var(--danger);}
 
 #stBar {width:120px;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;margin-top:5px;overflow:hidden;}
-#stFill {height:100%;width:100%;background:var(--accent);transition:width 0.1s linear;}
+#stFill {height:100%;width:100%;background:var(--accent);}
 
-/* LIVE FEED LOGS & CHAT */
+/* CHAT & CLASSEMENT */
 #ui_right {position:absolute;right:1.5rem;top:7.5rem;bottom:1.5rem;width:260px;pointer-events:auto;z-index:4;display:flex;flex-direction:column;gap:1rem;}
 #chat_panel {flex:1;background:rgba(2,2,5,0.75);border:1px solid rgba(31,31,58,0.6);border-radius:6px;backdrop-filter:blur(4px);display:flex;flex-direction:column;overflow:hidden;}
 #chat_logs {flex:1;overflow-y:auto;padding:0.8rem;display:flex;flex-direction:column;gap:0.4rem;font-size:0.75rem;}
@@ -84,12 +84,12 @@ input[type=text]:focus{border-color:var(--accent);}
 /* MINIMAP RADAR */
 #radarCanvas {background:rgba(0,0,0,0.8);border:2px solid var(--border);border-radius:50%;box-shadow:0 0 15px rgba(0,0,0,0.5);align-self:flex-end;}
 
-/* GAME OVER / LEVEL WIN OVERLAYS */
+/* OVERLAYS FIN DE PARTIE */
 #screen_msg {position:fixed;inset:0;background:rgba(0,0,0,0.95);display:none;flex-direction:column;align-items:center;justify-content:center;gap:2rem;z-index:100;}
 #screen_msg.on {display:flex;}
 #msg_title {font-family:'Creepster',cursive;font-size:4rem;}
 
-/* LOCK NOTICE INITIAL */
+/* NOTICE VERROUILLAGE SOURIS */
 #lock_notice {position:absolute;inset:0;background:rgba(0,0,0,0.8);z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;}
 #lock_notice p {font-size:1.5rem;color:var(--accent);letter-spacing:2px;animation:blink 1.5s infinite;}
 @keyframes blink { 0%, 100% { opacity:0.3; } 50% { opacity:1; } }
@@ -99,7 +99,7 @@ input[type=text]:focus{border-color:var(--accent);}
 
 <div id="menuScreen" class="screen active">
   <h1>HAUNTED 3D</h1>
-  <div class="sub" style="color:var(--dim); letter-spacing:5px;">MOTEUR TEMPS RÉEL INTERACTIF VUE SUBJECTIVE</div>
+  <div class="sub" style="color:var(--dim); letter-spacing:5px;">MOTEUR INTERACTIF TEMPS RÉEL VUE SUBJECTIVE</div>
   
   <div class="panel">
     <div class="ptitle">▸ Identité du Survivant</div>
@@ -137,14 +137,14 @@ input[type=text]:focus{border-color:var(--accent);}
 
   <div id="lock_notice">
     <p>CLIQUEZ SUR L'ÉCRAN POUR ACTIVER LA CAMÉRA FPS</p>
-    <span style="font-size:0.8rem; margin-top:10px; color:#666;">Z,Q,S,D / Entrées Fléchées · SOURIS pour orienter la vue</span>
+    <span style="font-size:0.8rem; margin-top:10px; color:#666;">Z,Q,S,D / Entrées Fléchées · SOURIS pour orienter la vue · ESPACE pour ramasser</span>
   </div>
 
   <div id="hud_overlay">
     <div class="hud_row">
       <div class="hud_card">
         <span class="hud_lbl">Donjon</span>
-        <span class="hud_val" id="hLvl">NIVEAU 1</span>
+        <span class="hud_val" id="hLvl">ÉTAGE 1</span>
       </div>
       <div class="hud_card">
         <span class="hud_lbl">Cargaisons Sécurisées</span>
@@ -205,7 +205,7 @@ const ANIMALS=[
 ];
 let myAnimalIdx=0;
 
-// Peuplement de l'interface graphique de sélection d'avatars
+// Peuplement de l'interface de sélection d'avatars
 const avatarGrid=document.getElementById('avatarGrid');
 ANIMALS.forEach((a,i)=>{
   const d=document.createElement('div');
@@ -231,10 +231,10 @@ document.getElementById('btnJoin').onclick=()=>{
   if(code) socket.emit('join_room',{roomCode:code, name, animal:myAnimalIdx, color:ANIMALS[myAnimalIdx].hex});
 };
 
-socket.on('room_created',(data)=>{ myId=data.playerId; myRoom=data.roomCode; isHost=true; setupLobbyView(); });
-socket.on('room_joined',(data)=>{ myId=data.playerId; myRoom=data.roomCode; isHost=false; setupLobbyView(); });
+socket.on('room_created',(data)=>{ myId=data.playerId; myRoom=data.roomId; isHost=true; setupLobbyView(); });
+socket.on('joined',(data)=>{ myId=data.playerId; myRoom=data.roomId; isHost=false; setupLobbyView(); });
 socket.on('lobby_state',(data)=>{ if(!gameStarted) updateLobbyList(data); });
-socket.on('room_error',(msg)=>{ document.getElementById('menuErr').textContent=msg; });
+socket.on('error',(msg)=>{ document.getElementById('menuErr').textContent=msg; });
 
 function setupLobbyView(){
   document.getElementById('menuScreen').classList.remove('active');
@@ -247,31 +247,31 @@ function updateLobbyList(data){
   document.getElementById('lStage').textContent="Survivants connectés : "+names;
 }
 
-// MANAGEMENT DES CONTROLES DE CAPTURE POUR LE FPS SUR LA SOURIS
+// MANAGEMENT DU LOCK SOURIS
 const lockNotice = document.getElementById('lock_notice');
 const container3d = document.getElementById('canvas3d_container');
 
-lockNotice.onclick = () => { container3d.requestPointerLock(); };
+lockNotice.onclick = () => { if(gameStarted) container3d.requestPointerLock(); };
 document.addEventListener('pointerlockchange', () => {
   if (document.pointerLockElement === container3d) {
     lockNotice.style.display = 'none';
   } else {
-    lockNotice.style.display = 'flex';
+    if(gameStarted) lockNotice.style.display = 'flex';
   }
 });
 
 const keys={};
-let viewYaw = 0; // Rotation horizontale (regard)
+let viewYaw = 0; 
 window.addEventListener('keydown', e => { keys[e.code] = true; });
 window.addEventListener('keyup', e => { keys[e.code] = false; });
 window.addEventListener('mousemove', e => {
   if (document.pointerLockElement === container3d) {
-    viewYaw -= e.movementX * 0.0022; // Sensibilité angulaire horizontale
+    viewYaw -= e.movementX * 0.0025; 
   }
 });
 
 // ====================================================================
-//            MOTEUR GRAPHIQUE TECHNIQUE 3D (THREE.JS CORPUS)
+//            MOTEUR GRAPHIQUE 3D (THREE.JS)
 // ====================================================================
 let scene, camera, renderer;
 let wallsArray = [];
@@ -283,22 +283,19 @@ let meshExitPortal = null;
 function initThreeEngine() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x020205);
-  // Brouillard volumétrique très dense pour cacher les limites de la carte
   scene.fog = new THREE.FogExp2(0x020205, 0.18);
 
   camera = new THREE.PerspectiveCamera(70, container3d.clientWidth / container3d.clientHeight, 0.05, 100);
   
   renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
   renderer.setSize(container3d.clientWidth, container3d.clientHeight);
-  renderer.shadowMap.enabled = true;
   container3d.appendChild(renderer.domElement);
 
-  // Éclairage ambiant résiduel
-  const ambient = new THREE.AmbientLight(0x0b0d1a, 0.4);
+  const ambient = new THREE.AmbientLight(0x0b0d1a, 0.5);
   scene.add(ambient);
 
-  // Projecteur directionnel attaché à la caméra (Effet Lampe Torche de poche)
-  const flashlight = new THREE.SpotLight(0xfff3db, 2.5, 22, Math.PI / 4.5, 0.6, 1.2);
+  // Lampe torche directionnelle attachée à la vision FPS
+  const flashlight = new THREE.SpotLight(0xfff3db, 3.0, 25, Math.PI / 4.5, 0.6, 1.2);
   flashlight.position.set(0, 0, 0);
   camera.add(flashlight);
   
@@ -322,22 +319,13 @@ function generate3DArchitecture() {
 
   if (!gameMap) return;
 
-  // Création du sol texturé via des facettes géométriques sombres
-  const floorGeo = new THREE.PlaneGeometry(60, 60, 30, 30);
-  // Légère distorsion du sol pour casser la monotonie plate
-  const pos = floorGeo.attributes.position;
-  for (let i = 0; i < pos.count; i++) {
-    let vx = pos.getX(i); let vy = pos.getY(i);
-    pos.setZ(i, Math.sin(vx*0.5)*Math.cos(vy*0.5)*0.06);
-  }
-  floorGeo.computeVertexNormals();
-
-  const floorMat = new THREE.MeshStandardMaterial({ color: 0x0a0b10, roughness: 0.9, metalness: 0.1 });
+  const floorGeo = new THREE.PlaneGeometry(60, 60);
+  const floorMat = new THREE.MeshStandardMaterial({ color: 0x0a0b10, roughness: 0.9 });
   const floorMesh = new THREE.Mesh(floorGeo, floorMat);
   floorMesh.rotation.x = -Math.PI / 2;
   scene.add(floorMesh);
 
-  // Matériau des structures verticales du labyrinthe
+  // Épaisseur et hauteur du labyrinthe 3D
   const wallGeo = new THREE.BoxGeometry(1, 2.6, 1);
   const wallMat = new THREE.MeshStandardMaterial({ color: 0x141622, roughness: 0.7, metalness: 0.2 });
 
@@ -352,8 +340,8 @@ function generate3DArchitecture() {
     }
   }
 
-  // Portail de sortie tridimensionnel (Puits de lumière quantique)
-  const exitGeo = new THREE.TorusGeometry(0.6, 0.08, 8, 24);
+  // Puits de lumière de l'évacuation
+  const exitGeo = new THREE.TorusGeometry(0.5, 0.08, 8, 24);
   const exitMat = new THREE.MeshBasicMaterial({ color: 0x00ff88, wireframe: true });
   meshExitPortal = new THREE.Mesh(exitGeo, exitMat);
   meshExitPortal.rotation.x = Math.PI / 2;
@@ -361,13 +349,18 @@ function generate3DArchitecture() {
 }
 
 // ====================================================================
-//            MÉCANIQUE LOGIQUE COMPLÈTE & RENDER RUNTIME
+//       INTERCEPTION DES SIGNAUX DU SERVEUR DE JEU (CORRECTIF)
 // ====================================================================
-let lx=1.5, ly=1.5, lastActionSent=false;
-let localStaminaPool = 120;
+let lastActionSent = false;
+let clientPosition = { x: 1.5, y: 1.5 };
 
-socket.on('init_map', (data) => {
-  gameMap = data.map;
+// Le serveur envoie la carte via l'événement 'map'
+socket.on('map', (mapData) => {
+  gameMap = mapData;
+});
+
+// Le serveur démarre la partie via l'événement 'game_started'
+socket.on('game_started', () => {
   gameStarted = true;
   document.getElementById('lobbyScreen').classList.remove('active');
   document.getElementById('gameScreen').classList.add('active');
@@ -376,54 +369,68 @@ socket.on('init_map', (data) => {
   generate3DArchitecture();
   container3d.requestPointerLock();
   
-  // Lancement du cycle de rendu principal
   runExecution3D();
 });
 
-socket.on('game_state', (state) => {
+// Réception constante à 30 FPS des coordonnées calculées par server.js
+socket.on('state', (state) => {
   gameState = state;
-  const me = state.players[myId];
-  if(me){
-    document.getElementById('hLvl').textContent = "ÉTAGE " + state.level;
-    document.getElementById('hItems').textContent = `${state.collectedItems} / ${state.totalItems}`;
-    document.getElementById('hScore').textContent = String(me.score).padStart(4, '0');
-    document.getElementById('hLives').textContent = '❤️'.repeat(Math.max(0, me.lives));
+  
+  if (state.gameOver) {
+    document.exitPointerLock();
+    const scr = document.getElementById('screen_msg');
+    scr.style.display = 'flex';
+    document.getElementById('msg_title').textContent = "ÉLIMINATION DE L'ÉQUIPE";
+    document.getElementById('msg_title').style.color = "var(--danger)";
+    document.getElementById('msg_sub').textContent = "Toutes les vies ont été consommées.";
+    return;
   }
 
-  // Rafraîchissement du Leaderboard
+  if (state.gameWon) {
+    document.exitPointerLock();
+    const scr = document.getElementById('screen_msg');
+    scr.style.display = 'flex';
+    document.getElementById('msg_title').textContent = "NIVEAU COMPLÉTÉ !";
+    document.getElementById('msg_title').style.color = "var(--accent)";
+    document.getElementById('msg_sub').textContent = `Étage validé avec une note de ${state.stars} Étoile(s).`;
+    if (isHost) {
+      const nxt = document.getElementById('btnNext');
+      nxt.style.display = 'inline-block';
+      nxt.onclick = () => {
+        socket.emit('next_level');
+        scr.style.display = 'none';
+        nxt.style.display = 'none';
+      };
+    }
+    return;
+  }
+
+  const me = state.players[myId];
+  if (me) {
+    // Aligner notre position 3D caméra locale sur celle validée par le serveur
+    clientPosition.x = me.x;
+    clientPosition.y = me.y;
+
+    document.getElementById('hLvl').textContent = "ÉTAGE " + state.level;
+    document.getElementById('hItems').textContent = `${state.itemsDelivered} / ${state.totalItems}`;
+    document.getElementById('hScore').textContent = String(me.score).padStart(4, '0');
+    document.getElementById('hLives').textContent = '❤️'.repeat(Math.max(0, me.lives));
+    document.getElementById('stFill').style.width = `${(me.stamina / 120) * 100}%`;
+  }
+
+  // Mise à jour temps réel du classement à droite
   let lhtml = Object.values(state.players)
     .sort((a,b)=>b.score - a.score)
-    .map(p=>`<div style="color:${p.color}; margin-bottom:2px;">${p.name}: ${p.score} ${p.carrying?'📦':''}</div>`)
+    .map(p=>`<div style="color:${p.color}; font-weight:bold;">${p.name}: ${p.score} ${p.carrying!==null?'📦':''}</div>`)
     .join('');
   document.getElementById('leaderboard').innerHTML = lhtml;
 });
 
-// Écrans de transition de session
-socket.on('level_win', (data) => {
-  document.exitPointerLock();
-  const scr = document.getElementById('screen_msg');
-  scr.style.display = 'flex';
-  document.getElementById('msg_title').textContent = "ZÔNE PURGÉE";
-  document.getElementById('msg_title').style.color = "var(--accent)";
-  document.getElementById('msg_sub').textContent = "Tous les fragments ont été sécurisés. Progression vers le vecteur suivant autorisée.";
-  if (isHost) {
-    const nxt = document.getElementById('btnNext');
-    nxt.style.display = 'inline-block';
-    nxt.onclick = () => {
-      socket.emit('next_level');
-      scr.style.display = 'none';
-      nxt.style.display = 'none';
-    };
-  }
-});
-
-socket.on('game_over', (data) => {
-  document.exitPointerLock();
-  const scr = document.getElementById('screen_msg');
-  scr.style.display = 'flex';
-  document.getElementById('msg_title').textContent = "ÉLIMINATION IMMINENTE";
-  document.getElementById('msg_title').style.color = "var(--danger)";
-  document.getElementById('msg_sub').textContent = "La force vitale de l'équipe de récupération a été entièrement siphonnée par les entités.";
+// Événement d'actualisation de l'étage suivant
+socket.on('level_start', (data) => {
+  document.getElementById('screen_msg').style.display = 'none';
+  generate3DArchitecture();
+  container3d.requestPointerLock();
 });
 
 function runExecution3D() {
@@ -433,78 +440,68 @@ function runExecution3D() {
   const me = gameState.players[myId];
   
   if (me && !me.dead && !me.eliminated) {
-    // 1. DÉPLACEMENT LOCAL FPS CALCULÉ RELATIVEMENT À LA SOURIS
-    let forward = 0, sideways = 0;
-    if (keys['KeyW'] || keys['ArrowUp'] || keys['KeyZ']) forward = -1;
-    if (keys['KeyS'] || keys['ArrowDown']) forward = 1;
-    if (keys['KeyA'] || keys['ArrowLeft'] || keys['KeyQ']) sideways = -1;
-    if (keys['KeyD'] || keys['ArrowRight']) sideways = 1;
+    // 1. CALCULS TRIGONOMÉTRIQUES DE MOUVEMENT RELATIFS AU REGARD FPS
+    let dx = 0, dy = 0;
+    if (keys['KeyW'] || keys['ArrowUp'] || keys['KeyZ']) dy = -1;
+    if (keys['KeyS'] || keys['ArrowDown']) dy = 1;
+    if (keys['KeyA'] || keys['ArrowLeft'] || keys['KeyQ']) dx = -1;
+    if (keys['KeyD'] || keys['ArrowRight']) dx = 1;
 
-    let movementSpeed = 0.065;
-    const isMoving = (forward !== 0 || sideways !== 0);
+    const boost = !!(keys['ShiftLeft'] || keys['ShiftRight']);
+    const action = !!(keys['Space'] || keys['KeyE']);
 
-    // Contrôle d'endurance
-    if ((keys['ShiftLeft'] || keys['ShiftRight']) && isMoving && localStaminaPool > 0) {
-      movementSpeed = 0.11;
-      localStaminaPool -= 1.6;
-    } else {
-      if (localStaminaPool < 120) localStaminaPool += 0.5;
-    }
-    document.getElementById('stFill').style.width = `${(localStaminaPool / 120) * 100}%`;
-
-    if (isMoving) {
-      // Transformation vectorielle par rapport à la rotation Yaw de la caméra
+    // Traduction de la visée de la caméra vers le plan 2D du serveur
+    let finalDx = 0;
+    let finalDy = 0;
+    
+    if (dx !== 0 || dy !== 0) {
       let cosY = Math.cos(viewYaw);
       let sinY = Math.sin(viewYaw);
-
-      // Calcul des directions absolues sur la grille 2D du serveur
-      let targetDx = sideways * cosY - forward * sinY;
-      let targetDy = sideways * sinY + forward * cosY;
-
-      let nextX = lx + targetDx * movementSpeed;
-      let nextY = ly + targetDy * movementSpeed;
-
-      // Résolution simple des collisions locales avec la carte
-      const testCollision = (tx, ty) => {
-        let mx = Math.floor(tx); let my = Math.floor(ty);
-        if (mx < 0 || mx >= 28 || my < 0 || my >= 20) return false;
-        return gameMap[my][mx] !== 1;
-      };
-
-      if (testCollision(nextX, ly)) lx = nextX;
-      if (testCollision(lx, nextY)) ly = nextY;
-
-      // Émission réseau immédiate vers la boucle du serveur
-      socket.emit('move', { x: lx, y: ly, dir: 'up' });
+      finalDx = dx * cosY - dy * sinY;
+      finalDy = dx * sinY + dy * cosY;
+      
+      // Normalisation du vecteur pour éviter d'avancer plus vite en diagonale
+      let len = Math.hypot(finalDx, finalDy);
+      finalDx /= len;
+      finalDy /= len;
     }
 
-    // Gestion du ramassage (Espace / E)
-    const actionKeyActive = !!(keys['Space'] || keys['KeyE']);
-    if (actionKeyActive && !lastActionSent) {
-      socket.emit('action');
+    // Capture de l'action de ramassage (Déclenchement unique par appui)
+    let actionTrigger = false;
+    if (action && !lastActionSent) {
+      actionTrigger = true;
     }
-    lastActionSent = actionKeyActive;
+    lastActionSent = action;
 
-    // Positionnement de la vision première personne
-    camera.position.set(lx, 1.15, ly);
+    // Émission du paquet d'entrées exact attendu par server.js (méthode socket.on('input'))
+    socket.emit('input', {
+      dx: finalDx,
+      dy: finalDy,
+      action: actionTrigger,
+      boost: boost,
+      dir: dy < 0 ? 'up' : (dy > 0 ? 'down' : (dx < 0 ? 'left' : 'right'))
+    });
+
+    // Verrouillage de la caméra à hauteur d'homme sur les coordonnées synchronisées
+    camera.position.set(clientPosition.x, 1.15, clientPosition.y);
     camera.rotation.set(0, viewYaw, 0, 'YXZ');
 
   } else if (me && (me.dead || me.eliminated)) {
-    // Mode caméra spectateur orbitale automatique si mort clinique
-    let elapsed = Date.now() * 0.0004;
-    camera.position.set(14 + Math.sin(elapsed)*10, 14, 10 + Math.cos(elapsed)*10);
+    // Caméra spectateur si mort clinique
+    let elapsed = Date.now() * 0.0005;
+    camera.position.set(14 + Math.sin(elapsed)*8, 12, 10 + Math.cos(elapsed)*8);
     camera.lookAt(14, 1, 10);
   }
 
-  // 2. SYNCHRONISATION DES ACTEURS ET OBJETS DANS LA SCÈNE 3D
+  // 2. RENDU ET RENDU ET MISE À JOUR DES OBJETS DANS L'ESPACE 3D
   
   // Portail d'Évacuation
-  if (gameState.exitPoint && meshExitPortal) {
-    meshExitPortal.position.set(gameState.exitPoint.x, 0.1, gameState.exitPoint.y);
+  if (gameState.exit && meshExitPortal) {
+    meshExitPortal.position.set(gameState.exit.x, 0.1, gameState.exit.y);
     meshExitPortal.rotation.z += 0.02;
   }
 
-  // Colis Complexes 3D (Formes géométriques imbriquées avec rotation inverse)
+  // Colis 3D
   gameState.items.forEach(item => {
     if (item.collected || item.carriedBy !== null) {
       if (meshesItems[item.id]) {
@@ -513,7 +510,7 @@ function runExecution3D() {
       }
     } else {
       if (!meshesItems[item.id]) {
-        let col = item.type === 'gold' ? 0xffcc00 : (item.type === 'cursed' ? 0xcc22ff : 0x00aaff);
+        let col = item.type === 'golden' ? 0xffcc00 : (item.type === 'cursed' ? 0xcc22ff : 0x00aaff);
         const gGroup = new THREE.Group();
         
         const coreGeo = new THREE.BoxGeometry(0.3, 0.3, 0.3);
@@ -537,14 +534,14 @@ function runExecution3D() {
     }
   });
 
-  // Fantômes Complexes (Spectres flottants à structure pyramidale inversée cristalline)
+  // Fantômes Complexes
   gameState.monsters.forEach(m => {
     if (!meshesMonsters[m.id]) {
-      let fCol = m.type === 'hunter' ? 0xff1144 : (m.type === 'twins' ? 0xaa00ff : 0xffaa00);
+      let fCol = m.type === 'hunter' ? 0xff1144 : (m.type === 'twin' ? 0xaa00ff : 0xffaa00);
       const ghostGeo = new THREE.ConeGeometry(0.32, 0.7, 5);
       const ghostMat = new THREE.MeshBasicMaterial({ color: fCol, wireframe: true });
       const mMesh = new THREE.Mesh(ghostGeo, ghostMat);
-      mMesh.rotation.x = Math.PI; // Inversion du cône vers le bas
+      mMesh.rotation.x = Math.PI;
       scene.add(mMesh);
       meshesMonsters[m.id] = mMesh;
     }
@@ -552,7 +549,7 @@ function runExecution3D() {
     meshesMonsters[m.id].rotation.y += 0.03;
   });
 
-  // Autres Survivants connectés (Modélisés sous forme de Cristaux d'énergie cinétique)
+  // Alliés Connectés
   Object.values(gameState.players).forEach(p => {
     if (p.id === myId || p.eliminated || p.dead) {
       if (meshesPlayers[p.id]) { scene.remove(meshesPlayers[p.id]); delete meshesPlayers[p.id]; }
@@ -570,15 +567,12 @@ function runExecution3D() {
     meshesPlayers[p.id].rotation.y += 0.01;
   });
 
-  // Exécution du moteur graphique
   renderer.render(scene, camera);
-
-  // Mise à jour du sous-système Radar Tactique
   renderRadarMap();
 }
 
 // ====================================================================
-//                 SOUS-SYSTÈME RADAR DE PROXIMITÉ (HUD)
+//                       RADAR PROXIMITÉ HUD
 // ====================================================================
 function renderRadarMap() {
   const rad = document.getElementById('radarCanvas');
@@ -587,62 +581,57 @@ function renderRadarMap() {
   if (!gameMap || !gameState) return;
 
   const center = rad.width / 2;
-  const radarRange = 7.0; // Distance max visible sur le balayage radar
+  const radarRange = 7.0; 
 
-  // Fond du radar ciculaire
-  rctx.fillStyle = 'rgba(4, 5, 12, 0.75)';
+  rctx.fillStyle = 'rgba(4, 5, 12, 0.8)';
   rctx.beginPath(); rctx.arc(center, center, center - 2, 0, Math.PI*2); rctx.fill();
   rctx.strokeStyle = '#1f1f3a'; rctx.lineWidth = 1.5; rctx.stroke();
 
-  // Cercles concentriques d'intervalles
-  rctx.strokeStyle = 'rgba(0, 255, 136, 0.08)';
+  rctx.strokeStyle = 'rgba(0, 255, 136, 0.1)';
   rctx.beginPath(); rctx.arc(center, center, center * 0.5, 0, Math.PI*2); rctx.stroke();
 
-  // Récupération de ma position pour faire le décalage relatif
   const me = gameState.players[myId];
   if (!me) return;
-  const px = lx; const py = ly;
 
-  // Dessin des murs environnants sur le radar
+  // Murs
   rctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
   for (let y = 0; y < gameMap.length; y++) {
     for (let x = 0; x < gameMap[y].length; x++) {
       if (gameMap[y][x] === 1) {
-        let dx = (x + 0.5) - px; let dy = (y + 0.5) - py;
+        let dx = (x + 0.5) - me.x; let dy = (y + 0.5) - me.y;
         if (Math.abs(dx) < radarRange && Math.abs(dy) < radarRange) {
-          // Transformation de l'espace monde vers le repère écran du radar
           let rx = center + (dx / radarRange) * center;
           let ry = center + (dy / radarRange) * center;
-          rctx.fillRect(rx - 3, ry - 3, 6, 6);
+          rctx.fillRect(rx - 2, ry - 2, 4, 4);
         }
       }
     }
   }
 
-  // Colis (Points Jaunes)
+  // Colis
   rctx.fillStyle = '#ffcc00';
   gameState.items.forEach(item => {
     if (!item.collected && item.carriedBy === null) {
-      let dx = item.x - px; let dy = item.y - py;
+      let dx = item.x - me.x; let dy = item.y - me.y;
       let rx = center + (dx / radarRange) * center; let ry = center + (dy / radarRange) * center;
       if (Math.hypot(dx, dy) < radarRange) rctx.fillRect(rx - 2, ry - 2, 4, 4);
     }
   });
 
-  // Monstres / Spectres (Points rouges clignotants)
+  // Monstres
   rctx.fillStyle = `rgba(255, 42, 95, ${0.6 + Math.sin(Date.now()*0.01)*0.4})`;
   gameState.monsters.forEach(m => {
-    let dx = m.x - px; let dy = m.y - py;
+    let dx = m.x - me.x; let dy = m.y - me.y;
     let rx = center + (dx / radarRange) * center; let ry = center + (dy / radarRange) * center;
     if (Math.hypot(dx, dy) < radarRange) {
       rctx.beginPath(); rctx.arc(rx, ry, 3.5, 0, Math.PI*2); rctx.fill();
     }
   });
 
-  // Flèche centrale de mon orientation (Survivant)
+  // Flèche d'orientation joueur
   rctx.save();
   rctx.translate(center, center);
-  rctx.rotate(-viewYaw); // Aligner la flèche avec la direction du regard de la caméra
+  rctx.rotate(-viewYaw); 
   rctx.fillStyle = '#00ff88';
   rctx.beginPath();
   rctx.moveTo(0, -6); rctx.lineTo(-4, 4); rctx.lineTo(4, 4);
@@ -650,19 +639,19 @@ function renderRadarMap() {
   rctx.restore();
 }
 
-// MANAGEMENT DU MODULE CHAT RESEAU
+// CHAT RECEIVER
 const chatForm = document.getElementById('chat_form');
 chatForm.onsubmit=(e)=>{
   e.preventDefault();
   const inp = document.getElementById('chat_input');
   const txt = inp.value.trim();
-  if(txt) { socket.emit('chat_msg', txt); inp.value=''; }
+  if(txt) { socket.emit('chat', {msg: txt}); inp.value=''; }
 };
-socket.on('msg',(data)=>{
+socket.on('chat_msg',(data)=>{
   const logs = document.getElementById('chat_logs');
   const el = document.createElement('div');
   el.className = 'msg_line';
-  el.innerHTML = `<span style="color:var(--accent)">${data.name}:</span> <span style="color:#fff">${data.text}</span>`;
+  el.innerHTML = `<span style="color:${data.color}">${data.name}:</span> <span style="color:#fff">${data.msg}</span>`;
   logs.appendChild(el);
   logs.scrollTop = logs.scrollHeight;
 });
