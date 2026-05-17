@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HAUNTED NIGHTMARE 3D - EMOTIVE 2026 EDITION</title>
+<title>HAUNTED NIGHTMARE 3D</title>
 <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 :root {
-  --bg: #020204; --bg2: #06060c; --border: #121224;
+  --bg: #020204; --border: #121224;
   --accent: #00ff88; --danger: #ff2a5f; --text: #e2e2f0; --dim: #4a4a6a;
 }
 html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;user-select:none;}
@@ -31,7 +31,7 @@ input[type=text]{background:#000;border:2px solid var(--border);color:#fff;font-
 #gameScreen{display:none;position:fixed;inset:0;background:#000;}
 #gameScreen.active{display:flex;}
 #canvas3d_container {width:100%;height:100%;position:absolute;inset:0;z-index:1;}
-#vignette_overlay {position:absolute;inset:0;pointer-events:none;z-index:2;background:radial-gradient(circle, transparent 25%, rgba(0,0,0,0.95) 100%);transition: background 0.3s;}
+#vignette_overlay {position:absolute;inset:0;pointer-events:none;z-index:2;background:radial-gradient(circle, transparent 40%, rgba(0,0,0,0.85) 100%);}
 #reticle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:10px;height:10px;pointer-events:none;z-index:5;}
 #reticle::before{content:'';position:absolute;background:rgba(255,255,255,0.4);top:4px;left:-5px;width:20px;height:2px;}
 
@@ -44,7 +44,7 @@ input[type=text]{background:#000;border:2px solid var(--border);color:#fff;font-
 #stBar {width:120px;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;}
 #stFill {height:100%;width:100%;background:var(--accent);}
 
-#lock_notice {position:absolute;inset:0;background:rgba(0,0,0,0.9);z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;}
+#lock_notice {position:absolute;inset:0;background:rgba(0,0,0,0.85);z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;}
 #lock_notice p {font-size:1.4rem;color:var(--accent);letter-spacing:2px;}
 </style>
 </head>
@@ -52,7 +52,7 @@ input[type=text]{background:#000;border:2px solid var(--border);color:#fff;font-
 
 <div id="menuScreen" class="screen active">
   <h1>HAUNT 2026</h1>
-  <div style="color:var(--dim); letter-spacing:5px; font-size:0.8rem; margin-bottom:15px;">DIVERGENCE DIMENSIONNELLE ASYMÉTRIQUE</div>
+  <div style="color:var(--dim); letter-spacing:5px; font-size:0.8rem; margin-bottom:15px;">DIVERGENCE DIMENSIONNELLE</div>
   
   <div class="panel">
     <div class="ptitle">▸ Identité</div>
@@ -60,13 +60,12 @@ input[type=text]{background:#000;border:2px solid var(--border);color:#fff;font-
   </div>
 
   <div style="display:flex; gap:1rem; width:100%; max-width:500px;">
-    <button class="btn primary" id="btnCreate">Créer Anomalie</button>
+    <button class="btn primary" id="btnCreate">Créer Salon</button>
     <div style="display:flex; flex-direction:column; flex:1; gap:0.4rem;">
       <input type="text" id="codeIn" placeholder="CODE" maxlength="6" style="text-align:center;"/>
-      <button class="btn" id="btnJoin">Infiltrer</button>
+      <button class="btn" id="btnJoin">Rejoindre</button>
     </div>
   </div>
-  <div id="menuErr" style="color:var(--danger); font-size:0.9rem;"></div>
 </div>
 
 <div id="lobbyScreen" class="screen">
@@ -75,7 +74,7 @@ input[type=text]{background:#000;border:2px solid var(--border);color:#fff;font-
     <div id="lCodeVal" style="font-family:'Bebas Neue',sans-serif; font-size:3.5rem; color:var(--accent);">------</div>
     <div id="lStage" style="color:#888;">En attente de synchronisation...</div>
   </div>
-  <button id="readyBtn" class="btn primary" style="display:none;" onclick="socket.emit('start_game')">LANCER LE PROTOCOLE ▶</button>
+  <button id="readyBtn" class="btn primary" style="display:none;" onclick="socket.emit('start_game')">LANCER LA PARTIE ▶</button>
 </div>
 
 <div id="gameScreen">
@@ -84,8 +83,8 @@ input[type=text]{background:#000;border:2px solid var(--border);color:#fff;font-
   <div id="reticle"></div>
 
   <div id="lock_notice">
-    <p>CLIQUEZ POUR ENTRER DANS L'ANOMALIE</p>
-    <span style="font-size:0.8rem; margin-top:10px; color:#666;">Z,Q,S,D (ou flèches) pour MARCHER · SOURIS pour orienter la vision (360°) · MAJ pour COURIR · ESPACE pour interagir</span>
+    <p>CLIQUEZ ICI POUR ACTIVER LA CAMÉRA 3D</p>
+    <span style="font-size:0.8rem; margin-top:10px; color:#aaa;">Z,Q,S,D pour MARCHER · SOURIS pour regarder autour (360°) · MAJ pour COURIR · ESPACE pour interagir</span>
   </div>
 
   <div id="hud_overlay">
@@ -99,11 +98,11 @@ input[type=text]{background:#000;border:2px solid var(--border);color:#fff;font-
         <span class="hud_val" id="hItems">0 / 0</span>
       </div>
       <div class="hud_card">
-        <span class="hud_lbl">Résistance Physio</span>
+        <span class="hud_lbl">Vies</span>
         <span class="hud_val" id="hLives" style="color:var(--danger);">❤️❤️❤️</span>
       </div>
       <div class="hud_card">
-        <span class="hud_lbl">Adrénaline</span>
+        <span class="hud_lbl">Stamina</span>
         <div id="stBar"><div id="stFill"></div></div>
       </div>
     </div>
@@ -116,31 +115,16 @@ input[type=text]{background:#000;border:2px solid var(--border);color:#fff;font-
 const socket = io({transports:['websocket','polling']});
 let myId=null, myRoom=null, gameMap=null, gameState=null, isHost=false, gameStarted=false;
 
-// AUDIO PROCÉDURAL SYNTHÉTISÉ
+// AUDIO
 const AudioEngine = {
-  ctx: null, ambientStarted: false,
-  init() {
-    if (this.ctx) return;
-    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-    this.startAmbient();
-  },
-  startAmbient() {
-    if (!this.ctx || this.ambientStarted) return;
-    this.ambientStarted = true;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'sine'; osc.frequency.setValueAtTime(45, this.ctx.currentTime);
-    gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
-    osc.connect(gain); gain.connect(this.ctx.destination);
-    osc.start();
-  },
+  ctx: null,
+  init() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
   playPickup() {
     if(!this.ctx) return;
     const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'triangle'; osc.frequency.setValueAtTime(420, now);
-    osc.frequency.exponentialRampToValueAtTime(840, now+0.1);
+    const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+    osc.type = 'triangle'; osc.frequency.setValueAtTime(400, now);
+    osc.frequency.exponentialRampToValueAtTime(800, now+0.1);
     gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.001, now+0.1);
     osc.connect(gain); gain.connect(this.ctx.destination);
     osc.start(); osc.stop(now+0.1);
@@ -148,10 +132,9 @@ const AudioEngine = {
   playFootstep(isRunning) {
     if(!this.ctx) return;
     const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'triangle'; osc.frequency.setValueAtTime(40, now);
-    gain.gain.setValueAtTime(isRunning ? 0.25 : 0.08, now);
+    const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+    osc.type = 'triangle'; osc.frequency.setValueAtTime(50, now);
+    gain.gain.setValueAtTime(isRunning ? 0.2 : 0.06, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now+0.08);
     osc.connect(gain); gain.connect(this.ctx.destination);
     osc.start(); osc.stop(now+0.08);
@@ -168,7 +151,7 @@ document.getElementById('btnJoin').onclick=()=>{
 socket.on('room_created',(data)=>{ myId=data.playerId; myRoom=data.roomId; isHost=true; setupLobby(); });
 socket.on('joined',(data)=>{ myId=data.playerId; myRoom=data.roomId; isHost=false; setupLobby(); });
 socket.on('lobby_state',(data)=>{
-  document.getElementById('lStage').textContent = "Membres infiltrés : " + Object.values(data.players).map(p=>p.name).join(', ');
+  document.getElementById('lStage').textContent = "Infiltrés : " + Object.values(data.players).map(p=>p.name).join(', ');
 });
 
 function setupLobby(){
@@ -210,20 +193,20 @@ window.addEventListener('keyup', e => {
 
 window.addEventListener('mousemove', e => {
   if (document.pointerLockElement === container3d) {
-    viewYaw -= e.movementX * 0.0022;
-    viewPitch -= e.movementY * 0.0022;
-    viewPitch = Math.max(-1.4, Math.min(1.4, viewPitch)); // Blocage haut/bas
+    viewYaw -= e.movementX * 0.0025;
+    viewPitch -= e.movementY * 0.0025;
+    viewPitch = Math.max(-1.3, Math.min(1.3, viewPitch));
   }
 });
 
-let scene, camera, renderer, wallMaterial;
+let scene, camera, renderer;
 let wallsArray = [], meshesItems = {}, meshesMonsters = {};
 let headBobTimer = 0, lastStepTime = 0;
 
 function initEngine() {
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x020205);
-  scene.fog = new THREE.FogExp2(0x020205, 0.3);
+  scene.background = new THREE.Color(0x050510);
+  scene.fog = new THREE.FogExp2(0x050510, 0.2);
 
   camera = new THREE.PerspectiveCamera(75, container3d.clientWidth/container3d.clientHeight, 0.1, 100);
   
@@ -231,14 +214,14 @@ function initEngine() {
   renderer.setSize(container3d.clientWidth, container3d.clientHeight);
   container3d.appendChild(renderer.domElement);
 
-  const light = new THREE.AmbientLight(0x0a0a15, 0.5);
-  scene.add(light);
+  const ambientLight = new THREE.AmbientLight(0x282a3a, 1.2);
+  scene.add(ambientLight);
 
-  const spot = new THREE.SpotLight(0xfffaed, 3.0, 20, Math.PI/5, 0.5);
-  spot.position.set(0,0,0);
+  const spot = new THREE.SpotLight(0xffffff, 6.0, 30, Math.PI/3.5, 0.4);
+  spot.position.set(0, 0, 0);
   camera.add(spot);
   camera.add(spot.target);
-  spot.target.position.set(0,0,-1);
+  spot.target.position.set(0, 0, -1);
   scene.add(camera);
 }
 
@@ -247,14 +230,14 @@ function buildMap3D() {
   wallsArray = [];
   if(!gameMap) return;
 
-  const wGeo = new THREE.BoxGeometry(1, 2.5, 1);
-  wallMaterial = new THREE.MeshStandardMaterial({ color: 0x1b1c25, roughness: 0.8 });
+  const wGeo = new THREE.BoxGeometry(1, 2.2, 1);
+  const wallMaterial = new THREE.MeshStandardMaterial({ color: 0x3a3d52, roughness: 0.6 });
 
   for(let y=0; y<gameMap.length; y++) {
     for(let x=0; x<gameMap[y].length; x++) {
       if(gameMap[y][x] === 1) {
         const wall = new THREE.Mesh(wGeo, wallMaterial);
-        wall.position.set(x+0.5, 1.25, y+0.5);
+        wall.position.set(x + 0.5, 1.1, y + 0.5); // CORRECTION : Placement x et y strict
         scene.add(wall);
         wallsArray.push(wall);
       }
@@ -267,15 +250,18 @@ socket.on('game_started', () => {
   document.getElementById('lobbyScreen').classList.remove('active');
   document.getElementById('gameScreen').classList.add('active');
   initEngine();
+  if(gameState && gameState.map) gameMap = gameState.map;
   buildMap3D();
   container3d.requestPointerLock();
   loop();
 });
 
 socket.on('sound', (t) => { if(t==='pickup') AudioEngine.playPickup(); });
-socket.on('level_start', () => { buildMap3D(); });
 
-socket.on('state', (state) => { gameState = state; });
+socket.on('state', (state) => { 
+  gameState = state; 
+  if(!gameMap && state.map) { gameMap = state.map; buildMap3D(); }
+});
 
 let lastActionSent = false;
 
@@ -301,73 +287,64 @@ function loop() {
 
     socket.emit('input', { dx: finalDx, dy: finalDy, action: actionTrigger, boost: !!keys['shift'] });
 
-    // Interpolation fluide cinématique de la caméra
-    camera.position.x += (me.x - camera.position.x) * 0.18;
-    camera.position.z += (me.y - camera.position.z) * 0.18;
+    camera.position.x += (me.x - camera.position.x) * 0.2;
+    camera.position.z += (me.y - camera.position.z) * 0.2;
 
-    // Head bobbing & pas réalistes liés à la vitesse réelle
     if(dx!==0 || dy!==0) {
-      let speedFactor = keys['shift'] && me.stamina > 10 ? 0.14 : 0.07;
+      let speedFactor = keys['shift'] && me.stamina > 10 ? 0.12 : 0.06;
       headBobTimer += speedFactor;
-      camera.position.y = 1.25 + Math.sin(headBobTimer) * 0.025;
+      camera.position.y = 1.1 + Math.sin(headBobTimer) * 0.02;
       
-      let stepInterval = keys['shift'] && me.stamina > 10 ? 260 : 460;
+      let stepInterval = keys['shift'] && me.stamina > 10 ? 280 : 480;
       if(Date.now() - lastStepTime > stepInterval) {
         AudioEngine.playFootstep(keys['shift']);
         lastStepTime = Date.now();
       }
     } else {
-      camera.position.y += (1.25 - camera.position.y) * 0.1;
+      camera.position.y += (1.1 - camera.position.y) * 0.1;
     }
 
     camera.rotation.set(viewPitch, viewYaw, 0, 'YXZ');
 
-    // UI Updates
     document.getElementById('hDim').textContent = me.dimension.toUpperCase();
     document.getElementById('hDim').style.color = me.dimension === 'astral' ? '#00e1ff' : '#cc22ff';
     document.getElementById('hItems').textContent = `${gameState.itemsDelivered} / ${gameState.totalItems}`;
     document.getElementById('hLives').textContent = '❤️'.repeat(Math.max(0, me.lives));
     document.getElementById('stFill').style.width = `${(me.stamina/120)*100}%`;
 
-    // EFFET VISUEL 2026 : Le Plan Astral applique un filtre de distorsion
     document.getElementById('vignette_overlay').style.background = me.dimension === 'astral' 
-      ? 'radial-gradient(circle, transparent 20%, rgba(0,24,40,0.96) 100%)'
-      : 'radial-gradient(circle, transparent 25%, rgba(0,0,0,0.95) 100%)';
+      ? 'radial-gradient(circle, transparent 35%, rgba(0,40,70,0.9) 100%)'
+      : 'radial-gradient(circle, transparent 45%, rgba(0,0,0,0.8) 100%)';
   }
 
-  // RENDU FILTRÉ DES OBJETS (MÉCANIQUE D'ASYMÉTRIE COGNITIVE 2026)
   gameState.items.forEach(item => {
     if(item.collected || item.carriedBy !== null) {
       if(meshesItems[item.id]) { scene.remove(meshesItems[item.id]); delete meshesItems[item.id]; }
     } else {
-      // Les objets ne se matérialisent que dans le Plan Astral !
       if(me && me.dimension === 'astral') {
         if(!meshesItems[item.id]) {
-          let itemColor = item.type === 'golden' ? 0xffd700 : (item.type==='cursed' ? 0xcc22ff : 0x0088ff);
-          const geo = new THREE.BoxGeometry(0.2, 0.2, 0.2);
-          const mat = new THREE.MeshStandardMaterial({ color: itemColor, emissive: itemColor });
+          let itemColor = item.type === 'golden' ? 0xffd700 : (item.type==='cursed' ? 0xcc22ff : 0x00ff66);
+          const geo = new THREE.BoxGeometry(0.25, 0.25, 0.25);
+          const mat = new THREE.MeshStandardMaterial({ color: itemColor, emissive: itemColor, emissiveIntensity: 0.5 });
           const mesh = new THREE.Mesh(geo, mat);
           scene.add(mesh); meshesItems[item.id] = mesh;
         }
-        meshesItems[item.id].position.set(item.x, 0.4 + Math.sin(Date.now()*0.005)*0.05, item.y);
+        meshesItems[item.id].position.set(item.x, 0.4 + Math.sin(Date.now()*0.004)*0.06, item.y);
         meshesItems[item.id].rotation.y += 0.02;
       } else {
-        // Invisibles dans le plan matériel
         if(meshesItems[item.id]) { scene.remove(meshesItems[item.id]); delete meshesItems[item.id]; }
       }
     }
   });
 
-  // GESTION ET RENDU DES MONSTRES / ÉCHOS
   gameState.monsters.forEach(m => {
     if(!meshesMonsters[m.id]) {
-      let mColor = m.isEcho ? 0x00ffcc : 0xff1144; // Écho turquoise vs Monstre rouge
-      const geo = new THREE.SphereGeometry(0.25, 8, 8);
-      const mat = new THREE.MeshBasicMaterial({ color: mColor, wireframe: m.isEcho });
+      const geo = new THREE.SphereGeometry(0.3, 12, 12);
+      const mat = new THREE.MeshBasicMaterial({ color: 0xff1144 });
       const mesh = new THREE.Mesh(geo, mat);
       scene.add(mesh); meshesMonsters[m.id] = mesh;
     }
-    meshesMonsters[m.id].position.set(m.x, 0.6, m.y);
+    meshesMonsters[m.id].position.set(m.x, 0.5, m.y);
   });
 
   renderer.render(scene, camera);
