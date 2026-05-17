@@ -437,6 +437,10 @@ io.on('connection',socket=>{
     if(!currentRoom||!rooms[currentRoom]) return;
     const room=rooms[currentRoom];
     if(room.hostId!==playerId) return;
+    
+    // ICI : On dit aux clients de tuer proprement leur boucle d'animation locale
+    io.to(currentRoom).emit('stop_client_loop');
+
     room.level=1;
     const lvl=buildLevel(1);
     Object.assign(room,{map:lvl.map,exit:lvl.exit,season:lvl.season,pw:lvl.pw,ph:lvl.ph,items:lvl.items,monsters:lvl.monsters});
