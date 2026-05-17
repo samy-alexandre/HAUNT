@@ -115,7 +115,6 @@ input[type=text]{background:#000;border:2px solid var(--border);color:#fff;font-
 const socket = io({transports:['websocket','polling']});
 let myId=null, myRoom=null, gameMap=null, gameState=null, isHost=false, gameStarted=false;
 
-// AUDIO
 const AudioEngine = {
   ctx: null,
   init() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
@@ -152,13 +151,15 @@ socket.on('room_created',(data)=>{ myId=data.playerId; myRoom=data.roomId; isHos
 socket.on('joined',(data)=>{ myId=data.playerId; myRoom=data.roomId; isHost=false; setupLobby(); });
 socket.on('lobby_state',(data)=>{
   document.getElementById('lStage').textContent = "Infiltrés : " + Object.values(data.players).map(p=>p.name).join(', ');
+  if(myId === data.hostId) {
+    document.getElementById('readyBtn').style.display='block';
+  }
 });
 
 function setupLobby(){
   document.getElementById('menuScreen').classList.remove('active');
   document.getElementById('lobbyScreen').classList.add('active');
   document.getElementById('lCodeVal').textContent=myRoom;
-  if(isHost) document.getElementById('readyBtn').style.display='block';
 }
 
 const lockNotice = document.getElementById('lock_notice');
@@ -237,7 +238,7 @@ function buildMap3D() {
     for(let x=0; x<gameMap[y].length; x++) {
       if(gameMap[y][x] === 1) {
         const wall = new THREE.Mesh(wGeo, wallMaterial);
-        wall.position.set(x + 0.5, 1.1, y + 0.5); // CORRECTION : Placement x et y strict
+        wall.position.set(x + 0.5, 1.1, y + 0.5);
         scene.add(wall);
         wallsArray.push(wall);
       }
