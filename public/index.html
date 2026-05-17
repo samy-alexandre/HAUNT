@@ -3,126 +3,79 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HAUNTED NIGHTMARE 3D - KINETIC AUDIO EDITION</title>
+<title>HAUNTED NIGHTMARE 3D - EMOTIVE 2026 EDITION</title>
 <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-
 :root {
-  --bg: #020204;
-  --bg2: #06060c;
-  --border: #121224;
-  --accent: #00ff88;
-  --danger: #ff2a5f;
-  --text: #e2e2f0;
-  --dim: #4a4a6a;
+  --bg: #020204; --bg2: #06060c; --border: #121224;
+  --accent: #00ff88; --danger: #ff2a5f; --text: #e2e2f0; --dim: #4a4a6a;
 }
-
 html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;user-select:none;}
 
-/* ÉCRANS DE NAVIGATION */
 .screen{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;padding:2rem;background:radial-gradient(circle at center, #060614 0%, #020204 100%);z-index:10;}
 .screen.active{display:flex;}
 
-h1{font-family:'Creepster',cursive;font-size:clamp(3.5rem,8vw,6rem);color:var(--danger);text-shadow:0 0 25px rgba(255,42,95,0.6);letter-spacing:0.1em;animation:pulse 2s infinite alternate;}
-@keyframes pulse { 0% { transform: scale(0.98); filter: brightness(0.9); } 100% { transform: scale(1.02); filter: brightness(1.2); } }
+h1{font-family:'Creepster',cursive;font-size:clamp(3.5rem,8vw,6rem);color:var(--danger);text-shadow:0 0 25px rgba(255,42,95,0.6);letter-spacing:0.1em;}
 
-.panel{background:rgba(4,4,8,0.9);border:2px solid var(--border);border-radius:8px;padding:2rem;width:100%;max-width:500px;box-shadow:0 10px 30px rgba(0,0,0,0.9);}
+.panel{background:rgba(4,4,8,0.9);border:2px solid var(--border);border-radius:8px;padding:2rem;width:100%;max-width:500px;}
 .ptitle{font-size:0.75rem;letter-spacing:0.25em;color:var(--accent);text-transform:uppercase;margin-bottom:1rem;font-weight:bold;}
 
-input[type=text]{background:#000;border:2px solid var(--border);color:#fff;font-family:inherit;font-size:1.2rem;padding:0.7rem 1rem;width:100%;border-radius:4px;text-transform:uppercase;letter-spacing:0.1em;outline:none;transition:border-color 0.3s;}
-input[type=text]:focus{border-color:var(--accent);}
+input[type=text]{background:#000;border:2px solid var(--border);color:#fff;font-family:inherit;font-size:1.2rem;padding:0.7rem 1rem;width:100%;border-radius:4px;outline:none;}
 
-.btn{display:block;width:100%;padding:0.9rem;background:transparent;border:2px solid var(--accent);color:var(--accent);font-family:inherit;font-size:1rem;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;border-radius:4px;font-weight:bold;transition:all 0.2s;}
-.btn:hover{background:var(--accent);color:#000;box-shadow:0 0 15px rgba(0,255,136,0.4);}
+.btn{display:block;width:100%;padding:0.9rem;background:transparent;border:2px solid var(--accent);color:var(--accent);font-family:inherit;font-size:1rem;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;border-radius:4px;font-weight:bold;}
+.btn:hover{background:var(--accent);color:#000;}
 .btn.primary{border-color:var(--danger);color:var(--danger);}
-.btn.primary:hover{background:var(--danger);color:#000;box-shadow:0 0 15px rgba(255,42,95,0.4);}
+.btn.primary:hover{background:var(--danger);color:#000;}
 
-.err{color:var(--danger);font-size:0.9rem;text-align:center;min-height:1.5em;font-weight:bold;}
-
-.cgrid{display:grid;grid-template-columns:repeat(3, 1fr);gap:0.7rem;margin-top:0.5rem;}
-.cbtn{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;padding:0.8rem;border-radius:6px;border:2px solid var(--border);background:rgba(255,255,255,0.01);transition:all 0.2s;}
-.cbtn:hover{border-color:var(--accent);background:rgba(0,255,136,0.05);}
-.cbtn.on{border-color:var(--accent);background:rgba(0,255,136,0.15);box-shadow:0 0 10px rgba(0,255,136,0.2);}
-.cbtn-emoji{font-size:1.8rem;}
-.cbtn-label{font-size:0.65rem;color:var(--text);letter-spacing:1px;}
-
-/* ZONE DE JEU & EFFETS AVANCÉS */
 #gameScreen{display:none;position:fixed;inset:0;background:#000;}
 #gameScreen.active{display:flex;}
-
 #canvas3d_container {width:100%;height:100%;position:absolute;inset:0;z-index:1;}
-#vignette_overlay {position:absolute;inset:0;pointer-events:none;z-index:2;background:radial-gradient(circle, transparent 35%, rgba(0,0,0,0.92) 100%);}
-
+#vignette_overlay {position:absolute;inset:0;pointer-events:none;z-index:2;background:radial-gradient(circle, transparent 25%, rgba(0,0,0,0.95) 100%);transition: background 0.3s;}
 #reticle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:10px;height:10px;pointer-events:none;z-index:5;}
-#reticle::before, #reticle::after {content:'';position:absolute;background:rgba(255,255,255,0.25);}
-#reticle::before{top:4px;left:-5px;width:20px;height:2px;}
-#reticle::after{top:-5px;left:4px;width:2px;height:20px;}
+#reticle::before{content:'';position:absolute;background:rgba(255,255,255,0.4);top:4px;left:-5px;width:20px;height:2px;}
 
-/* HUD */
 #hud_overlay {position:absolute;inset:0;pointer-events:none;z-index:4;display:flex;flex-direction:column;justify-content:space-between;padding:1.5rem;}
 .hud_row {display:flex;justify-content:space-between;width:100%;}
-.hud_card {background:rgba(1,1,3,0.85);border:1px solid rgba(31,31,58,0.4);padding:0.8rem 1.2rem;border-radius:6px;backdrop-filter:blur(6px);display:flex;flex-direction:column;gap:2px;}
+.hud_card {background:rgba(1,1,3,0.85);border:1px solid rgba(31,31,58,0.4);padding:0.8rem 1.2rem;border-radius:6px;}
 .hud_lbl {font-size:0.6rem;color:var(--dim);letter-spacing:2px;text-transform:uppercase;}
-.hud_val {font-size:1.4rem;font-weight:bold;color:var(--accent);font-family:'Bebas Neue',sans-serif;letter-spacing:1px;}
-.hud_val.danger {color:var(--danger);}
+.hud_val {font-size:1.4rem;font-weight:bold;color:var(--accent);font-family:'Bebas Neue',sans-serif;}
 
-#stBar {width:120px;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;margin-top:5px;overflow:hidden;}
+#stBar {width:120px;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;}
 #stFill {height:100%;width:100%;background:var(--accent);}
 
-#ui_right {position:absolute;right:1.5rem;top:7.5rem;bottom:1.5rem;width:260px;pointer-events:auto;z-index:4;display:flex;flex-direction:column;gap:1rem;}
-#chat_panel {flex:1;background:rgba(1,1,3,0.85);border:1px solid rgba(31,31,58,0.4);border-radius:6px;backdrop-filter:blur(6px);display:flex;flex-direction:column;overflow:hidden;}
-#chat_logs {flex:1;overflow-y:auto;padding:0.8rem;display:flex;flex-direction:column;gap:0.4rem;font-size:0.75rem;}
-.msg_line {line-height:1.3;word-break:break-all;}
-#chat_form {display:flex;border-top:1px solid rgba(31,31,58,0.4);background:rgba(0,0,0,0.4);}
-#chat_input {flex:1;background:transparent;border:none;padding:0.6rem;color:#fff;font-family:inherit;font-size:0.8rem;outline:none;}
-
-#leaderboard {background:rgba(1,1,3,0.85);border:1px solid rgba(31,31,58,0.4);border-radius:6px;padding:0.8rem;font-size:0.75rem;}
-#radarCanvas {background:rgba(0,0,0,0.85);border:2px solid var(--border);border-radius:50%;align-self:flex-end;}
-
-#screen_msg {position:fixed;inset:0;background:rgba(0,0,0,0.97);display:none;flex-direction:column;align-items:center;justify-content:center;gap:2rem;z-index:100;}
-#screen_msg.on {display:flex;}
-#msg_title {font-family:'Creepster',cursive;font-size:4rem;}
-
-#lock_notice {position:absolute;inset:0;background:rgba(0,0,0,0.85);z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;}
-#lock_notice p {font-size:1.4rem;color:var(--accent);letter-spacing:2px;animation:blink 1.5s infinite;}
-@keyframes blink { 0%, 100% { opacity:0.3; } 50% { opacity:1; } }
+#lock_notice {position:absolute;inset:0;background:rgba(0,0,0,0.9);z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;}
+#lock_notice p {font-size:1.4rem;color:var(--accent);letter-spacing:2px;}
 </style>
 </head>
 <body>
 
 <div id="menuScreen" class="screen active">
-  <h1>HAUNTED 3D</h1>
-  <div style="color:var(--dim); letter-spacing:5px; font-size:0.8rem;">REALTIME PROCEDURAL AUDIO · 360° MOUSE LOOK</div>
+  <h1>HAUNT 2026</h1>
+  <div style="color:var(--dim); letter-spacing:5px; font-size:0.8rem; margin-bottom:15px;">DIVERGENCE DIMENSIONNELLE ASYMÉTRIQUE</div>
   
   <div class="panel">
-    <div class="ptitle">▸ Identité du Survivant</div>
+    <div class="ptitle">▸ Identité</div>
     <input type="text" id="nameIn" placeholder="Pseudo" maxlength="14" value="Survivor"/>
-    
-    <div class="ptitle" style="margin-top:1.5rem;">▸ Choix de l'Hôte Animal</div>
-    <div class="cgrid" id="avatarGrid"></div>
   </div>
 
   <div style="display:flex; gap:1rem; width:100%; max-width:500px;">
-    <button class="btn primary" id="btnCreate">Créer Cauchemar</button>
+    <button class="btn primary" id="btnCreate">Créer Anomalie</button>
     <div style="display:flex; flex-direction:column; flex:1; gap:0.4rem;">
-      <input type="text" id="codeIn" placeholder="CODE SALLE" maxlength="6" style="text-align:center; font-size:1rem; padding:0.45rem;"/>
+      <input type="text" id="codeIn" placeholder="CODE" maxlength="6" style="text-align:center;"/>
       <button class="btn" id="btnJoin">Infiltrer</button>
     </div>
   </div>
-  <div class="err" id="menuErr"></div>
+  <div id="menuErr" style="color:var(--danger); font-size:0.9rem;"></div>
 </div>
 
 <div id="lobbyScreen" class="screen">
-  <h1>MANOIR PRIVÉ</h1>
+  <h1>SALLE D'ATTENTE</h1>
   <div class="panel" style="text-align:center;">
-    <div class="ptitle">Code d'accès universel</div>
-    <div id="lCodeVal" style="font-family:'Bebas Neue',sans-serif; font-size:3.5rem; color:var(--accent); letter-spacing:4px;">------</div>
-    <div id="lStage" style="margin-top:1.5rem; font-size:0.9rem; color:#888;">Génération de la géométrie...</div>
+    <div id="lCodeVal" style="font-family:'Bebas Neue',sans-serif; font-size:3.5rem; color:var(--accent);">------</div>
+    <div id="lStage" style="color:#888;">En attente de synchronisation...</div>
   </div>
-  <div style="width:100%; max-width:500px;">
-    <button id="readyBtn" class="btn primary" style="display:none;" onclick="socket.emit('start_game')">INITIALISER LE MOTEUR 3D ▶</button>
-  </div>
+  <button id="readyBtn" class="btn primary" style="display:none;" onclick="socket.emit('start_game')">LANCER LE PROTOCOLE ▶</button>
 </div>
 
 <div id="gameScreen">
@@ -131,56 +84,29 @@ input[type=text]:focus{border-color:var(--accent);}
   <div id="reticle"></div>
 
   <div id="lock_notice">
-    <p>CLIQUEZ ICI POUR ACTIVER LE SON & LA SOURIS FPS</p>
-    <span style="font-size:0.8rem; margin-top:10px; color:#555;">Z,Q,S,D · SOURIS pour orienter (Haut/Bas/Gauche/Droite) · MAJ pour courir</span>
+    <p>CLIQUEZ POUR ENTRER DANS L'ANOMALIE</p>
+    <span style="font-size:0.8rem; margin-top:10px; color:#666;">Z,Q,S,D (ou flèches) pour MARCHER · SOURIS pour orienter la vision (360°) · MAJ pour COURIR · ESPACE pour interagir</span>
   </div>
 
   <div id="hud_overlay">
     <div class="hud_row">
       <div class="hud_card">
-        <span class="hud_lbl">Donjon</span>
-        <span class="hud_val" id="hLvl">ÉTAGE 1</span>
+        <span class="hud_lbl">Dimension Affectée</span>
+        <span class="hud_val" id="hDim" style="color:#cc22ff;">MATÉRIELLE</span>
       </div>
       <div class="hud_card">
-        <span class="hud_lbl">Cargaisons Sécurisées</span>
+        <span class="hud_lbl">Colis Sécurisés</span>
         <span class="hud_val" id="hItems">0 / 0</span>
       </div>
       <div class="hud_card">
-        <span class="hud_lbl">Score d'Évasion</span>
-        <span class="hud_val" id="hScore">0000</span>
-      </div>
-      <div class="hud_card">
-        <span class="hud_lbl">Résistance Vitale</span>
-        <span class="hud_val danger" id="hLives">❤️❤️❤️</span>
+        <span class="hud_lbl">Résistance Physio</span>
+        <span class="hud_val" id="hLives" style="color:var(--danger);">❤️❤️❤️</span>
       </div>
       <div class="hud_card">
         <span class="hud_lbl">Adrénaline</span>
         <div id="stBar"><div id="stFill"></div></div>
       </div>
     </div>
-
-    <div class="hud_row" style="flex:1; align-items:flex-end; justify-content:space-between; margin-top:20px;">
-      <canvas id="radarCanvas" width="130" height="130"></canvas>
-      
-      <div id="ui_right">
-        <div id="leaderboard"></div>
-        <div id="chat_panel">
-          <div id="chat_logs"></div>
-          <form id="chat_form">
-            <input type="text" id="chat_input" autocomplete="off" placeholder="Canal radio..." />
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div id="screen_msg">
-  <div id="msg_title">TITRE</div>
-  <p id="msg_sub" style="color:#aaa; font-size:1.1rem; text-align:center; max-width:600px;"></p>
-  <div style="display:flex; gap:1rem; width:100%; max-width:400px;">
-    <button class="btn primary" id="btnNext" style="display:none;">Prochain Étage</button>
-    <button class="btn" id="btnRestart" onclick="location.reload()">Réinitialiser</button>
   </div>
 </div>
 
@@ -190,12 +116,9 @@ input[type=text]:focus{border-color:var(--accent);}
 const socket = io({transports:['websocket','polling']});
 let myId=null, myRoom=null, gameMap=null, gameState=null, isHost=false, gameStarted=false;
 
-// ====================================================================
-//            MOTEUR AUDIO PROCÉDURAL (SANS FICHIERS EXTERNES)
-// ====================================================================
+// AUDIO PROCÉDURAL SYNTHÉTISÉ
 const AudioEngine = {
-  ctx: null,
-  ambientStarted: false,
+  ctx: null, ambientStarted: false,
   init() {
     if (this.ctx) return;
     this.ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -204,628 +127,251 @@ const AudioEngine = {
   startAmbient() {
     if (!this.ctx || this.ambientStarted) return;
     this.ambientStarted = true;
-    
-    // Bourdonnement sourd d'horreur
-    const osc1 = this.ctx.createOscillator();
-    const osc2 = this.ctx.createOscillator();
+    const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
-    const filter = this.ctx.createBiquadFilter();
-    
-    osc1.type = 'sine'; osc1.frequency.setValueAtTime(40, this.ctx.currentTime);
-    osc2.type = 'sawtooth'; osc2.frequency.setValueAtTime(40.6, this.ctx.currentTime);
-    
-    filter.type = 'lowpass'; filter.frequency.setValueAtTime(90, this.ctx.currentTime);
-    gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
-    
-    osc1.connect(filter); osc2.connect(filter);
-    filter.connect(gain); gain.connect(this.ctx.destination);
-    osc1.start(); osc2.start();
+    osc.type = 'sine'; osc.frequency.setValueAtTime(45, this.ctx.currentTime);
+    gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+    osc.connect(gain); gain.connect(this.ctx.destination);
+    osc.start();
   },
   playPickup() {
-    if (!this.ctx) return;
+    if(!this.ctx) return;
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(380, now);
-    osc.frequency.exponentialRampToValueAtTime(760, now + 0.12);
-    gain.gain.setValueAtTime(0.15, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    osc.type = 'triangle'; osc.frequency.setValueAtTime(420, now);
+    osc.frequency.exponentialRampToValueAtTime(840, now+0.1);
+    gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.001, now+0.1);
     osc.connect(gain); gain.connect(this.ctx.destination);
-    osc.start(); osc.stop(now + 0.15);
-  },
-  playHurt() {
-    if (!this.ctx) return;
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(140, now);
-    osc.frequency.linearRampToValueAtTime(30, now + 0.35);
-    gain.gain.setValueAtTime(0.35, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-    osc.connect(gain); gain.connect(this.ctx.destination);
-    osc.start(); osc.stop(now + 0.35);
+    osc.start(); osc.stop(now+0.1);
   },
   playFootstep(isRunning) {
-    if (!this.ctx) return;
+    if(!this.ctx) return;
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
-    const filter = this.ctx.createBiquadFilter();
-    
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(55, now);
-    osc.frequency.linearRampToValueAtTime(20, now + 0.08);
-    
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(80, now);
-    
-    gain.gain.setValueAtTime(isRunning ? 0.3 : 0.15, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-    
-    osc.connect(filter); filter.connect(gain); gain.connect(this.ctx.destination);
-    osc.start(); osc.stop(now + 0.1);
-  },
-  playWin() {
-    if (!this.ctx) return;
-    const now = this.ctx.currentTime;
-    [440, 554, 659, 880].forEach((freq, idx) => {
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, now + idx * 0.08);
-      gain.gain.setValueAtTime(0.12, now + idx * 0.08);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.4);
-      osc.connect(gain); gain.connect(this.ctx.destination);
-      osc.start(now + idx * 0.08); osc.stop(now + idx * 0.08 + 0.4);
-    });
-  },
-  playGameOver() {
-    if (!this.ctx) return;
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(90, now);
-    osc.frequency.linearRampToValueAtTime(35, now + 1.2);
-    gain.gain.setValueAtTime(0.4, now);
-    gain.gain.linearRampToValueAtTime(0.001, now + 1.2);
+    osc.type = 'triangle'; osc.frequency.setValueAtTime(40, now);
+    gain.gain.setValueAtTime(isRunning ? 0.25 : 0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now+0.08);
     osc.connect(gain); gain.connect(this.ctx.destination);
-    osc.start(); osc.stop(now + 1.2);
+    osc.start(); osc.stop(now+0.08);
   }
 };
 
-const ANIMALS=[
-  {hex:'#888888', emoji:'🐱', name:'Chat', color:0x888888},
-  {hex:'#cc8833', emoji:'🐵', name:'Singe', color:0xcc8833},
-  {hex:'#ff8844', emoji:'🦊', name:'Renard', color:0xff8844},
-  {hex:'#884422', emoji:'🐻', name:'Ours', color:0x884422},
-  {hex:'#44cc44', emoji:'🐸', name:'Grenouille', color:0x44cc44},
-  {hex:'#dddddd', emoji:'🐰', name:'Lapin', color:0xdddddd}
-];
-let myAnimalIdx=0;
-
-const avatarGrid=document.getElementById('avatarGrid');
-ANIMALS.forEach((a,i)=>{
-  const d=document.createElement('div');
-  d.className='cbtn'+(i===0?' on':''); d.id='avatar_'+i;
-  d.innerHTML=`<div class="cbtn-emoji">${a.emoji}</div><div class="cbtn-label">${a.name}</div>`;
-  d.onclick=()=>{
-    myAnimalIdx=i;
-    document.querySelectorAll('.cbtn').forEach(x=>x.classList.remove('on'));
-    d.classList.add('on');
-    socket.emit('update_color',{color:a.hex, animal:i});
-  };
-  avatarGrid.appendChild(d);
-});
-
 document.getElementById('btnCreate').onclick=()=>{
-  const name=document.getElementById('nameIn').value.trim()||'Héros';
-  socket.emit('create_room',{name, animal:myAnimalIdx, color:ANIMALS[myAnimalIdx].hex});
+  socket.emit('create_room',{name:document.getElementById('nameIn').value});
 };
 document.getElementById('btnJoin').onclick=()=>{
-  const name=document.getElementById('nameIn').value.trim()||'Héros';
-  const code=document.getElementById('codeIn').value.trim().toUpperCase();
-  if(code) socket.emit('join_room',{roomCode:code, name, animal:myAnimalIdx, color:ANIMALS[myAnimalIdx].hex});
+  socket.emit('join_room',{roomCode:document.getElementById('codeIn').value, name:document.getElementById('nameIn').value});
 };
 
-socket.on('room_created',(data)=>{ myId=data.playerId; myRoom=data.roomId; isHost=true; setupLobbyView(); });
-socket.on('joined',(data)=>{ myId=data.playerId; myRoom=data.roomId; isHost=false; setupLobbyView(); });
-socket.on('lobby_state',(data)=>{ if(!gameStarted) updateLobbyList(data); });
-socket.on('error',(msg)=>{ document.getElementById('menuErr').textContent=msg; });
+socket.on('room_created',(data)=>{ myId=data.playerId; myRoom=data.roomId; isHost=true; setupLobby(); });
+socket.on('joined',(data)=>{ myId=data.playerId; myRoom=data.roomId; isHost=false; setupLobby(); });
+socket.on('lobby_state',(data)=>{
+  document.getElementById('lStage').textContent = "Membres infiltrés : " + Object.values(data.players).map(p=>p.name).join(', ');
+});
 
-function setupLobbyView(){
+function setupLobby(){
   document.getElementById('menuScreen').classList.remove('active');
   document.getElementById('lobbyScreen').classList.add('active');
   document.getElementById('lCodeVal').textContent=myRoom;
   if(isHost) document.getElementById('readyBtn').style.display='block';
 }
-function updateLobbyList(data){
-  let names=Object.values(data.players).map(p=>p.name).join(' · ');
-  document.getElementById('lStage').textContent="Survivants connectés : "+names;
-}
 
 const lockNotice = document.getElementById('lock_notice');
 const container3d = document.getElementById('canvas3d_container');
+lockNotice.onclick = () => { AudioEngine.init(); if(gameStarted) container3d.requestPointerLock(); };
 
-lockNotice.onclick = () => { 
-  AudioEngine.init(); // Initier le son au clic utilisateur
-  if(gameStarted) container3d.requestPointerLock(); 
-};
 document.addEventListener('pointerlockchange', () => {
-  if (document.pointerLockElement === container3d) {
-    lockNotice.style.display = 'none';
-  } else {
-    if(gameStarted) lockNotice.style.display = 'flex';
-  }
+  lockNotice.style.display = (document.pointerLockElement === container3d) ? 'none' : 'flex';
 });
 
 const keys={};
-let viewYaw = 0; 
-let viewPitch = 0; // Ajout axe vertical
+let viewYaw = 0, viewPitch = 0;
 
-window.addEventListener('keydown', e => { 
-  const k = e.key.toLowerCase();
-  if(k === 'z' || e.code === 'ArrowUp') keys['up'] = true;
-  if(k === 's' || e.code === 'ArrowDown') keys['down'] = true;
-  if(k === 'q' || e.code === 'ArrowLeft') keys['left'] = true;
-  if(k === 'd' || e.code === 'ArrowRight') keys['right'] = true;
-  if(e.code === 'ShiftLeft' || e.code === 'ShiftRight') keys['shift'] = true;
-  if(e.code === 'Space' || k === 'e') keys['action'] = true;
+window.addEventListener('keydown', e => {
+  let k = e.key.toLowerCase();
+  if(k==='z' || e.code==='ArrowUp') keys['up']=true;
+  if(k==='s' || e.code==='ArrowDown') keys['down']=true;
+  if(k==='q' || e.code==='ArrowLeft') keys['left']=true;
+  if(k==='d' || e.code==='ArrowRight') keys['right']=true;
+  if(e.code==='ShiftLeft') keys['shift']=true;
+  if(e.code==='Space' || k==='e') keys['action']=true;
 });
-window.addEventListener('keyup', e => { 
-  const k = e.key.toLowerCase();
-  if(k === 'z' || e.code === 'ArrowUp') keys['up'] = false;
-  if(k === 's' || e.code === 'ArrowDown') keys['down'] = false;
-  if(k === 'q' || e.code === 'ArrowLeft') keys['left'] = false;
-  if(k === 'd' || e.code === 'ArrowRight') keys['right'] = false;
-  if(e.code === 'ShiftLeft' || e.code === 'ShiftRight') keys['shift'] = false;
-  if(e.code === 'Space' || k === 'e') keys['action'] = false;
+window.addEventListener('keyup', e => {
+  let k = e.key.toLowerCase();
+  if(k==='z' || e.code==='ArrowUp') keys['up']=false;
+  if(k==='s' || e.code==='ArrowDown') keys['down']=false;
+  if(k==='q' || e.code==='ArrowLeft') keys['left']=false;
+  if(k==='d' || e.code==='ArrowRight') keys['right']=false;
+  if(e.code==='ShiftLeft') keys['shift']=false;
+  if(e.code==='Space' || k==='e') keys['action']=false;
 });
 
 window.addEventListener('mousemove', e => {
   if (document.pointerLockElement === container3d) {
-    viewYaw -= e.movementX * 0.0020; 
-    viewPitch -= e.movementY * 0.0020;
-    viewPitch = Math.max(-1.45, Math.min(1.45, viewPitch)); // Limiter la vision haute/basse à ~83 degrés
+    viewYaw -= e.movementX * 0.0022;
+    viewPitch -= e.movementY * 0.0022;
+    viewPitch = Math.max(-1.4, Math.min(1.4, viewPitch)); // Blocage haut/bas
   }
 });
 
-let scene, camera, renderer;
-let wallsArray = [];
-let meshesItems = {};
-let meshesMonsters = {};
-let meshesPlayers = {};
-let exitPortalGroup = null;
-let exitVisualCylinder = null;
-let wallMaterial, floorMaterial;
+let scene, camera, renderer, wallMaterial;
+let wallsArray = [], meshesItems = {}, meshesMonsters = {};
+let headBobTimer = 0, lastStepTime = 0;
 
-let targetCameraPos = new THREE.Vector3(1.5, 1.2, 1.5);
-let headBobbingTimer = 0;
-let lastStepTime = 0;
-let lastKnownLives = 3;
-
-function generateProceduralTextures() {
-  const wallCanvas = document.createElement('canvas');
-  wallCanvas.width = 512; wallCanvas.height = 512;
-  const wCtx = wallCanvas.getContext('2d');
-  wCtx.fillStyle = '#111218'; wCtx.fillRect(0,0,512,512);
-  wCtx.strokeStyle = '#050608'; wCtx.lineWidth = 6;
-  
-  for(let y=0; y<512; y+=64) {
-    wCtx.beginPath(); wCtx.moveTo(0, y); wCtx.lineTo(512, y); wCtx.stroke();
-    let shift = (y/64)%2 * 64;
-    for(let x=shift; x<512+shift; x+=128) {
-      wCtx.beginPath(); wCtx.moveTo(x%512, y); wCtx.lineTo(x%512, y+64); wCtx.stroke();
-    }
-  }
-  for(let i=0; i<8000; i++) {
-    let rx = Math.random()*512; let ry = Math.random()*512;
-    let c = Math.random()*25;
-    wCtx.fillStyle = `rgba(${c},${c},${c},0.15)`; wCtx.fillRect(rx, ry, 2, 2);
-  }
-  const wallTex = new THREE.CanvasTexture(wallCanvas);
-  wallTex.wrapS = THREE.RepeatWrapping; wallTex.wrapT = THREE.RepeatWrapping;
-
-  wallMaterial = new THREE.MeshStandardMaterial({
-    map: wallTex, bumpMap: wallTex, bumpScale: 0.04, roughness: 0.75, metalness: 0.1
-  });
-
-  const floorCanvas = document.createElement('canvas');
-  floorCanvas.width = 256; floorCanvas.height = 256;
-  const fCtx = floorCanvas.getContext('2d');
-  fCtx.fillStyle = '#06070a'; fCtx.fillRect(0,0,256,256);
-  fCtx.strokeStyle = '#0e1017'; fCtx.lineWidth = 4; fCtx.strokeRect(0,0,256,256);
-  for(let i=0; i<4000; i++) {
-    let rx = Math.random()*256; let ry = Math.random()*256;
-    let c = Math.random()*20;
-    fCtx.fillStyle = `rgba(${c},${c},${c},0.12)`; fCtx.fillRect(rx, ry, 2, 2);
-  }
-  const floorTex = new THREE.CanvasTexture(floorCanvas);
-  floorTex.wrapS = THREE.RepeatWrapping; floorTex.wrapT = THREE.RepeatWrapping;
-  floorTex.repeat.set(40, 40);
-
-  floorMaterial = new THREE.MeshStandardMaterial({
-    map: floorTex, bumpMap: floorTex, bumpScale: 0.02, roughness: 0.6
-  });
-}
-
-function initThreeEngine() {
-  generateProceduralTextures();
-
+function initEngine() {
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x010103);
-  scene.fog = new THREE.FogExp2(0x010103, 0.25);
+  scene.background = new THREE.Color(0x020205);
+  scene.fog = new THREE.FogExp2(0x020205, 0.3);
 
-  camera = new THREE.PerspectiveCamera(75, container3d.clientWidth / container3d.clientHeight, 0.05, 50);
+  camera = new THREE.PerspectiveCamera(75, container3d.clientWidth/container3d.clientHeight, 0.1, 100);
   
-  renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+  renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(container3d.clientWidth, container3d.clientHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
-  
   container3d.appendChild(renderer.domElement);
 
-  const ambient = new THREE.AmbientLight(0x04050d, 0.25);
-  scene.add(ambient);
+  const light = new THREE.AmbientLight(0x0a0a15, 0.5);
+  scene.add(light);
 
-  const flashlight = new THREE.SpotLight(0xfff5e0, 4.5, 25, Math.PI / 4.8, 0.5, 1.2);
-  flashlight.position.set(0, 0, 0);
-  flashlight.castShadow = true;
-  flashlight.shadow.mapSize.width = 1024;
-  flashlight.shadow.mapSize.height = 1024;
-  camera.add(flashlight);
-  
-  const flashlightTarget = new THREE.Object3D();
-  flashlightTarget.position.set(0, 0, -1);
-  camera.add(flashlightTarget);
-  flashlight.target = flashlightTarget;
-
+  const spot = new THREE.SpotLight(0xfffaed, 3.0, 20, Math.PI/5, 0.5);
+  spot.position.set(0,0,0);
+  camera.add(spot);
+  camera.add(spot.target);
+  spot.target.position.set(0,0,-1);
   scene.add(camera);
-
-  window.addEventListener('resize', () => {
-    camera.aspect = container3d.clientWidth / container3d.clientHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(container3d.clientWidth, container3d.clientHeight);
-  });
 }
 
-function generate3DArchitecture() {
+function buildMap3D() {
   wallsArray.forEach(w => scene.remove(w));
   wallsArray = [];
-  if(exitPortalGroup) scene.remove(exitPortalGroup);
-  if (!gameMap) return;
+  if(!gameMap) return;
 
-  const floorGeo = new THREE.PlaneGeometry(70, 70);
-  const floorMesh = new THREE.Mesh(floorGeo, floorMaterial);
-  floorMesh.rotation.x = -Math.PI / 2;
-  floorMesh.receiveShadow = true;
-  scene.add(floorMesh);
+  const wGeo = new THREE.BoxGeometry(1, 2.5, 1);
+  wallMaterial = new THREE.MeshStandardMaterial({ color: 0x1b1c25, roughness: 0.8 });
 
-  const wallGeo = new THREE.BoxGeometry(1, 2.8, 1);
-  for (let y = 0; y < gameMap.length; y++) {
-    for (let x = 0; x < gameMap[y].length; x++) {
-      if (gameMap[y][x] === 1) {
-        const wall = new THREE.Mesh(wallGeo, wallMaterial);
-        wall.position.set(x + 0.5, 1.4, y + 0.5);
-        wall.castShadow = true;
-        wall.receiveShadow = true;
+  for(let y=0; y<gameMap.length; y++) {
+    for(let x=0; x<gameMap[y].length; x++) {
+      if(gameMap[y][x] === 1) {
+        const wall = new THREE.Mesh(wGeo, wallMaterial);
+        wall.position.set(x+0.5, 1.25, y+0.5);
         scene.add(wall);
         wallsArray.push(wall);
       }
     }
   }
-
-  exitPortalGroup = new THREE.Group();
-  const exitGeo = new THREE.CylinderGeometry(0.45, 0.45, 2.8, 24, 1, true);
-  const exitMat = new THREE.MeshBasicMaterial({ color: 0x00ff88, transparent: true, opacity: 0.35, side: THREE.DoubleSide, wireframe: true });
-  exitVisualCylinder = new THREE.Mesh(exitGeo, exitMat);
-  exitVisualCylinder.position.y = 1.4;
-  exitPortalGroup.add(exitVisualCylinder);
-
-  const coreGeo = new THREE.CylinderGeometry(0.1, 0.1, 2.8, 8);
-  const coreMat = new THREE.MeshBasicMaterial({ color: 0x88ffcc, transparent: true, opacity: 0.6 });
-  const coreMesh = new THREE.Mesh(coreGeo, coreMat);
-  coreMesh.position.y = 1.4;
-  exitPortalGroup.add(coreMesh);
-
-  const exitLight = new THREE.PointLight(0x00ff88, 3, 6);
-  exitLight.position.y = 1.4;
-  exitPortalGroup.add(exitLight);
-
-  scene.add(exitPortalGroup);
-  exitPortalGroup.position.set(-999, 0, -999);
 }
-
-let lastActionSent = false;
-socket.on('map', (mapData) => { gameMap = mapData; });
-
-socket.on('sound', (type) => {
-  if (type === 'pickup') AudioEngine.playPickup();
-});
 
 socket.on('game_started', () => {
   gameStarted = true;
   document.getElementById('lobbyScreen').classList.remove('active');
   document.getElementById('gameScreen').classList.add('active');
-  initThreeEngine();
-  generate3DArchitecture();
+  initEngine();
+  buildMap3D();
   container3d.requestPointerLock();
-  runExecution3D();
+  loop();
 });
 
-socket.on('state', (state) => {
-  gameState = state;
-  if (state.gameOver) {
-    document.exitPointerLock();
-    AudioEngine.playGameOver();
-    const scr = document.getElementById('screen_msg'); scr.style.display = 'flex';
-    document.getElementById('msg_title').textContent = "SOUFFRANCE ÉTERNELLE";
-    document.getElementById('msg_title').style.color = "var(--danger)";
-    document.getElementById('msg_sub').textContent = "L'asile a consumé l'intégralité de vos âmes.";
-    return;
-  }
-  if (state.gameWon) {
-    document.exitPointerLock();
-    AudioEngine.playWin();
-    const scr = document.getElementById('screen_msg'); scr.style.display = 'flex';
-    document.getElementById('msg_title').textContent = "BRÈCHE DE CONFINEMENT";
-    document.getElementById('msg_title').style.color = "var(--accent)";
-    document.getElementById('msg_sub').textContent = `Étage nettoyé avec succès. Rang d'évacuation : ${state.stars} Étoile(s).`;
-    if (isHost) {
-      const nxt = document.getElementById('btnNext'); nxt.style.display = 'inline-block';
-      nxt.onclick = () => { socket.emit('next_level'); scr.style.display = 'none'; nxt.style.display = 'none'; };
-    }
-    return;
-  }
+socket.on('sound', (t) => { if(t==='pickup') AudioEngine.playPickup(); });
+socket.on('level_start', () => { buildMap3D(); });
 
-  const me = state.players[myId];
-  if (me) {
-    targetCameraPos.set(me.x, 1.2, me.y);
-    
-    // Détecter la perte de vie pour jouer le son de blessure
-    if (me.lives < lastKnownLives) {
-      AudioEngine.playHurt();
-    }
-    lastKnownLives = me.lives;
+socket.on('state', (state) => { gameState = state; });
 
-    document.getElementById('hLvl').textContent = "ÉTAGE " + state.level;
-    document.getElementById('hItems').textContent = `${state.itemsDelivered} / ${state.totalItems}`;
-    document.getElementById('hScore').textContent = String(me.score).padStart(4, '0');
-    document.getElementById('hLives').textContent = '❤️'.repeat(Math.max(0, me.lives));
-    document.getElementById('stFill').style.width = `${(me.stamina / 120) * 100}%`;
-  }
+let lastActionSent = false;
 
-  let lhtml = Object.values(state.players)
-    .sort((a,b)=>b.score - a.score)
-    .map(p=>`<div style="color:${p.color}; font-weight:bold;">${p.name}: ${p.score} ${p.carrying !== null ? '📦' : ''}</div>`)
-    .join('');
-  document.getElementById('leaderboard').innerHTML = lhtml;
-});
-
-socket.on('level_start', (data) => {
-  document.getElementById('screen_msg').style.display = 'none';
-  generate3DArchitecture();
-  container3d.requestPointerLock();
-});
-
-function runExecution3D() {
-  requestAnimationFrame(runExecution3D);
-  if (!gameStarted || !gameState) return;
+function loop() {
+  requestAnimationFrame(loop);
+  if(!gameStarted || !gameState) return;
 
   const me = gameState.players[myId];
-  
-  if (me && !me.dead && !me.eliminated) {
-    let F = 0, R = 0;
-    if (keys['up']) F = 1; if (keys['down']) F = -1;
-    if (keys['left']) R = -1; if (keys['right']) R = 1;
+  if(me && !me.dead) {
+    let dx=0, dy=0;
+    if(keys['up']) dy = 1; if(keys['down']) dy = -1;
+    if(keys['left']) dx = -1; if(keys['right']) dx = 1;
 
-    const boost = !!keys['shift'];
-    const action = !!keys['action'];
+    let actionTrigger = (keys['action'] && !lastActionSent);
+    lastActionSent = keys['action'];
 
-    let finalDx = 0, finalDy = 0;
-    if (F !== 0 || R !== 0) {
-      finalDx = -F * Math.sin(viewYaw) + R * Math.cos(viewYaw);
-      finalDy = -F * Math.cos(viewYaw) - R * Math.sin(viewYaw);
+    let finalDx = -dy * Math.sin(viewYaw) + dx * Math.cos(viewYaw);
+    let finalDy = -dy * Math.cos(viewYaw) - dx * Math.sin(viewYaw);
+    if(dx!==0 || dy!==0) {
       let len = Math.hypot(finalDx, finalDy);
       finalDx /= len; finalDy /= len;
     }
 
-    let actionTrigger = false;
-    if (action && !lastActionSent) actionTrigger = true;
-    lastActionSent = action;
+    socket.emit('input', { dx: finalDx, dy: finalDy, action: actionTrigger, boost: !!keys['shift'] });
 
-    socket.emit('input', { dx: finalDx, dy: finalDy, action: actionTrigger, boost: boost, dir: F > 0 ? 'up' : 'down' });
+    // Interpolation fluide cinématique de la caméra
+    camera.position.x += (me.x - camera.position.x) * 0.18;
+    camera.position.z += (me.y - camera.position.z) * 0.18;
 
-    // INTERPOLATION CINÉMATIQUE SUPÉRIEURE (Lissage 0 friction)
-    camera.position.x += (targetCameraPos.x - camera.position.x) * 0.16;
-    camera.position.z += (targetCameraPos.z - camera.position.z) * 0.16;
-
-    // EFFET HEAD-BOBBING ET BLARE DE PAS (MARCHE VS COURSE)
-    if (F !== 0 || R !== 0) {
-      let isRunning = boost && me.stamina > 0;
-      let speedFactor = isRunning ? 0.16 : 0.09;
-      headBobbingTimer += speedFactor;
+    // Head bobbing & pas réalistes liés à la vitesse réelle
+    if(dx!==0 || dy!==0) {
+      let speedFactor = keys['shift'] && me.stamina > 10 ? 0.14 : 0.07;
+      headBobTimer += speedFactor;
+      camera.position.y = 1.25 + Math.sin(headBobTimer) * 0.025;
       
-      // Mouvement sinusoïdal vertical et latéral (effet tête humaine réaliste)
-      camera.position.y = 1.2 + Math.sin(headBobbingTimer) * 0.03;
-      
-      // Inclinaison latérale subtile (Head-Roll)
-      camera.rotation.z = Math.cos(headBobbingTimer * 0.5) * 0.015;
-
-      // Déclenchement périodique des bruits de pas
-      let stepDelay = isRunning ? 280 : 480; 
-      if (Date.now() - lastStepTime > stepDelay) {
-        AudioEngine.playFootstep(isRunning);
+      let stepInterval = keys['shift'] && me.stamina > 10 ? 260 : 460;
+      if(Date.now() - lastStepTime > stepInterval) {
+        AudioEngine.playFootstep(keys['shift']);
         lastStepTime = Date.now();
       }
     } else {
-      camera.position.y += (1.2 - camera.position.y) * 0.1;
-      camera.rotation.z += (0 - camera.rotation.z) * 0.1;
+      camera.position.y += (1.25 - camera.position.y) * 0.1;
     }
 
-    // Application stricte Yaw (rotation horizontale) & Pitch (rotation verticale)
-    camera.rotation.set(viewPitch, viewYaw, camera.rotation.z, 'YXZ');
+    camera.rotation.set(viewPitch, viewYaw, 0, 'YXZ');
 
-  } else if (me && (me.dead || me.eliminated)) {
-    let elapsed = Date.now() * 0.0004;
-    camera.position.set(14 + Math.sin(elapsed)*9, 11, 10 + Math.cos(elapsed)*9);
-    camera.lookAt(14, 1, 10);
+    // UI Updates
+    document.getElementById('hDim').textContent = me.dimension.toUpperCase();
+    document.getElementById('hDim').style.color = me.dimension === 'astral' ? '#00e1ff' : '#cc22ff';
+    document.getElementById('hItems').textContent = `${gameState.itemsDelivered} / ${gameState.totalItems}`;
+    document.getElementById('hLives').textContent = '❤️'.repeat(Math.max(0, me.lives));
+    document.getElementById('stFill').style.width = `${(me.stamina/120)*100}%`;
+
+    // EFFET VISUEL 2026 : Le Plan Astral applique un filtre de distorsion
+    document.getElementById('vignette_overlay').style.background = me.dimension === 'astral' 
+      ? 'radial-gradient(circle, transparent 20%, rgba(0,24,40,0.96) 100%)'
+      : 'radial-gradient(circle, transparent 25%, rgba(0,0,0,0.95) 100%)';
   }
 
-  if (gameState.exit && exitPortalGroup) {
-    exitPortalGroup.position.set(gameState.exit.x, 0, gameState.exit.y);
-    exitVisualCylinder.rotation.y += 0.015;
-  }
-
-  // COLLECTIBLES
+  // RENDU FILTRÉ DES OBJETS (MÉCANIQUE D'ASYMÉTRIE COGNITIVE 2026)
   gameState.items.forEach(item => {
-    if (item.collected || item.carriedBy !== null) {
-      if (meshesItems[item.id]) { scene.remove(meshesItems[item.id]); delete meshesItems[item.id]; }
+    if(item.collected || item.carriedBy !== null) {
+      if(meshesItems[item.id]) { scene.remove(meshesItems[item.id]); delete meshesItems[item.id]; }
     } else {
-      if (!meshesItems[item.id]) {
-        let col = item.type === 'golden' ? 0xffcc00 : (item.type === 'cursed' ? 0xcc22ff : 0x00aaff);
-        const gGroup = new THREE.Group();
-        const coreGeo = new THREE.BoxGeometry(0.25, 0.25, 0.25);
-        const coreMat = new THREE.MeshStandardMaterial({ color: col, roughness: 0.1, metalness: 0.9 });
-        const coreMesh = new THREE.Mesh(coreGeo, coreMat);
-        coreMesh.castShadow = true; gGroup.add(coreMesh);
-
-        const ringGeo = new THREE.TorusGeometry(0.24, 0.02, 4, 16);
-        const ringMat = new THREE.MeshBasicMaterial({ color: col, wireframe: true });
-        const ringMesh = new THREE.Mesh(ringGeo, ringMat);
-        ringMesh.rotation.x = Math.PI/2; gGroup.add(ringMesh);
-
-        scene.add(gGroup); meshesItems[item.id] = gGroup;
+      // Les objets ne se matérialisent que dans le Plan Astral !
+      if(me && me.dimension === 'astral') {
+        if(!meshesItems[item.id]) {
+          let itemColor = item.type === 'golden' ? 0xffd700 : (item.type==='cursed' ? 0xcc22ff : 0x0088ff);
+          const geo = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+          const mat = new THREE.MeshStandardMaterial({ color: itemColor, emissive: itemColor });
+          const mesh = new THREE.Mesh(geo, mat);
+          scene.add(mesh); meshesItems[item.id] = mesh;
+        }
+        meshesItems[item.id].position.set(item.x, 0.4 + Math.sin(Date.now()*0.005)*0.05, item.y);
+        meshesItems[item.id].rotation.y += 0.02;
+      } else {
+        // Invisibles dans le plan matériel
+        if(meshesItems[item.id]) { scene.remove(meshesItems[item.id]); delete meshesItems[item.id]; }
       }
-      let targetMesh = meshesItems[item.id];
-      targetMesh.position.set(item.x, 0.5 + Math.sin(Date.now()*0.004 + item.id)*0.08, item.y);
-      targetMesh.children[0].rotation.y += 0.025;
-      targetMesh.children[1].rotation.z -= 0.015;
     }
   });
 
-  // MONSTRES FLUIDIFIÉS
+  // GESTION ET RENDU DES MONSTRES / ÉCHOS
   gameState.monsters.forEach(m => {
-    if (!meshesMonsters[m.id]) {
-      let fCol = m.type === 'hunter' ? 0xff1144 : (m.type === 'twin' ? 0xaa00ff : 0xffaa00);
-      const ghostGroup = new THREE.Group();
-
-      const headGeo = new THREE.SphereGeometry(0.22, 16, 16);
-      const headMat = new THREE.MeshStandardMaterial({ color: fCol, emissive: fCol, emissiveIntensity: 0.4, roughness: 0.1, metalness: 0.3 });
-      const headMesh = new THREE.Mesh(headGeo, headMat); headMesh.position.y = 0.4; headMesh.castShadow = true;
-      ghostGroup.add(headMesh);
-
-      const eyeGeo = new THREE.SphereGeometry(0.04, 8, 8);
-      const eyeMat = new THREE.MeshStandardMaterial({ color: 0x010101, roughness: 0.9 });
-      const leftEye = new THREE.Mesh(eyeGeo, eyeMat); leftEye.position.set(0.08, 0.42, -0.18); ghostGroup.add(leftEye);
-      const rightEye = new THREE.Mesh(eyeGeo, eyeMat); rightEye.position.set(-0.08, 0.42, -0.18); ghostGroup.add(rightEye);
-
-      const bodyGeo = new THREE.CylinderGeometry(0.2, 0.36, 0.65, 16, 4, true);
-      const bodyMat = new THREE.MeshStandardMaterial({ color: fCol, transparent: true, opacity: 0.8, roughness: 0.4, side: THREE.DoubleSide });
-      const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat); bodyMesh.position.y = 0.05; bodyMesh.castShadow = true;
-      ghostGroup.add(bodyMesh);
-
-      const ghostLight = new THREE.PointLight(fCol, 1.6, 4.0); ghostLight.position.set(0, 0.4, 0);
-      ghostGroup.add(ghostLight);
-
-      scene.add(ghostGroup);
-      meshesMonsters[m.id] = { group: ghostGroup, body: bodyMesh };
+    if(!meshesMonsters[m.id]) {
+      let mColor = m.isEcho ? 0x00ffcc : 0xff1144; // Écho turquoise vs Monstre rouge
+      const geo = new THREE.SphereGeometry(0.25, 8, 8);
+      const mat = new THREE.MeshBasicMaterial({ color: mColor, wireframe: m.isEcho });
+      const mesh = new THREE.Mesh(geo, mat);
+      scene.add(mesh); meshesMonsters[m.id] = mesh;
     }
-
-    const mData = meshesMonsters[m.id];
-    const time = Date.now() * 0.005;
-    const floatY = 0.88 + Math.sin(time + m.id) * 0.07;
-    
-    let mTargetPos = new THREE.Vector3(m.x, floatY, m.y);
-    mData.group.position.lerp(mTargetPos, 0.18);
-
-    if (m.dx !== 0 || m.dy !== 0) {
-      mData.group.rotation.y = Math.atan2(m.dx, m.dy) + Math.PI;
-    }
-    mData.body.rotation.z = Math.sin(time * 1.6) * 0.06;
-  });
-
-  // AUTRES JOUEURS INTERPOLÉS
-  Object.values(gameState.players).forEach(p => {
-    if (p.id === myId || p.eliminated || p.dead) {
-      if (meshesPlayers[p.id]) { scene.remove(meshesPlayers[p.id]); delete meshesPlayers[p.id]; }
-      return;
-    }
-    if (!meshesPlayers[p.id]) {
-      let pColor = ANIMALS[p.animal||0].color;
-      const charGeo = new THREE.OctahedronGeometry(0.35, 0);
-      const charMat = new THREE.MeshStandardMaterial({ color: pColor, roughness: 0.2, metalness: 0.7 });
-      const charMesh = new THREE.Mesh(charGeo, charMat);
-      charMesh.castShadow = true; scene.add(charMesh);
-      meshesPlayers[p.id] = charMesh;
-    }
-    let pTarget = new THREE.Vector3(p.x, 0.75, p.y);
-    meshesPlayers[p.id].position.lerp(pTarget, 0.2);
-    meshesPlayers[p.id].rotation.y += 0.015;
+    meshesMonsters[m.id].position.set(m.x, 0.6, m.y);
   });
 
   renderer.render(scene, camera);
-  renderRadarMap();
 }
-
-function renderRadarMap() {
-  const rad = document.getElementById('radarCanvas'); const rctx = rad.getContext('2d');
-  rctx.clearRect(0, 0, rad.width, rad.height);
-  if (!gameMap || !gameState) return;
-
-  const center = rad.width / 2; const radarRange = 7.0; 
-
-  rctx.fillStyle = 'rgba(2, 2, 6, 0.85)'; rctx.beginPath(); rctx.arc(center, center, center - 2, 0, Math.PI*2); rctx.fill();
-  rctx.strokeStyle = '#121224'; rctx.lineWidth = 1.5; rctx.stroke();
-
-  const me = gameState.players[myId]; if (!me) return;
-
-  for (let y = 0; y < gameMap.length; y++) {
-    for (let x = 0; x < gameMap[y].length; x++) {
-      if (gameMap[y][x] === 1) {
-        let dx = (x + 0.5) - me.x; let dy = (y + 0.5) - me.y;
-        if (Math.abs(dx) < radarRange && Math.abs(dy) < radarRange) {
-          let rx = center + (dx / radarRange) * center; let ry = center + (dy / radarRange) * center;
-          rctx.fillStyle = 'rgba(255, 255, 255, 0.06)'; rctx.fillRect(rx - 2, ry - 2, 4, 4);
-        }
-      }
-    }
-  }
-
-  gameState.items.forEach(item => {
-    if (!item.collected && item.carriedBy === null) {
-      let dx = item.x - me.x; let dy = item.y - me.y;
-      let rx = center + (dx / radarRange) * center; let ry = center + (dy / radarRange) * center;
-      if (Math.hypot(dx, dy) < radarRange) { rctx.fillStyle = '#ffcc00'; rctx.fillRect(rx - 2, ry - 2, 4, 4); }
-    }
-  });
-
-  gameState.monsters.forEach(m => {
-    let dx = m.x - me.x; let dy = m.y - me.y;
-    let rx = center + (dx / radarRange) * center; let ry = center + (dy / radarRange) * center;
-    if (Math.hypot(dx, dy) < radarRange) {
-      rctx.fillStyle = `rgba(255, 42, 95, ${0.6 + Math.sin(Date.now()*0.01)*0.4})`;
-      rctx.beginPath(); rctx.arc(rx, ry, 3.5, 0, Math.PI*2); rctx.fill();
-    }
-  });
-
-  rctx.save(); rctx.translate(center, center); rctx.rotate(-viewYaw); rctx.fillStyle = '#00ff88';
-  rctx.beginPath(); rctx.moveTo(0, -6); rctx.lineTo(-4, 4); rctx.lineTo(4, 4); rctx.closePath(); rctx.fill(); rctx.restore();
-}
-
-const chatForm = document.getElementById('chat_form');
-chatForm.onsubmit=(e)=>{
-  e.preventDefault(); const inp = document.getElementById('chat_input'); const txt = inp.value.trim();
-  if(txt) { socket.emit('chat', {msg: txt}); inp.value=''; }
-};
-socket.on('chat_msg',(data)=>{
-  const logs = document.getElementById('chat_logs'); const el = document.createElement('div'); el.className = 'msg_line';
-  el.innerHTML = `<span style="color:${data.color}">${data.name}:</span> <span style="color:#fff">${data.msg}</span>`;
-  logs.appendChild(el); logs.scrollTop = logs.scrollHeight;
-});
 </script>
 </body>
 </html>
