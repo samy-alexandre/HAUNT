@@ -335,7 +335,17 @@ input[type=range]{width:120px;accent-color:var(--accent);}
       </div>
       <div class="rule-sep"></div>
       <div class="rule"><span class="rule-icon">🏆</span><div><b>Score</b> — chaque colis = <b>100 pts + 50 pts × niveau</b>. L'hôte 👑 lance la partie et valide le niveau suivant.</div></div>
-      <div class="rule"><span class="rule-icon">🍂</span><div>La <b>musique change</b> selon la zone du labyrinthe : ❄️ Hiver (gauche), 🌸 Printemps, ☀️ Été, 🍂 Automne (droite).</div></div>
+      <div class="rule-sep"></div>
+      <div class="rule"><span class="rule-icon">💥</span><div><b>Combos</b> — livre 3 colis d'affilée sans mourir et tu gagnes le <b>double des points</b> jusqu'à ta prochaine mort !</div></div>
+      <div class="rule"><span class="rule-icon">📦</span><div><b>Colis spéciaux</b> — les colis <b style="color:#ffcc00">dorés ✨</b> valent 3× les points. Les colis <b style="color:#aa44ff">maudits 💀</b> accélèrent tous les fantômes si tu les ramasses. Réfléchis avant !</div></div>
+      <div class="rule"><span class="rule-icon">👻</span><div><b>3 types de fantômes</b><br>
+        🔴 <b>Le Chasseur</b> — fonce droit sur toi, ultra-rapide<br>
+        🟡 <b>Le Rôdeur</b> — lent et prévisible, patrouille en boucle<br>
+        🟣 <b>Le Jumeau</b> — copie les déplacements d'un autre fantôme
+      </div></div>
+      <div class="rule"><span class="rule-icon">⏱️</span><div><b>Rush Hour</b> — toutes les 90 secondes, une alarme retentit et tous les colis réapparaissent pendant 30 secondes. C'est le chaos, profites-en !</div></div>
+      <div class="rule"><span class="rule-icon">🌟</span><div><b>Étoiles de niveau</b> — à la fin de chaque niveau tu gagnes 1, 2 ou 3 étoiles selon ton temps, tes décès et tes combos.</div></div>
+      <div class="rule"><span class="rule-icon">🍂</span><div>La <b>musique change</b> à chaque niveau selon la saison : ❄️ Hiver, 🌸 Printemps, ☀️ Été, 🍂 Automne.</div></div>
     </div>
   </div>
 
@@ -384,7 +394,7 @@ input[type=range]{width:120px;accent-color:var(--accent);}
     <thead>
       <tr>
         <th>#</th><th style="text-align:left">Joueur</th>
-        <th>Score</th><th>Colis</th><th>Décès</th><th>Vies</th>
+        <th>Score</th><th>Colis</th><th>Décès</th><th>Combo</th>
       </tr>
     </thead>
     <tbody id="statsTbody"></tbody>
@@ -505,31 +515,31 @@ function getAC(){
 const SEASONS={
   winter:{
     label:'❄️ Hiver',
-    // Am pentatonic — notes audibles, éerie et froid
-    scale:[440,523,587,659,392,349],
-    tempo:2600, bassFreq:55, waveform:'triangle', padFreq:110,
-    dark:'#5588ee', light:'#88aaff'
+    // Pentatonique doux — notes cristallines espacées
+    melody:[523,659,784,880,1047,784,659],
+    chords:[131,165,196], tempo:2200,
+    bassFreq:65, dark:'#5588ee', light:'#88aaff'
   },
   spring:{
     label:'🌸 Printemps',
-    // C major pentatonic — vif et joyeux
-    scale:[523,587,659,784,880,440],
-    tempo:850, bassFreq:65, waveform:'sine', padFreq:130,
-    dark:'#dd4488', light:'#ff88bb'
+    // Majeur joyeux — rapide et léger
+    melody:[523,587,659,698,784,659,587],
+    chords:[131,165,196], tempo:1100,
+    bassFreq:65, dark:'#dd4488', light:'#ff88bb'
   },
   summer:{
     label:'☀️ Été',
-    // F major pentatonic — chaud et énergique
-    scale:[349,392,440,523,587,659],
-    tempo:650, bassFreq:87, waveform:'sine', padFreq:174,
-    dark:'#22aa66', light:'#44ddaa'
+    // Lydien ensoleillé — groovy et chaud
+    melody:[349,392,440,494,523,440,392],
+    chords:[110,138,165], tempo:850,
+    bassFreq:87, dark:'#22aa66', light:'#44ddaa'
   },
   autumn:{
     label:'🍂 Automne',
-    // D minor pentatonic — mélancolique
-    scale:[293,349,392,440,523,392],
-    tempo:1900, bassFreq:73, waveform:'triangle', padFreq:146,
-    dark:'#cc5511', light:'#ff9944'
+    // Dorien mélancolique — chaleureux et introspectif
+    melody:[440,392,349,329,392,440,494],
+    chords:[110,131,165], tempo:1800,
+    bassFreq:73, dark:'#cc5511', light:'#ff9944'
   }
 };
 
@@ -552,59 +562,91 @@ function showSeasonBadge(label){
   clearTimeout(b._t);b._t=setTimeout(()=>b.classList.remove('show'),3000);
 }
 
+// Melody player — séquence douce avec vibrato léger
+let melodyStep=0;
 function playMelodyNote(){
   if(!actx||!S.music)return;
   const s=SEASONS[currentSeason];
-  const f=s.scale[Math.floor(Math.random()*s.scale.length)];
+  const notes=s.melody;
+  // Joue en séquence (pas aléatoire) pour que ça soit musical
+  const f=notes[melodyStep%notes.length];
+  melodyStep++;
   try{
     const o=actx.createOscillator(),g=actx.createGain();
-    o.type=s.waveform;o.frequency.value=f;
-    const dur={winter:3.0,spring:1.0,summer:0.8,autumn:2.2}[currentSeason]||1.5;
+    // Vibrato doux
+    const lfo=actx.createOscillator(),lfoG=actx.createGain();
+    lfo.frequency.value=5;lfoG.gain.value=f*0.008;
+    lfo.connect(lfoG);lfoG.connect(o.frequency);lfo.start();
+    o.type='sine';o.frequency.value=f;
+    const dur=0.7+Math.random()*0.4;
     g.gain.setValueAtTime(0,actx.currentTime);
-    g.gain.linearRampToValueAtTime(0.38,actx.currentTime+0.08);
+    g.gain.linearRampToValueAtTime(0.28,actx.currentTime+0.06);
+    g.gain.setValueAtTime(0.22,actx.currentTime+dur*0.6);
     g.gain.exponentialRampToValueAtTime(0.001,actx.currentTime+dur);
-    o.connect(g);g.connect(masterGain);o.start();o.stop(actx.currentTime+dur);
-    // Add harmony note (5th interval)
-    if(Math.random()>0.4){
+    o.connect(g);g.connect(masterGain);
+    o.start();o.stop(actx.currentTime+dur);
+    lfo.stop(actx.currentTime+dur);
+    // Note harmonie (tierce douce) tous les 2 temps
+    if(melodyStep%2===0){
       const o2=actx.createOscillator(),g2=actx.createGain();
-      o2.type=s.waveform;o2.frequency.value=f*1.5;
-      g2.gain.setValueAtTime(0,actx.currentTime+0.05);
-      g2.gain.linearRampToValueAtTime(0.15,actx.currentTime+0.15);
-      g2.gain.exponentialRampToValueAtTime(0.001,actx.currentTime+dur*0.7);
-      o2.connect(g2);g2.connect(masterGain);o2.start();o2.stop(actx.currentTime+dur*0.7);
+      o2.type='sine';o2.frequency.value=f*1.26;
+      g2.gain.setValueAtTime(0,actx.currentTime);
+      g2.gain.linearRampToValueAtTime(0.1,actx.currentTime+0.1);
+      g2.gain.exponentialRampToValueAtTime(0.001,actx.currentTime+dur*0.8);
+      o2.connect(g2);g2.connect(masterGain);o2.start();o2.stop(actx.currentTime+dur*0.8);
     }
   }catch(e){}
-  const s2=SEASONS[currentSeason];
-  melodyTimeout=setTimeout(playMelodyNote, s2.tempo+Math.random()*s2.tempo*0.6);
+  const tempo=SEASONS[currentSeason].tempo;
+  melodyTimeout=setTimeout(playMelodyNote,tempo*(0.8+Math.random()*0.4));
 }
 
 function playBass(){
   if(!actx||!S.music)return;
   const s=SEASONS[currentSeason];
   try{
+    // Basse douce avec filtre passe-bas
     const o=actx.createOscillator(),g=actx.createGain();
+    const filter=actx.createBiquadFilter();
+    filter.type='lowpass';filter.frequency.value=300;
     o.type='sine';o.frequency.value=s.bassFreq;
+    const dur=8+Math.random()*4;
     g.gain.setValueAtTime(0,actx.currentTime);
-    g.gain.linearRampToValueAtTime(0.55,actx.currentTime+2);
-    g.gain.linearRampToValueAtTime(0,actx.currentTime+11);
-    o.connect(g);g.connect(masterGain);o.start();o.stop(actx.currentTime+11);
+    g.gain.linearRampToValueAtTime(0.35,actx.currentTime+2);
+    g.gain.setValueAtTime(0.25,actx.currentTime+dur-2);
+    g.gain.linearRampToValueAtTime(0,actx.currentTime+dur);
+    o.connect(filter);filter.connect(g);g.connect(masterGain);
+    o.start();o.stop(actx.currentTime+dur);
+    // Note de basse secondaire (quinte)
+    const o2=actx.createOscillator(),g2=actx.createGain();
+    o2.type='sine';o2.frequency.value=s.bassFreq*1.5;
+    g2.gain.setValueAtTime(0,actx.currentTime+1);
+    g2.gain.linearRampToValueAtTime(0.12,actx.currentTime+3);
+    g2.gain.linearRampToValueAtTime(0,actx.currentTime+dur);
+    o2.connect(g2);g2.connect(masterGain);o2.start();o2.stop(actx.currentTime+dur);
   }catch(e){}
-  bassTimeout=setTimeout(playBass,9000+Math.random()*4000);
+  bassTimeout=setTimeout(playBass,7000+Math.random()*5000);
 }
 
 function playPad(){
   if(!actx||!S.music)return;
   const s=SEASONS[currentSeason];
   try{
-    const o=actx.createOscillator(),g=actx.createGain();
-    o.type='sine';o.frequency.value=s.padFreq;
-    const dur=7+Math.random()*4;
-    g.gain.setValueAtTime(0,actx.currentTime);
-    g.gain.linearRampToValueAtTime(0.2,actx.currentTime+2);
-    g.gain.linearRampToValueAtTime(0,actx.currentTime+dur);
-    o.connect(g);g.connect(masterGain);o.start();o.stop(actx.currentTime+dur);
+    // Accord doux (3 notes simultanées avec enveloppe lente)
+    s.chords.forEach((freq,i)=>{
+      const o=actx.createOscillator(),g=actx.createGain();
+      const filter=actx.createBiquadFilter();
+      filter.type='lowpass';filter.frequency.value=800;
+      o.type='sine';o.frequency.value=freq;
+      const dur=6+Math.random()*4;
+      const vol=i===0?0.14:i===1?0.1:0.07;
+      g.gain.setValueAtTime(0,actx.currentTime+i*0.3);
+      g.gain.linearRampToValueAtTime(vol,actx.currentTime+i*0.3+2.5);
+      g.gain.linearRampToValueAtTime(0,actx.currentTime+dur);
+      o.connect(filter);filter.connect(g);g.connect(masterGain);
+      o.start();o.stop(actx.currentTime+dur);
+    });
   }catch(e){}
-  padTimeout=setTimeout(playPad,5500+Math.random()*4000);
+  padTimeout=setTimeout(playPad,5000+Math.random()*4000);
 }
 
 function startMusic(){
@@ -634,6 +676,10 @@ function snd(n){
   else if(n==='score'){[330,415,494,659].forEach((f,i)=>setTimeout(()=>tone(f,'sine',0.22,0.25),i*60));}
   else if(n==='death'){[250,200,160,120].forEach((f,i)=>setTimeout(()=>tone(f,'triangle',0.18,0.25),i*80));}
   else if(n==='win'){[330,415,494,587,659,784].forEach((f,i)=>setTimeout(()=>tone(f,'sine',0.35,0.25),i*90));}
+  else if(n==='combo'){tone(660,'sine',0.15,0.28);setTimeout(()=>tone(880,'sine',0.2,0.3),100);setTimeout(()=>tone(1047,'sine',0.25,0.4),220);}
+  else if(n==='rush'){[200,300,400,300,200,400].forEach((f,i)=>setTimeout(()=>tone(f,'sawtooth',0.1,0.15),i*80));}
+  else if(n==='cursed'){[300,200,150].forEach((f,i)=>setTimeout(()=>tone(f,'triangle',0.15,0.25),i*100));}
+  else if(n==='golden_score'){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,'sine',0.2,0.22),i*50));}
 }
 socket.on('sound',snd);
 document.addEventListener('click',startMusic,{once:true});
@@ -660,6 +706,7 @@ const STAMINA_MAX=120,STAMINA_DRAIN=2,STAMINA_REGEN=0.667;
 const SPEED_N=0.11,SPEED_B=0.18,RC=0.28;
 let lx=SPAWN_X,ly=SPAWN_Y,ldir='down',lstam=STAMINA_MAX;
 let gameStarted=false,prevDead=false,spectateIdx=0,boostReady=true;
+let comboFlash=0,comboText='',rushActive=false,cursedActive=false,rushFlash=0;
 
 function canMoveLocal(x,y){
   if(!gameMap)return true;
@@ -833,7 +880,20 @@ socket.on('back_to_lobby',()=>{
 socket.on('level_start',({season})=>{document.getElementById('ov').classList.remove('on');lx=SPAWN_X;ly=SPAWN_Y;lstam=STAMINA_MAX;if(season)updateSeasonFromServer(season);});
 socket.on('error',msg=>{document.getElementById('menuErr').textContent='⚠ '+msg;});
 
+socket.on('combo_activated',({name,color})=>{
+  comboFlash=180; comboText=`🔥 ${name} — COMBO x2 !`;
+  snd('combo'); toast(`🔥 ${name} — COMBO x2 !`,'#ff8800');
+});
+socket.on('rush_hour',({active})=>{
+  rushActive=active;
+  if(active){toast('⚡ RUSH HOUR ! Tous les colis réapparaissent !','#ff4400');snd('rush');}
+  else toast('Rush Hour terminé','#888888');
+});
+socket.on('cursed_activated',({name})=>{
+  cursedActive=true;toast(`💀 ${name} a pris un colis maudit — fantômes accélérés !`,'#aa44ff');snd('cursed');
+});
 socket.on('state',state=>{
+  rushActive=state.rushActive||false; cursedActive=state.cursedActive||false;
   gameState=state;
   if(state.season)updateSeasonFromServer(state.season);
   const me=state.players[myId];
@@ -869,12 +929,14 @@ function showEndScreen(state,isGameOver){
   const medals=['🥇','🥈','🥉'];
   const lb=state.leaderboard||[];
 
+  const stars=state.stars||1;
+  const starsStr=['⭐','⭐⭐','⭐⭐⭐'][stars-1]||'⭐';
   if(isGameOver){
     document.getElementById('ovtitle').textContent='💀 GAME OVER';
     document.getElementById('ovtitle').style.color='var(--danger)';
-    document.getElementById('ovsub').textContent=`Score final de l'équipe : ${state.score} pts`;
+    document.getElementById('ovsub').textContent=`Score final : ${state.score} pts`;
   } else {
-    document.getElementById('ovtitle').textContent=`✅ NIVEAU ${state.level} TERMINÉ !`;
+    document.getElementById('ovtitle').innerHTML=`${starsStr} NIVEAU ${state.level} TERMINÉ ! ${starsStr}`;
     document.getElementById('ovtitle').style.color='var(--accent)';
     document.getElementById('ovsub').textContent=`Score équipe : ${state.score} pts  •  +1 vie pour tous !`;
   }
@@ -882,13 +944,14 @@ function showEndScreen(state,isGameOver){
   // Stats table
   document.getElementById('statsTbody').innerHTML=lb.map((p,i)=>{
     const an=ANIMALS[p.animal||0]||ANIMALS[0];
+    const comboStr=(p.maxCombo||0)>=3?`🔥x${p.maxCombo}`:(p.maxCombo||0)>0?`x${p.maxCombo}`:'—';
     return`<tr>
       <td><span class="st-medal">${medals[i]||''}</span><span class="st-rank">${i>2?`#${i+1}`:''}</span></td>
       <td style="text-align:left"><div class="st-name"><span style="font-size:1.2rem">${an.emoji}</span><span style="color:${p.color};font-weight:bold">${esc(p.name)}</span>${p.id===state.hostId?'<span style="font-size:0.8rem">👑</span>':''}</div></td>
       <td style="color:var(--accent);font-weight:bold">${p.score}</td>
       <td>📦 ${p.itemsDelivered||0}</td>
       <td style="color:var(--danger)">💀 ${p.deaths||0}</td>
-      <td>${ld(p.lives||0)}</td>
+      <td style="color:#ff8800">${comboStr}</td>
     </tr>`;
   }).join('');
 
@@ -993,33 +1056,51 @@ function render(){
       if(d2<2.5){ctx.strokeStyle='rgba(255,220,0,0.3)';ctx.lineWidth=2;ctx.setLineDash([4,4]);ctx.beginPath();ctx.arc(ix+TILE/2,iy+TILE/2+bob,TILE*0.68,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}
     }
     const bx=ix+3,by=iy+4+bob,bw=TILE-6,bh=TILE-8;
-    ctx.fillStyle=carried?'#5a3d00':'#3a2800';ctx.fillRect(bx,by,bw,bh);
-    ctx.strokeStyle=carried?'#ffcc00':'#cc8800';ctx.lineWidth=carried?2:1.5;ctx.strokeRect(bx,by,bw,bh);
-    ctx.strokeStyle=carried?'#ffee44':'#dd9900';ctx.lineWidth=1;
+    const itype=item.type||'normal';
+    const isGolden=itype==='golden', isCursed=itype==='cursed';
+    // Glow for special items
+    if(isGolden){const g=ctx.createRadialGradient(bx+bw/2,by+bh/2+bob,0,bx+bw/2,by+bh/2+bob,bw);g.addColorStop(0,'rgba(255,220,0,0.35)');g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.beginPath();ctx.arc(bx+bw/2,by+bh/2,bw,0,Math.PI*2);ctx.fill();}
+    if(isCursed){const g=ctx.createRadialGradient(bx+bw/2,by+bh/2+bob,0,bx+bw/2,by+bh/2+bob,bw);g.addColorStop(0,'rgba(170,0,255,0.35)');g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.beginPath();ctx.arc(bx+bw/2,by+bh/2,bw,0,Math.PI*2);ctx.fill();}
+    ctx.fillStyle=isGolden?(carried?'#7a5c00':'#5a4200'):isCursed?(carried?'#4a0066':'#2a0044'):(carried?'#5a3d00':'#3a2800');
+    ctx.fillRect(bx,by,bw,bh);
+    ctx.strokeStyle=isGolden?(carried?'#ffee00':'#ffcc00'):isCursed?(carried?'#cc66ff':'#aa44ff'):(carried?'#ffcc00':'#cc8800');
+    ctx.lineWidth=carried?2:1.5;ctx.strokeRect(bx,by,bw,bh);
+    ctx.strokeStyle=isGolden?'#ffe844':isCursed?'#dd88ff':'#dd9900';ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(bx,by+bh/2);ctx.lineTo(bx+bw,by+bh/2);ctx.stroke();
     ctx.beginPath();ctx.moveTo(bx+bw/2,by);ctx.lineTo(bx+bw/2,by+bh);ctx.stroke();
+    // Icons
+    if(isGolden){ctx.font=`${TILE*0.3}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='rgba(0,0,0,1)';ctx.globalAlpha=1;ctx.fillText('✨',bx+bw/2,by+bh/2+bob);}
+    if(isCursed){ctx.font=`${TILE*0.3}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='rgba(0,0,0,1)';ctx.globalAlpha=1;ctx.fillText('💀',bx+bw/2,by+bh/2+bob);}
   });
 
-  // Monsters — colored by season zone
+  // Monsters — rendered by type
+  const GHOST_COLORS={hunter:'#ff3333',rover:'#ffaa00',twin:'#cc44ff'};
   gameState.monsters.forEach(m=>{
     const{sx:mx,sy:my2}=w2s(m.x-0.5,m.y-0.5);
     if(mx<-TILE||mx>canvas.width+TILE)return;
-    const fl=0.8+0.2*Math.sin(tick*0.15+m.id*2.5);
-    const bob2=Math.sin(tick*0.07+m.id)*2.5;
-    const baseColor=seasonWallColor();
+    const mtype=m.type||'rover';
+    const baseColor=cursedActive?'#ff2222':(GHOST_COLORS[mtype]||'#ff4466');
+    const fl=0.85+0.15*Math.sin(tick*0.15+m.id*2.5);
+    const bob2=Math.sin(tick*(mtype==='hunter'?0.14:0.07)+m.id)*2.5;
     ctx.save();ctx.globalAlpha=fl;
-    const gx=mx+TILE/2,gy=my2+TILE/2+bob2,gr=TILE*0.42;
+    const gx=mx+TILE/2,gy=my2+TILE/2+bob2,gr=TILE*(mtype==='twin'?0.38:0.42);
     ctx.fillStyle=baseColor;
     ctx.beginPath();ctx.arc(gx,gy-gr*0.1,gr,Math.PI,0);
     ctx.lineTo(gx+gr,gy+gr*0.8);
     for(let i=5;i>=0;i--)ctx.lineTo(gx-gr+i*(gr*2/5),gy+gr*0.8+((i%2===0)?gr*0.2:-gr*0.2));
     ctx.lineTo(gx-gr,gy+gr*0.8);ctx.closePath();ctx.fill();
-    ctx.fillStyle='white';
-    ctx.beginPath();ctx.arc(gx-gr*0.3,gy-gr*0.15,gr*0.2,0,Math.PI*2);ctx.fill();
-    ctx.beginPath();ctx.arc(gx+gr*0.3,gy-gr*0.15,gr*0.2,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle='#111';
-    ctx.beginPath();ctx.arc(gx-gr*0.27,gy-gr*0.12,gr*0.11,0,Math.PI*2);ctx.fill();
-    ctx.beginPath();ctx.arc(gx+gr*0.34,gy-gr*0.11,gr*0.11,0,Math.PI*2);ctx.fill();
+    if(cursedActive){ctx.strokeStyle='rgba(255,0,100,0.7)';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(gx,gy,gr*1.25,0,Math.PI*2);ctx.stroke();}
+    if(mtype==='hunter'){
+      ctx.fillStyle='#ffdddd';ctx.beginPath();ctx.arc(gx-gr*0.3,gy-gr*0.15,gr*0.22,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(gx+gr*0.3,gy-gr*0.15,gr*0.22,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#ff0000';ctx.beginPath();ctx.arc(gx-gr*0.27,gy-gr*0.12,gr*0.12,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(gx+gr*0.33,gy-gr*0.12,gr*0.12,0,Math.PI*2);ctx.fill();
+    } else {
+      ctx.fillStyle='white';ctx.beginPath();ctx.arc(gx-gr*0.3,gy-gr*0.15,gr*0.2,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(gx+gr*0.3,gy-gr*0.15,gr*0.2,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#111';ctx.beginPath();ctx.arc(gx-gr*0.27,gy-gr*0.12,gr*0.11,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(gx+gr*0.33,gy-gr*0.12,gr*0.11,0,Math.PI*2);ctx.fill();
+    }
     ctx.restore();
   });
 
@@ -1034,6 +1115,34 @@ function render(){
   const vg=ctx.createRadialGradient(canvas.width/2,canvas.height/2,canvas.height*0.25,canvas.width/2,canvas.height/2,canvas.height*0.8);
   vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,vc);
   ctx.fillStyle=vg;ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  // === RUSH HOUR BANNER ===
+  if(rushActive){
+    const rp=0.6+0.4*Math.sin(tick*0.2);
+    ctx.fillStyle=`rgba(255,50,0,${0.15*rp})`;ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.strokeStyle=`rgba(255,50,0,${0.8*rp})`;ctx.lineWidth=4;ctx.strokeRect(4,4,canvas.width-8,canvas.height-8);
+    ctx.fillStyle=`rgba(255,50,0,${0.9})`;
+    ctx.font=`bold ${Math.max(14,TILE*0.7)}px Bebas Neue,Share Tech Mono`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('⚡ RUSH HOUR ⚡',canvas.width/2,40);
+  }
+  // === CURSED BORDER ===
+  if(cursedActive){
+    const cp=0.5+0.5*Math.sin(tick*0.25);
+    ctx.strokeStyle=`rgba(170,0,255,${0.6*cp})`;ctx.lineWidth=6;ctx.strokeRect(6,6,canvas.width-12,canvas.height-12);
+  }
+  // === COMBO FLASH ===
+  if(comboFlash>0){
+    comboFlash--;
+    const alpha=Math.min(1,comboFlash/30);
+    const scale=1+0.2*(1-comboFlash/180);
+    ctx.save();ctx.globalAlpha=alpha;ctx.translate(canvas.width/2,canvas.height/2);
+    ctx.scale(scale,scale);
+    ctx.fillStyle='rgba(0,0,0,0.7)';ctx.beginPath();ctx.roundRect(-200,-35,400,70,10);ctx.fill();
+    ctx.fillStyle='#ff8800';ctx.font='bold 28px Bebas Neue,Share Tech Mono';
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(comboText,0,0);
+    ctx.restore();
+  }
 
   // Spectate overlay
   const meSpec=gameState?.players[myId];
