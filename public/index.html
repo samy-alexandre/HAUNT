@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HAUNTED NIGHTMARE 3D - SMOOTH AAA EDITION</title>
+<title>HAUNTED NIGHTMARE 3D - KINETIC AUDIO EDITION</title>
 <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -52,8 +52,6 @@ input[type=text]:focus{border-color:var(--accent);}
 #gameScreen.active{display:flex;}
 
 #canvas3d_container {width:100%;height:100%;position:absolute;inset:0;z-index:1;}
-
-/* VIGNETTE CINÉMATIQUE */
 #vignette_overlay {position:absolute;inset:0;pointer-events:none;z-index:2;background:radial-gradient(circle, transparent 35%, rgba(0,0,0,0.92) 100%);}
 
 #reticle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:10px;height:10px;pointer-events:none;z-index:5;}
@@ -61,7 +59,7 @@ input[type=text]:focus{border-color:var(--accent);}
 #reticle::before{top:4px;left:-5px;width:20px;height:2px;}
 #reticle::after{top:-5px;left:4px;width:2px;height:20px;}
 
-/* HUD INTERFACE IMMERSIF */
+/* HUD */
 #hud_overlay {position:absolute;inset:0;pointer-events:none;z-index:4;display:flex;flex-direction:column;justify-content:space-between;padding:1.5rem;}
 .hud_row {display:flex;justify-content:space-between;width:100%;}
 .hud_card {background:rgba(1,1,3,0.85);border:1px solid rgba(31,31,58,0.4);padding:0.8rem 1.2rem;border-radius:6px;backdrop-filter:blur(6px);display:flex;flex-direction:column;gap:2px;}
@@ -95,7 +93,7 @@ input[type=text]:focus{border-color:var(--accent);}
 
 <div id="menuScreen" class="screen active">
   <h1>HAUNTED 3D</h1>
-  <div style="color:var(--dim); letter-spacing:5px; font-size:0.8rem;">ENGINE GRAPHIC UPGRADE · CINEMATIC INTERPOLATION</div>
+  <div style="color:var(--dim); letter-spacing:5px; font-size:0.8rem;">REALTIME PROCEDURAL AUDIO · 360° MOUSE LOOK</div>
   
   <div class="panel">
     <div class="ptitle">▸ Identité du Survivant</div>
@@ -106,7 +104,7 @@ input[type=text]:focus{border-color:var(--accent);}
   </div>
 
   <div style="display:flex; gap:1rem; width:100%; max-width:500px;">
-    <button class="btn primary" id="btnCreate" style="flex:1;">Créer Cauchemar</button>
+    <button class="btn primary" id="btnCreate">Créer Cauchemar</button>
     <div style="display:flex; flex-direction:column; flex:1; gap:0.4rem;">
       <input type="text" id="codeIn" placeholder="CODE SALLE" maxlength="6" style="text-align:center; font-size:1rem; padding:0.45rem;"/>
       <button class="btn" id="btnJoin">Infiltrer</button>
@@ -133,8 +131,8 @@ input[type=text]:focus{border-color:var(--accent);}
   <div id="reticle"></div>
 
   <div id="lock_notice">
-    <p>CLIQUEZ ICI POUR VERROUILLER LA SOURIS FPS</p>
-    <span style="font-size:0.8rem; margin-top:10px; color:#555;">Z,Q,S,D · SOURIS pour orienter la caméra · MAJ pour courir</span>
+    <p>CLIQUEZ ICI POUR ACTIVER LE SON & LA SOURIS FPS</p>
+    <span style="font-size:0.8rem; margin-top:10px; color:#555;">Z,Q,S,D · SOURIS pour orienter (Haut/Bas/Gauche/Droite) · MAJ pour courir</span>
   </div>
 
   <div id="hud_overlay">
@@ -192,6 +190,112 @@ input[type=text]:focus{border-color:var(--accent);}
 const socket = io({transports:['websocket','polling']});
 let myId=null, myRoom=null, gameMap=null, gameState=null, isHost=false, gameStarted=false;
 
+// ====================================================================
+//            MOTEUR AUDIO PROCÉDURAL (SANS FICHIERS EXTERNES)
+// ====================================================================
+const AudioEngine = {
+  ctx: null,
+  ambientStarted: false,
+  init() {
+    if (this.ctx) return;
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    this.startAmbient();
+  },
+  startAmbient() {
+    if (!this.ctx || this.ambientStarted) return;
+    this.ambientStarted = true;
+    
+    // Bourdonnement sourd d'horreur
+    const osc1 = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+    
+    osc1.type = 'sine'; osc1.frequency.setValueAtTime(40, this.ctx.currentTime);
+    osc2.type = 'sawtooth'; osc2.frequency.setValueAtTime(40.6, this.ctx.currentTime);
+    
+    filter.type = 'lowpass'; filter.frequency.setValueAtTime(90, this.ctx.currentTime);
+    gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+    
+    osc1.connect(filter); osc2.connect(filter);
+    filter.connect(gain); gain.connect(this.ctx.destination);
+    osc1.start(); osc2.start();
+  },
+  playPickup() {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(380, now);
+    osc.frequency.exponentialRampToValueAtTime(760, now + 0.12);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    osc.connect(gain); gain.connect(this.ctx.destination);
+    osc.start(); osc.stop(now + 0.15);
+  },
+  playHurt() {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(140, now);
+    osc.frequency.linearRampToValueAtTime(30, now + 0.35);
+    gain.gain.setValueAtTime(0.35, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+    osc.connect(gain); gain.connect(this.ctx.destination);
+    osc.start(); osc.stop(now + 0.35);
+  },
+  playFootstep(isRunning) {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+    
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(55, now);
+    osc.frequency.linearRampToValueAtTime(20, now + 0.08);
+    
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(80, now);
+    
+    gain.gain.setValueAtTime(isRunning ? 0.3 : 0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+    
+    osc.connect(filter); filter.connect(gain); gain.connect(this.ctx.destination);
+    osc.start(); osc.stop(now + 0.1);
+  },
+  playWin() {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    [440, 554, 659, 880].forEach((freq, idx) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+      gain.gain.setValueAtTime(0.12, now + idx * 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.4);
+      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.start(now + idx * 0.08); osc.stop(now + idx * 0.08 + 0.4);
+    });
+  },
+  playGameOver() {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(90, now);
+    osc.frequency.linearRampToValueAtTime(35, now + 1.2);
+    gain.gain.setValueAtTime(0.4, now);
+    gain.gain.linearRampToValueAtTime(0.001, now + 1.2);
+    osc.connect(gain); gain.connect(this.ctx.destination);
+    osc.start(); osc.stop(now + 1.2);
+  }
+};
+
 const ANIMALS=[
   {hex:'#888888', emoji:'🐱', name:'Chat', color:0x888888},
   {hex:'#cc8833', emoji:'🐵', name:'Singe', color:0xcc8833},
@@ -245,7 +349,10 @@ function updateLobbyList(data){
 const lockNotice = document.getElementById('lock_notice');
 const container3d = document.getElementById('canvas3d_container');
 
-lockNotice.onclick = () => { if(gameStarted) container3d.requestPointerLock(); };
+lockNotice.onclick = () => { 
+  AudioEngine.init(); // Initier le son au clic utilisateur
+  if(gameStarted) container3d.requestPointerLock(); 
+};
 document.addEventListener('pointerlockchange', () => {
   if (document.pointerLockElement === container3d) {
     lockNotice.style.display = 'none';
@@ -256,6 +363,8 @@ document.addEventListener('pointerlockchange', () => {
 
 const keys={};
 let viewYaw = 0; 
+let viewPitch = 0; // Ajout axe vertical
+
 window.addEventListener('keydown', e => { 
   const k = e.key.toLowerCase();
   if(k === 'z' || e.code === 'ArrowUp') keys['up'] = true;
@@ -277,13 +386,12 @@ window.addEventListener('keyup', e => {
 
 window.addEventListener('mousemove', e => {
   if (document.pointerLockElement === container3d) {
-    viewYaw -= e.movementX * 0.0022; 
+    viewYaw -= e.movementX * 0.0020; 
+    viewPitch -= e.movementY * 0.0020;
+    viewPitch = Math.max(-1.45, Math.min(1.45, viewPitch)); // Limiter la vision haute/basse à ~83 degrés
   }
 });
 
-// ====================================================================
-//            MOTEUR 3D TRIPLE A AVEC ANTIALIASING SANS BALBUTIEMENTS
-// ====================================================================
 let scene, camera, renderer;
 let wallsArray = [];
 let meshesItems = {};
@@ -293,9 +401,10 @@ let exitPortalGroup = null;
 let exitVisualCylinder = null;
 let wallMaterial, floorMaterial;
 
-// VARIABLES D'INTERPOLATION RÉSIDUELLES (ANTI-SACCADES)
 let targetCameraPos = new THREE.Vector3(1.5, 1.2, 1.5);
 let headBobbingTimer = 0;
+let lastStepTime = 0;
+let lastKnownLives = 3;
 
 function generateProceduralTextures() {
   const wallCanvas = document.createElement('canvas');
@@ -353,8 +462,7 @@ function initThreeEngine() {
   
   renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
   renderer.setSize(container3d.clientWidth, container3d.clientHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Améliore drastiquement la netteté (60fps+)
-  
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
   
@@ -368,9 +476,6 @@ function initThreeEngine() {
   flashlight.castShadow = true;
   flashlight.shadow.mapSize.width = 1024;
   flashlight.shadow.mapSize.height = 1024;
-  flashlight.shadow.camera.near = 0.2;
-  flashlight.shadow.camera.far = 25;
-  flashlight.shadow.bias = -0.0015;
   camera.add(flashlight);
   
   const flashlightTarget = new THREE.Object3D();
@@ -391,7 +496,6 @@ function generate3DArchitecture() {
   wallsArray.forEach(w => scene.remove(w));
   wallsArray = [];
   if(exitPortalGroup) scene.remove(exitPortalGroup);
-
   if (!gameMap) return;
 
   const floorGeo = new THREE.PlaneGeometry(70, 70);
@@ -414,53 +518,41 @@ function generate3DArchitecture() {
     }
   }
 
-  // RECONSTRUCTION TRIPLE A DE LA PORTE DE SORTIE (CYLINDRE LUMINEUX VERT DE 2.5m COUPLÉ À UN POINTLIGHT)
   exitPortalGroup = new THREE.Group();
-  
   const exitGeo = new THREE.CylinderGeometry(0.45, 0.45, 2.8, 24, 1, true);
-  const exitMat = new THREE.MeshBasicMaterial({
-    color: 0x00ff88,
-    transparent: true,
-    opacity: 0.35,
-    side: THREE.DoubleSide,
-    wireframe: true
-  });
+  const exitMat = new THREE.MeshBasicMaterial({ color: 0x00ff88, transparent: true, opacity: 0.35, side: THREE.DoubleSide, wireframe: true });
   exitVisualCylinder = new THREE.Mesh(exitGeo, exitMat);
-  exitVisualCylinder.position.y = 1.4; // Hauteur complète du couloir
+  exitVisualCylinder.position.y = 1.4;
   exitPortalGroup.add(exitVisualCylinder);
 
-  // Cœur solide du portail
   const coreGeo = new THREE.CylinderGeometry(0.1, 0.1, 2.8, 8);
   const coreMat = new THREE.MeshBasicMaterial({ color: 0x88ffcc, transparent: true, opacity: 0.6 });
   const coreMesh = new THREE.Mesh(coreGeo, coreMat);
   coreMesh.position.y = 1.4;
   exitPortalGroup.add(coreMesh);
 
-  // Lumière projetée par la porte sur les murs en briques
   const exitLight = new THREE.PointLight(0x00ff88, 3, 6);
   exitLight.position.y = 1.4;
   exitPortalGroup.add(exitLight);
 
   scene.add(exitPortalGroup);
-  exitPortalGroup.position.set(-999, 0, -999); // Masqué par défaut
+  exitPortalGroup.position.set(-999, 0, -999);
 }
 
-// ====================================================================
-//       BOUCLE DE TICK SYSTEME & RESEAU
-// ====================================================================
 let lastActionSent = false;
-
 socket.on('map', (mapData) => { gameMap = mapData; });
+
+socket.on('sound', (type) => {
+  if (type === 'pickup') AudioEngine.playPickup();
+});
 
 socket.on('game_started', () => {
   gameStarted = true;
   document.getElementById('lobbyScreen').classList.remove('active');
   document.getElementById('gameScreen').classList.add('active');
-  
   initThreeEngine();
   generate3DArchitecture();
   container3d.requestPointerLock();
-  
   runExecution3D();
 });
 
@@ -468,6 +560,7 @@ socket.on('state', (state) => {
   gameState = state;
   if (state.gameOver) {
     document.exitPointerLock();
+    AudioEngine.playGameOver();
     const scr = document.getElementById('screen_msg'); scr.style.display = 'flex';
     document.getElementById('msg_title').textContent = "SOUFFRANCE ÉTERNELLE";
     document.getElementById('msg_title').style.color = "var(--danger)";
@@ -476,6 +569,7 @@ socket.on('state', (state) => {
   }
   if (state.gameWon) {
     document.exitPointerLock();
+    AudioEngine.playWin();
     const scr = document.getElementById('screen_msg'); scr.style.display = 'flex';
     document.getElementById('msg_title').textContent = "BRÈCHE DE CONFINEMENT";
     document.getElementById('msg_title').style.color = "var(--accent)";
@@ -489,9 +583,14 @@ socket.on('state', (state) => {
 
   const me = state.players[myId];
   if (me) {
-    // On met à jour l'objectif de la caméra (la vraie position calculée par le serveur)
     targetCameraPos.set(me.x, 1.2, me.y);
     
+    // Détecter la perte de vie pour jouer le son de blessure
+    if (me.lives < lastKnownLives) {
+      AudioEngine.playHurt();
+    }
+    lastKnownLives = me.lives;
+
     document.getElementById('hLvl').textContent = "ÉTAGE " + state.level;
     document.getElementById('hItems').textContent = `${state.itemsDelivered} / ${state.totalItems}`;
     document.getElementById('hScore').textContent = String(me.score).padStart(4, '0');
@@ -540,23 +639,35 @@ function runExecution3D() {
 
     socket.emit('input', { dx: finalDx, dy: finalDy, action: actionTrigger, boost: boost, dir: F > 0 ? 'up' : 'down' });
 
-    // INTERPOLATION CINÉMATIQUE (LERP) : Élimine instantanément les micros-saccades réseau
-    // La caméra glisse de manière ultra fluide vers la cible serveur à chaque rafraîchissement d'écran
-    camera.position.x += (targetCameraPos.x - camera.position.x) * 0.28;
-    camera.position.z += (targetCameraPos.z - camera.position.z) * 0.28;
+    // INTERPOLATION CINÉMATIQUE SUPÉRIEURE (Lissage 0 friction)
+    camera.position.x += (targetCameraPos.x - camera.position.x) * 0.16;
+    camera.position.z += (targetCameraPos.z - camera.position.z) * 0.16;
 
-    // EFFET HEAD-BOBBING (Simule les pas de l'humain quand il bouge)
+    // EFFET HEAD-BOBBING ET BLARE DE PAS (MARCHE VS COURSE)
     if (F !== 0 || R !== 0) {
-      let speedFactor = boost && me.stamina > 0 ? 0.16 : 0.09;
+      let isRunning = boost && me.stamina > 0;
+      let speedFactor = isRunning ? 0.16 : 0.09;
       headBobbingTimer += speedFactor;
-      // Oscillation légère en Y pour simuler la marche ou la course
-      camera.position.y = 1.2 + Math.sin(headBobbingTimer) * 0.024;
+      
+      // Mouvement sinusoïdal vertical et latéral (effet tête humaine réaliste)
+      camera.position.y = 1.2 + Math.sin(headBobbingTimer) * 0.03;
+      
+      // Inclinaison latérale subtile (Head-Roll)
+      camera.rotation.z = Math.cos(headBobbingTimer * 0.5) * 0.015;
+
+      // Déclenchement périodique des bruits de pas
+      let stepDelay = isRunning ? 280 : 480; 
+      if (Date.now() - lastStepTime > stepDelay) {
+        AudioEngine.playFootstep(isRunning);
+        lastStepTime = Date.now();
+      }
     } else {
-      // Retour fluide au repos (respiration normale)
       camera.position.y += (1.2 - camera.position.y) * 0.1;
+      camera.rotation.z += (0 - camera.rotation.z) * 0.1;
     }
 
-    camera.rotation.set(0, viewYaw, 0, 'YXZ');
+    // Application stricte Yaw (rotation horizontale) & Pitch (rotation verticale)
+    camera.rotation.set(viewPitch, viewYaw, camera.rotation.z, 'YXZ');
 
   } else if (me && (me.dead || me.eliminated)) {
     let elapsed = Date.now() * 0.0004;
@@ -564,13 +675,12 @@ function runExecution3D() {
     camera.lookAt(14, 1, 10);
   }
 
-  // RENDU DU PORTAIL DE SORTIE MODIFIÉ
   if (gameState.exit && exitPortalGroup) {
     exitPortalGroup.position.set(gameState.exit.x, 0, gameState.exit.y);
-    exitVisualCylinder.rotation.y += 0.015; // Rotation mystique de la cage lumineuse
+    exitVisualCylinder.rotation.y += 0.015;
   }
 
-  // OBJETS COLLECTIBLES
+  // COLLECTIBLES
   gameState.items.forEach(item => {
     if (item.collected || item.carriedBy !== null) {
       if (meshesItems[item.id]) { scene.remove(meshesItems[item.id]); delete meshesItems[item.id]; }
@@ -597,16 +707,14 @@ function runExecution3D() {
     }
   });
 
-  // MONSTRES FLUIDIFIÉS SANS SACCADES (LERP POSITIONNEL)
+  // MONSTRES FLUIDIFIÉS
   gameState.monsters.forEach(m => {
     if (!meshesMonsters[m.id]) {
       let fCol = m.type === 'hunter' ? 0xff1144 : (m.type === 'twin' ? 0xaa00ff : 0xffaa00);
       const ghostGroup = new THREE.Group();
 
       const headGeo = new THREE.SphereGeometry(0.22, 16, 16);
-      const headMat = new THREE.MeshStandardMaterial({ 
-        color: fCol, emissive: fCol, emissiveIntensity: 0.4, roughness: 0.1, metalness: 0.3
-      });
+      const headMat = new THREE.MeshStandardMaterial({ color: fCol, emissive: fCol, emissiveIntensity: 0.4, roughness: 0.1, metalness: 0.3 });
       const headMesh = new THREE.Mesh(headGeo, headMat); headMesh.position.y = 0.4; headMesh.castShadow = true;
       ghostGroup.add(headMesh);
 
@@ -616,50 +724,28 @@ function runExecution3D() {
       const rightEye = new THREE.Mesh(eyeGeo, eyeMat); rightEye.position.set(-0.08, 0.42, -0.18); ghostGroup.add(rightEye);
 
       const bodyGeo = new THREE.CylinderGeometry(0.2, 0.36, 0.65, 16, 4, true);
-      const bodyMat = new THREE.MeshStandardMaterial({
-        color: fCol, transparent: true, opacity: 0.8, roughness: 0.4, side: THREE.DoubleSide
-      });
+      const bodyMat = new THREE.MeshStandardMaterial({ color: fCol, transparent: true, opacity: 0.8, roughness: 0.4, side: THREE.DoubleSide });
       const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat); bodyMesh.position.y = 0.05; bodyMesh.castShadow = true;
       ghostGroup.add(bodyMesh);
 
       const ghostLight = new THREE.PointLight(fCol, 1.6, 4.0); ghostLight.position.set(0, 0.4, 0);
       ghostGroup.add(ghostLight);
 
-      const pCount = 18; const pGeo = new THREE.BufferGeometry(); const pPos = new Float32Array(pCount * 3);
-      for(let i=0; i<pCount*3; i++) { pPos[i] = (Math.random() - 0.5) * 0.25; }
-      pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-      const pMat = new THREE.PointsMaterial({ color: fCol, size: 0.05, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending });
-      const pSystem = new THREE.Points(pGeo, pMat); ghostGroup.add(pSystem);
-
       scene.add(ghostGroup);
-      meshesMonsters[m.id] = { group: ghostGroup, body: bodyMesh, particles: pSystem, pData: pPos };
+      meshesMonsters[m.id] = { group: ghostGroup, body: bodyMesh };
     }
 
     const mData = meshesMonsters[m.id];
     const time = Date.now() * 0.005;
     const floatY = 0.88 + Math.sin(time + m.id) * 0.07;
     
-    // Interpolation de la position des monstres (Glissement parfait en 60FPS)
     let mTargetPos = new THREE.Vector3(m.x, floatY, m.y);
-    mData.group.position.lerp(mTargetPos, 0.22);
+    mData.group.position.lerp(mTargetPos, 0.18);
 
     if (m.dx !== 0 || m.dy !== 0) {
       mData.group.rotation.y = Math.atan2(m.dx, m.dy) + Math.PI;
     }
-
     mData.body.rotation.z = Math.sin(time * 1.6) * 0.06;
-    mData.body.rotation.x = Math.cos(time * 1.3) * 0.06;
-
-    const positions = mData.particles.geometry.attributes.position.array;
-    for (let i = 0; i < positions.length; i += 3) {
-      positions[i+1] -= 0.004;
-      if (positions[i+1] < -0.4) {
-        positions[i] = (Math.random() - 0.5) * 0.2;
-        positions[i+1] = 0.25 + (Math.random() - 0.5) * 0.08;
-        positions[i+2] = (Math.random() - 0.5) * 0.2;
-      }
-    }
-    mData.particles.geometry.attributes.position.needsUpdate = true;
   });
 
   // AUTRES JOUEURS INTERPOLÉS
@@ -677,7 +763,7 @@ function runExecution3D() {
       meshesPlayers[p.id] = charMesh;
     }
     let pTarget = new THREE.Vector3(p.x, 0.75, p.y);
-    meshesPlayers[p.id].position.lerp(pTarget, 0.25);
+    meshesPlayers[p.id].position.lerp(pTarget, 0.2);
     meshesPlayers[p.id].rotation.y += 0.015;
   });
 
@@ -694,7 +780,6 @@ function renderRadarMap() {
 
   rctx.fillStyle = 'rgba(2, 2, 6, 0.85)'; rctx.beginPath(); rctx.arc(center, center, center - 2, 0, Math.PI*2); rctx.fill();
   rctx.strokeStyle = '#121224'; rctx.lineWidth = 1.5; rctx.stroke();
-  rctx.strokeStyle = 'rgba(0, 255, 136, 0.08)'; rctx.beginPath(); rctx.arc(center, center, center * 0.5, 0, Math.PI*2); rctx.stroke();
 
   const me = gameState.players[myId]; if (!me) return;
 
