@@ -20,7 +20,6 @@ const STAMINA_MAX = 120;
 const STAMINA_DRAIN = 1.8;
 const STAMINA_REGEN = 0.5;
 
-// Constantes de vitesse : Marche par défaut, course avec Shift
 const SPEED_WALK = 0.05; 
 const SPEED_SPRINT = 0.11; 
 
@@ -65,19 +64,19 @@ io.on('connection', (socket) => {
       historyTicks: 0,
       playerEchoLogs: []
     };
-    joinRoomSync(roomCode, data.name);
+    joinRoomSync(roomCode, data.name, true);
   });
 
   socket.on('join_room', (data) => {
     const roomCode = data.roomCode?.toUpperCase();
     if(rooms[roomCode] && !rooms[roomCode].started) {
-      joinRoomSync(roomCode, data.name);
+      joinRoomSync(roomCode, data.name, false);
     } else {
       socket.emit('error', "Chambre introuvable ou déjà lancée.");
     }
   });
 
-  function joinRoomSync(code, name) {
+  function joinRoomSync(code, name, forcedHost) {
     currentRoom = code;
     socket.join(code);
     const room = rooms[code];
@@ -98,7 +97,12 @@ io.on('connection', (socket) => {
       dead: false
     };
 
-    socket.emit('joined', { playerId, roomId: code });
+    // Correction de l'événement envoyé à l'hôte
+    if (forcedHost) {
+      socket.emit('room_created', { playerId, roomId: code });
+    } else {
+      socket.emit('joined', { playerId, roomId: code });
+    }
     io.to(code).emit('lobby_state', { players: room.players, hostId: room.hostId });
   }
 
