@@ -322,7 +322,6 @@ function build3DLabyrinth(mapData) {
     for(let x=0; x<mapData[y].length; x++) {
       if(mapData[y][x] === 1) {
         const block = new THREE.Mesh(wGeo, wallMat);
-        // Liaison stricte avec la grille : X serveur -> X Three.js, Y serveur -> Z Three.js
         block.position.set(x + 0.5, 1.25, y + 0.5);
         scene.add(block); wallMeshes.push(block);
       }
@@ -334,7 +333,6 @@ function build3DLabyrinth(mapData) {
   scene.add(ground);
 }
 
-// Interception de l'événement unique de carte
 socket.on('map', (map) => {
   gameMap = map;
   initThreeEngine();
@@ -373,9 +371,8 @@ socket.on('sound', (type) => {
   if(type === 'drop') showToast("⚠️ Colis lâché.", "#ffaa00");
 });
 
-// ÉCOUTEUR DU TICK D'ÉTAT DU SERVEUR (@30 FPS)
 socket.on('state', (state) => {
-  if(!scene) return; // Sécurité : évite de planter si Three.js n'a pas fini d'initialiser la scène
+  if(!scene) return;
   serverPlayersData = state.players;
   
   document.getElementById('hLvl').textContent = state.level;
@@ -388,13 +385,11 @@ socket.on('state', (state) => {
     document.getElementById('hLives').textContent = me.eliminated ? "ÉLIMINÉ" : (me.dead ? `RÉANIMATION (${Math.ceil(me.respawnTimer/30)}s)` : '❤️'.repeat(Math.max(0, me.lives)));
     document.getElementById('stFill').style.width = `${(me.stamina / 120) * 100}%`;
     
-    // Si mort ou désynchronisé de plus de 2 cases, recalage instantané sur la position validée du serveur
     if(me.dead || Math.hypot(lx - me.x, ly - me.y) > 2.0) {
       lx = me.x; ly = me.y;
     }
   }
 
-  // Porte de Sortie / Extraction
   if(state.exit) {
     if(!itemsMeshes['exit_gate']) {
       const eMesh = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.4, 0.1), exitMat);
@@ -403,7 +398,6 @@ socket.on('state', (state) => {
     itemsMeshes['exit_gate'].position.set(state.exit.x, 1.2, state.exit.y);
   }
 
-  // Colis (Items)
   state.items.forEach(item => {
     if(item.collected) {
       if(itemsMeshes[item.id]) { scene.remove(itemsMeshes[item.id]); delete itemsMeshes[item.id]; }
@@ -418,7 +412,6 @@ socket.on('state', (state) => {
     }
   });
 
-  // Fantômes
   state.monsters.forEach(m => {
     if(!monstersMeshes[m.id]) {
       const group = new THREE.Group();
@@ -434,7 +427,6 @@ socket.on('state', (state) => {
     if(!state.monsters.some(m => m.id == mid)) { scene.remove(monstersMeshes[mid]); delete monstersMeshes[mid]; }
   });
 
-  // Coéquipiers
   Object.keys(state.players).forEach(pid => {
     if(pid === myId) return;
     const p = state.players[pid];
@@ -452,7 +444,6 @@ socket.on('state', (state) => {
     if(!state.players[pid]) { scene.remove(playersMeshes[pid]); delete playersMeshes[pid]; }
   });
 
-  // Classement live
   if(state.leaderboard) {
     document.getElementById('scorebox').innerHTML = state.leaderboard.map((p, idx) => `
       <div class="sr" style="color:${p.color}">
@@ -462,7 +453,6 @@ socket.on('state', (state) => {
     `).join('');
   }
 
-  // Fin de partie
   if(state.gameOver || state.gameWon) {
     document.exitPointerLock();
     document.getElementById('ov').classList.add('on');
@@ -478,7 +468,6 @@ socket.on('state', (state) => {
   }
 });
 
-// Collision boite locale (Miroir exact de la fonction canMove du server.js)
 const RADIUS_C = 0.28;
 function checkMoveLocal(x, y) {
   if(!gameMap) return true;
@@ -492,26 +481,31 @@ function checkMoveLocal(x, y) {
 let spaceDebounce = false;
 let bobbing = 0;
 
-// BOUCLE PRINCIPALE DE RENDU FPS (60+ FPS LOCALEMENT)
+// BOUCLE PRINCIPALE DE RENDU FPS
 function runRenderLoop() {
   if(!gameStarted) return;
   requestAnimationFrame(runRenderLoop);
 
-  const me = serverPlayersData[myId];
+  const me = serverPlayersData ? serverPlayersData[myId] : null;
   
+  // SÉCURITÉ ANTI-ÉCRAN NOIR : Si le serveur n'a pas encore validé les données joueur, on attend sans crash
   if(me && !me.dead && !me.eliminated) {
     let dx = 0, dy = 0;
-    if(keys['KeyW'] || keys['KeyZ'] || keys['ArrowUp']) dy = 1;  // Avancer
-    if(keys['KeyS'] || keys['ArrowDown']) dy = -1;             // Reculer
-    if(keys['KeyA'] || keys['KeyQ'] || keys['ArrowLeft']) dx = -1; // Gauche
-    if(keys['KeyD'] || keys['ArrowRight']) dx = 1;             // Droite
+    if(keys['KeyW'] || keys['KeyZ'] || keys['ArrowUp']) dy = 1;  
+    if(keys['KeyS'] || keys['ArrowDown']) dy = -1;             
+    if(keys['KeyA'] || keys['KeyQ'] || keys['ArrowLeft']) dx = -1; 
+    if(keys['KeyD'] || keys['ArrowRight']) dx = 1;             
 
-    // Transformation trigonométrique de l'axe caméra vers la grille du serveur
-    let moveX = -dy * Math.sin(viewYaw) + dx * Math.cos(viewYaw);
-    let moveY = -dy * Math.cos(viewYaw) - dx * Math.sin(viewYaw);
+    let moveX = 0;
+    let moveY = 0;
     
     if(dx !== 0 || dy !== 0) {
-      let len = Math.hypot(moveX, moveY); moveX /= len; moveY /= len;
+      // Formule corrigée pour aligner la direction de la caméra Three.js avec la grille matricielle
+      moveX = -dy * Math.sin(viewYaw) + dx * Math.cos(viewYaw);
+      moveY = -dy * Math.cos(viewYaw) - dx * Math.sin(viewYaw);
+      
+      let len = Math.hypot(moveX, moveY);
+      if(len > 0) { moveX /= len; moveY /= len; }
       
       const wantsBoost = !!keys['ShiftLeft'];
       const speed = (wantsBoost && me.stamina > 0) ? 0.18 : 0.11;
@@ -535,7 +529,6 @@ function runRenderLoop() {
       spaceDebounce = false;
     }
 
-    // Émission instantanée des mouvements au serveur
     socket.emit('input', {
       dx: moveX,
       dy: moveY,
@@ -545,7 +538,7 @@ function runRenderLoop() {
       ly: ly
     });
 
-    // Lissage par interpolation linéaire pour détruire l'effet de saccade réseau
+    // Interpolation linéaire douce pour stabiliser le rendu
     camera.position.x = camera.position.x * 0.2 + lx * 0.8;
     camera.position.z = camera.position.z * 0.2 + ly * 0.8;
   }
