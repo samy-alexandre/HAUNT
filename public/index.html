@@ -32,13 +32,10 @@ input[type=text]{background:#000;border:2px solid var(--border);color:#fff;font-
 #gameScreen.active{display:flex;}
 #canvas3d_container {width:100%;height:100%;position:absolute;inset:0;z-index:1;}
 
-/* VIGNETTE OPTIQUE CINÉMATIQUE STYLE AAA */
-#vignette_overlay {position:absolute;inset:0;pointer-events:none;z-index:2;background:radial-gradient(circle, transparent 35%, rgba(0,0,0,0.92) 100%);}
-
+#vignette_overlay {position:absolute;inset:0;pointer-events:none;z-index:2;background:radial-gradient(circle, transparent 40%, rgba(0,0,0,0.85) 100%);}
 #reticle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:10px;height:10px;pointer-events:none;z-index:5;}
-#reticle::before{content:'';position:absolute;background:rgba(255,255,255,0.25);top:4px;left:-5px;width:20px;height:2px;}
+#reticle::before{content:'';position:absolute;background:rgba(255,255,255,0.4);top:4px;left:-5px;width:20px;height:2px;}
 
-/* HUD INTERFACE AVANCÉ STYLE AAA */
 #hud_overlay {position:absolute;inset:0;pointer-events:none;z-index:4;display:flex;flex-direction:column;justify-content:space-between;padding:1.5rem;}
 .hud_row {display:flex;justify-content:space-between;width:100%;}
 .hud_card {background:rgba(1,1,3,0.85);border:1px solid rgba(31,31,58,0.4);padding:0.8rem 1.2rem;border-radius:6px;}
@@ -76,7 +73,7 @@ input[type=text]{background:#000;border:2px solid var(--border);color:#fff;font-
   <h1>MANOIR PRIVÉ</h1>
   <div class="panel" style="text-align:center;">
     <div id="lCodeVal" style="font-family:'Bebas Neue',sans-serif; font-size:3.5rem; color:var(--accent);">------</div>
-    <div id="lStage" style="color:#888;">Génération de la géométrie...</div>
+    <div id="lStage" style="color:#888;">Génération de la géometrie...</div>
   </div>
   <button id="readyBtn" class="btn primary" style="display:none;" onclick="socket.emit('start_game')">LANCER LE PROTOCOLE ▶</button>
 </div>
@@ -88,7 +85,7 @@ input[type=text]{background:#000;border:2px solid var(--border);color:#fff;font-
 
   <div id="lock_notice">
     <p>CLIQUEZ ICI POUR ACTIVER LE MOTEUR GRAPHIQUE</p>
-    <span style="font-size:0.8rem; margin-top:10px; color:#555;">Z,Q,S,D (ou flèches) pour MARCHER · SOURIS pour orienter (Haut/Bas/Gauche/Droite) · MAJ pour COURIR · ESPACE pour interagir</span>
+    <span style="font-size:0.8rem; margin-top:10px; color:#aaa;">Z,Q,S,D pour MARCHER · SOURIS pour regarder à 360° · MAJ pour COURIR · ESPACE pour interagir</span>
   </div>
 
   <div id="hud_overlay">
@@ -113,38 +110,15 @@ input[type=text]{background:#000;border:2px solid var(--border);color:#fff;font-
   </div>
 </div>
 
-<div id="screen_msg">
-  <div id="msg_title">TITRE</div>
-  <p id="msg_sub" style="color:#aaa; font-size:1.1rem; text-align:center; max-width:600px;"></p>
-  <div style="display:flex; gap:1rem; width:100%; max-width:400px;">
-    <button class="btn primary" id="btnNext" style="display:none;">Prochain Étage</button>
-    <button class="btn" id="btnRestart" onclick="location.reload()">Réinitialiser</button>
-  </div>
-</div>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const socket = io({transports:['websocket','polling']});
 let myId=null, myRoom=null, gameMap=null, gameState=null, isHost=false, gameStarted=false;
 
-// AUDIO PROCÉDURAL SYNTHÉTISÉ
 const AudioEngine = {
-  ctx: null, ambientStarted: false,
-  init() {
-    if (this.ctx) return;
-    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-    this.startAmbient();
-  },
-  startAmbient() {
-    if (!this.ctx || this.ambientStarted) return;
-    this.ambientStarted = true;
-    const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
-    osc.type = 'sine'; osc.frequency.setValueAtTime(45, this.ctx.currentTime);
-    gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
-    osc.connect(gain); gain.connect(this.ctx.destination);
-    osc.start();
-  },
+  ctx: null,
+  init() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
   playPickup() {
     if(!this.ctx) return;
     const now = this.ctx.currentTime;
@@ -219,9 +193,9 @@ window.addEventListener('keyup', e => {
 
 window.addEventListener('mousemove', e => {
   if (document.pointerLockElement === container3d) {
-    viewYaw -= e.movementX * 0.0022;
-    viewPitch -= e.movementY * 0.0022;
-    viewPitch = Math.max(-1.45, Math.min(1.45, viewPitch)); // Limiter la vision haute/basse
+    viewYaw -= e.movementX * 0.0025;
+    viewPitch -= e.movementY * 0.0025;
+    viewPitch = Math.max(-1.3, Math.min(1.3, viewPitch));
   }
 });
 
@@ -229,105 +203,65 @@ let scene, camera, renderer;
 let wallsArray = [], meshesItems = {}, meshesMonsters = {};
 let wallMaterial, floorMaterial;
 
-// CONFIGURATION DES TEXTURES PBR PROCEDURALES (STYLE AAA)
 function generateProceduralTextures() {
-  // 1. Textures des Murs (Briques sombres avec Bump Map pour relief)
+  // Texture des murs de briques stylisés (Visible en basse lumière)
   const wallCanvas = document.createElement('canvas');
-  wallCanvas.width = 512; wallCanvas.height = 512;
+  wallCanvas.width = 256; wallCanvas.height = 256;
   const wCtx = wallCanvas.getContext('2d');
-  wCtx.fillStyle = '#111218'; wCtx.fillRect(0,0,512,512); // Base sombre
-  wCtx.strokeStyle = '#050608'; wCtx.lineWidth = 6;
-  
-  // Dessin des briques pour la normal map et la diffuse
-  for(let y=0; y<512; y+=64) {
-    wCtx.beginPath(); wCtx.moveTo(0, y); wCtx.lineTo(512, y); wCtx.stroke();
-    let shift = (y/64)%2 * 64; // Décalage des briques
-    for(let x=shift; x<512+shift; x+=128) {
-      wCtx.beginPath(); wCtx.moveTo(x%512, y); wCtx.lineTo(x%512, y+64); wCtx.stroke();
+  wCtx.fillStyle = '#222530'; wCtx.fillRect(0,0,256,256);
+  wCtx.strokeStyle = '#11131a'; wCtx.lineWidth = 4;
+  for(let y=0; y<256; y+=32) {
+    wCtx.beginPath(); wCtx.moveTo(0, y); wCtx.lineTo(256, y); wCtx.stroke();
+    let shift = (y/32)%2 * 32;
+    for(let x=shift; x<256+shift; x+=64) {
+      wCtx.beginPath(); wCtx.moveTo(x%256, y); wCtx.lineTo(x%256, y+32); wCtx.stroke();
     }
   }
-  // Bruit aléatoire pour texture de pierre
-  for(let i=0; i<8000; i++) {
-    let rx = Math.random()*512; let ry = Math.random()*512;
-    let c = Math.random()*25;
-    wCtx.fillStyle = `rgba(${c},${c},${c},0.15)`; wCtx.fillRect(rx, ry, 2, 2);
-  }
   const wallTex = new THREE.CanvasTexture(wallCanvas);
-  wallTex.wrapS = THREE.RepeatWrapping; wallTex.wrapT = THREE.RepeatWrapping;
+  wallMaterial = new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.6, metalness: 0.1 });
 
-  wallMaterial = new THREE.MeshStandardMaterial({
-    map: wallTex,
-    bumpMap: wallTex, // Applique le relief 3D
-    bumpScale: 0.04,
-    roughness: 0.75,
-    metalness: 0.1
-  });
-
-  // 2. Textures du Sol (Dalles de pierre usées)
+  // Texture des dalles du sol
   const floorCanvas = document.createElement('canvas');
-  floorCanvas.width = 256; floorCanvas.height = 256;
+  floorCanvas.width = 128; floorCanvas.height = 128;
   const fCtx = floorCanvas.getContext('2d');
-  fCtx.fillStyle = '#06070a'; fCtx.fillRect(0,0,256,256);
-  fCtx.strokeStyle = '#0e1017'; fCtx.lineWidth = 4; fCtx.strokeRect(0,0,256,256);
-  for(let i=0; i<4000; i++) {
-    let rx = Math.random()*256; let ry = Math.random()*256;
-    let c = Math.random()*20;
-    fCtx.fillStyle = `rgba(${c},${c},${c},0.12)`; fCtx.fillRect(rx, ry, 2, 2);
-  }
+  fCtx.fillStyle = '#14161f'; fCtx.fillRect(0,0,128,128);
+  fCtx.strokeStyle = '#282c3d'; fCtx.lineWidth = 2; fCtx.strokeRect(0,0,128,128);
   const floorTex = new THREE.CanvasTexture(floorCanvas);
   floorTex.wrapS = THREE.RepeatWrapping; floorTex.wrapT = THREE.RepeatWrapping;
-  floorTex.repeat.set(40, 40); // Répétition de la dalle
-
-  floorMaterial = new THREE.MeshStandardMaterial({
-    map: floorTex,
-    bumpMap: floorTex,
-    bumpScale: 0.02,
-    roughness: 0.6
-  });
+  floorTex.repeat.set(30, 30);
+  floorMaterial = new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.5 });
 }
 
 function initEngine() {
   generateProceduralTextures();
 
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x010103);
-  scene.fog = new THREE.FogExp2(0x010103, 0.25); // Brouillard volumétrique
+  scene.background = new THREE.Color(0x020205);
+  scene.fog = new THREE.FogExp2(0x020205, 0.15); // Réduit pour y voir plus clair !
 
-  camera = new THREE.PerspectiveCamera(75, container3d.clientWidth/container3d.clientHeight, 0.05, 50);
+  camera = new THREE.PerspectiveCamera(75, container3d.clientWidth/container3d.clientHeight, 0.1, 50);
   
-  renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+  renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(container3d.clientWidth, container3d.clientHeight);
-  
-  // ACTIVATION DU SYSTÈME DE SHADOW-MAPPING TRIPLE A
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
-  
   container3d.appendChild(renderer.domElement);
 
-  // Correction : Lumière ambiante très sombre pour l'angoisse
-  const ambient = new THREE.AmbientLight(0x04050d, 0.25);
-  scene.add(ambient);
+  // FIX 1 : Lumière ambiante générale augmentée pour ne plus être dans le noir complet
+  const ambientLight = new THREE.AmbientLight(0x3a3f58, 0.8);
+  scene.add(ambientLight);
 
-  // LAMPE TORCHE ÉMETTRICE D'OMBRES PORTÉES
-  const flashlight = new THREE.SpotLight(0xfff5e0, 4.5, 25, Math.PI / 4.8, 0.5, 1.2);
-  flashlight.position.set(0, 0, 0);
+  // FIX 2 : Ajustement de la Lampe Torche ultra puissante attachée devant la vue
+  const flashlight = new THREE.SpotLight(0xfff3d1, 15.0, 28, Math.PI/4, 0.4, 1.0);
+  flashlight.position.set(0, 0, 0.2); // Légèrement avancée
   flashlight.castShadow = true;
-  flashlight.shadow.mapSize.width = 1024;
-  flashlight.shadow.mapSize.height = 1024;
   camera.add(flashlight);
   
-  const flashlightTarget = new THREE.Object3D();
-  flashlightTarget.position.set(0, 0, -1);
-  camera.add(flashlightTarget);
-  flashlight.target = flashlightTarget;
+  const targetObj = new THREE.Object3D();
+  targetObj.position.set(0, 0, -1);
+  camera.add(targetObj);
+  flashlight.target = targetObj;
 
   scene.add(camera);
-
-  window.addEventListener('resize', () => {
-    camera.aspect = container3d.clientWidth / container3d.clientHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(container3d.clientWidth, container3d.clientHeight);
-  });
 }
 
 function buildMap3D() {
@@ -335,21 +269,19 @@ function buildMap3D() {
   wallsArray = [];
   if(!gameMap) return;
 
-  // Sol récepteur d'ombres
-  const floorGeo = new THREE.PlaneGeometry(70, 70);
-  const floorMesh = new THREE.Mesh(floorGeo, floorMaterial);
-  floorMesh.rotation.x = -Math.PI / 2;
-  floorMesh.receiveShadow = true;
-  scene.add(floorMesh);
+  const floorGeo = new THREE.PlaneGeometry(100, 100);
+  const floor = new THREE.Mesh(floorGeo, floorMaterial);
+  floor.rotation.x = -Math.PI/2;
+  floor.receiveShadow = true;
+  scene.add(floor);
 
-  // Murs émetteurs et récepteurs d'ombres
-  const wallGeo = new THREE.BoxGeometry(1, 2.8, 1);
+  const wGeo = new THREE.BoxGeometry(1, 2.4, 1);
 
   for(let y=0; y<gameMap.length; y++) {
     for(let x=0; x<gameMap[y].length; x++) {
       if(gameMap[y][x] === 1) {
-        const wall = new THREE.Mesh(wallGeo, wallMaterial);
-        wall.position.set(x + 0.5, 1.4, y + 0.5);
+        const wall = new THREE.Mesh(wGeo, wallMaterial);
+        wall.position.set(x + 0.5, 1.2, y + 0.5);
         wall.castShadow = true;
         wall.receiveShadow = true;
         scene.add(wall);
@@ -359,24 +291,26 @@ function buildMap3D() {
   }
 }
 
-let lastActionSent = false;
-let targetCameraPos = new THREE.Vector3(1.5, 1.2, 1.5);
-let headBobTimer = 0, lastStepTime = 0;
-
-socket.on('map', (mapData) => { gameMap = mapData; });
-socket.on('sound', (t) => { if(t==='pickup') AudioEngine.playPickup(); });
-
 socket.on('game_started', () => {
   gameStarted = true;
   document.getElementById('lobbyScreen').classList.remove('active');
   document.getElementById('gameScreen').classList.add('active');
   initEngine();
+  if(gameState && gameState.map) gameMap = gameState.map;
   buildMap3D();
   container3d.requestPointerLock();
   loop();
 });
 
-socket.on('state', (state) => { gameState = state; });
+socket.on('sound', (t) => { if(t==='pickup') AudioEngine.playPickup(); });
+
+socket.on('state', (state) => { 
+  gameState = state; 
+  if(!gameMap && state.map) { gameMap = state.map; buildMap3D(); }
+});
+
+let lastActionSent = false;
+let headBobTimer = 0, lastStepTime = 0;
 
 function loop() {
   requestAnimationFrame(loop);
@@ -384,130 +318,105 @@ function loop() {
 
   const me = gameState.players[myId];
   if(me && !me.dead) {
-    let F = 0, R = 0;
-    if(keys['up']) F = 1; if(keys['down']) F = -1;
-    if(keys['left']) R = -1; if(keys['right']) R = 1;
+    let dx=0, dy=0;
+    if(keys['up']) dy = 1; if(keys['down']) dy = -1;
+    if(keys['left']) dx = -1; if(keys['right']) dx = 1;
 
     let actionTrigger = (keys['action'] && !lastActionSent);
     lastActionSent = keys['action'];
 
-    let finalDx = -F * Math.sin(viewYaw) + R * Math.cos(viewYaw);
-    let finalDy = -F * Math.cos(viewYaw) - R * Math.sin(viewYaw);
-    if(F!==0 || R!==0) {
+    let finalDx = -dy * Math.sin(viewYaw) + dx * Math.cos(viewYaw);
+    let finalDy = -dy * Math.cos(viewYaw) - dx * Math.sin(viewYaw);
+    if(dx!==0 || dy!==0) {
       let len = Math.hypot(finalDx, finalDy);
       finalDx /= len; finalDy /= len;
     }
 
     socket.emit('input', { dx: finalDx, dy: finalDy, action: actionTrigger, boost: !!keys['shift'] });
 
-    targetCameraPos.set(me.x, 1.2, me.y);
-    camera.position.lerp(targetCameraPos, 0.28); // Interpolation cinématique supérieure
+    camera.position.x += (me.x - camera.position.x) * 0.25;
+    camera.position.z += (me.y - camera.position.z) * 0.25;
 
-    if(F!==0 || R!==0) {
-      let speedFactor = keys['shift'] && me.stamina > 10 ? 0.16 : 0.09;
+    if(dx!==0 || dy!==0) {
+      let speedFactor = keys['shift'] && me.stamina > 10 ? 0.14 : 0.07;
       headBobTimer += speedFactor;
-      camera.position.y = 1.2 + Math.sin(headBobTimer) * 0.024;
-      camera.rotation.z = Math.cos(headBobTimer * 0.5) * 0.015; // Head-Roll
-
-      let stepDelay = keys['shift'] && me.stamina > 10 ? 280 : 480; 
-      if(Date.now() - lastStepTime > stepDelay) {
+      camera.position.y = 1.2 + Math.sin(headBobTimer) * 0.022;
+      
+      let stepInterval = keys['shift'] && me.stamina > 10 ? 290 : 490;
+      if(Date.now() - lastStepTime > stepInterval) {
         AudioEngine.playFootstep(keys['shift']);
         lastStepTime = Date.now();
       }
     } else {
       camera.position.y += (1.2 - camera.position.y) * 0.1;
-      camera.rotation.z += (0 - camera.rotation.z) * 0.1;
     }
 
-    camera.rotation.set(viewPitch, viewYaw, camera.rotation.z, 'YXZ');
+    camera.rotation.set(viewPitch, viewYaw, 0, 'YXZ');
 
-    // UI Updates
     document.getElementById('hItems').textContent = `${gameState.itemsDelivered} / ${gameState.totalItems}`;
     document.getElementById('hLives').textContent = '❤️'.repeat(Math.max(0, me.lives));
     document.getElementById('stFill').style.width = `${(me.stamina/120)*100}%`;
   }
 
-  // OBJETS COLLECTIBLES
+  // LOGIQUE DES COLIS (COLLECTIBLES COMPLETS)
   gameState.items.forEach(item => {
     if(item.collected || item.carriedBy !== null) {
       if(meshesItems[item.id]) { scene.remove(meshesItems[item.id]); delete meshesItems[item.id]; }
     } else {
       if(!meshesItems[item.id]) {
-        let col = item.type === 'golden' ? 0xffcc00 : (item.type==='cursed' ? 0xcc22ff : 0x00aaff);
-        const gGroup = new THREE.Group();
-        const coreGeo = new THREE.BoxGeometry(0.25, 0.25, 0.25);
-        const coreMat = new THREE.MeshStandardMaterial({ color: col, roughness: 0.1, metalness: 0.9 });
-        const coreMesh = new THREE.Mesh(coreGeo, coreMat);
-        coreMesh.castShadow = true; gGroup.add(coreMesh);
-
-        const ringGeo = new THREE.TorusGeometry(0.24, 0.02, 4, 16);
-        const ringMat = new THREE.MeshBasicMaterial({ color: col, wireframe: true });
-        const ringMesh = new THREE.Mesh(ringGeo, ringMat);
-        ringMesh.rotation.x = Math.PI/2; gGroup.add(ringMesh);
-
-        scene.add(gGroup); meshesItems[item.id] = gGroup;
+        let itemColor = item.type === 'golden' ? 0xffd700 : (item.type==='cursed' ? 0xcc22ff : 0x00ff66);
+        const geo = new THREE.BoxGeometry(0.28, 0.28, 0.28);
+        const mat = new THREE.MeshStandardMaterial({ color: itemColor, roughness: 0.2, metalness: 0.6 });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.castShadow = true;
+        scene.add(mesh); meshesItems[item.id] = mesh;
       }
-      let targetMesh = meshesItems[item.id];
-      targetMesh.position.set(item.x, 0.5 + Math.sin(Date.now()*0.004 + item.id)*0.08, item.y);
-      targetMesh.children[0].rotation.y += 0.025;
-      targetMesh.children[1].rotation.z -= 0.015;
+      meshesItems[item.id].position.set(item.x, 0.4 + Math.sin(Date.now()*0.005)*0.05, item.y);
+      meshesItems[item.id].rotation.y += 0.02;
     }
   });
 
-  // MONSTRES ADVANCED AVEC EFFET SPECTRAL ET OMBRES GRAPHISME TRIPLE A
+  // FIX 3 : MONSTRES ENTIÈREMENT LUMINEUX DANS LE NOIR (SPECTRAL TRIPLE A)
   gameState.monsters.forEach(m => {
     if(!meshesMonsters[m.id]) {
-      let fCol = m.type === 'hunter' ? 0xff1144 : (m.type === 'twin' ? 0xaa00ff : 0xffaa00);
       const ghostGroup = new THREE.Group();
 
-      // Tête spéculaire brillante
-      const headGeo = new THREE.SphereGeometry(0.22, 16, 16);
-      const headMat = new THREE.MeshStandardMaterial({ 
-        color: fCol, emissive: fCol, emissiveIntensity: 0.4,
-        roughness: 0.1, metalness: 0.3
+      // Corps du spectre drapé
+      const bodyGeo = new THREE.CylinderGeometry(0.15, 0.32, 0.7, 12, 1, true);
+      const bodyMat = new THREE.MeshStandardMaterial({ 
+        color: 0xff1144, 
+        emissive: 0xff1144, 
+        emissiveIntensity: 1.5, // FIX : Brille de mille feux dans les couloirs
+        transparent: true, 
+        opacity: 0.85,
+        side: THREE.DoubleSide 
       });
-      const headMesh = new THREE.Mesh(headGeo, headMat); headMesh.position.y = 0.4;
-      headMesh.castShadow = true; 
-      ghostGroup.add(headMesh);
-
-      // Yeux noirs profonds
-      const eyeGeo = new THREE.SphereGeometry(0.04, 8, 8);
-      const eyeMat = new THREE.MeshStandardMaterial({ color: 0x010101, roughness: 0.9 });
-      const leftEye = new THREE.Mesh(eyeGeo, eyeMat); leftEye.position.set(0.08, 0.42, -0.18); ghostGroup.add(leftEye);
-      const rightEye = new THREE.Mesh(eyeGeo, eyeMat); rightEye.position.set(-0.08, 0.42, -0.18); ghostGroup.add(rightEye);
-
-      // Corps en drapé d'entité
-      const bodyGeo = new THREE.CylinderGeometry(0.2, 0.36, 0.65, 16, 4, true);
-      const bodyMat = new THREE.MeshStandardMaterial({
-        color: fCol, transparent: true, opacity: 0.8, roughness: 0.4, side: THREE.DoubleSide
-      });
-      const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat); bodyMesh.position.y = 0.05;
+      const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
       bodyMesh.castShadow = true;
       ghostGroup.add(bodyMesh);
 
-      // Lueur irradiant les murs
-      const ghostLight = new THREE.PointLight(fCol, 1.6, 4.0);
-      ghostLight.position.set(0, 0.4, 0);
-      ghostGroup.add(ghostLight);
+      // Yeux blancs terrifiants et incandescents
+      const eyeGeo = new THREE.SphereGeometry(0.04, 6, 6);
+      const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      const leftEye = new THREE.Mesh(eyeGeo, eyeMat); leftEye.position.set(0.07, 0.3, -0.15); ghostGroup.add(leftEye);
+      const rightEye = new THREE.Mesh(eyeGeo, eyeMat); rightEye.position.set(-0.07, 0.3, -0.15); ghostGroup.add(rightEye);
+
+      // Lumière dynamique rouge projetée sur les briques environnantes
+      const light = new THREE.PointLight(0xff1144, 2.5, 6);
+      light.position.set(0, 0.2, 0);
+      ghostGroup.add(light);
 
       scene.add(ghostGroup);
       meshesMonsters[m.id] = { group: ghostGroup, body: bodyMesh };
     }
-
-    const mData = meshesMonsters[m.id];
-    const time = Date.now() * 0.005;
-    const floatY = 0.88 + Math.sin(time + m.id) * 0.07;
     
-    let mTargetPos = new THREE.Vector3(m.x, floatY, m.y);
-    mData.group.position.lerp(mTargetPos, 0.22); // Interpolation monstres
-
-    if (m.dx !== 0 || m.dy !== 0) {
-      mData.group.rotation.y = Math.atan2(m.dx, m.dy) + Math.PI;
+    const mMesh = meshesMonsters[m.id];
+    mMesh.group.position.set(m.x, 0.7 + Math.sin(Date.now()*0.004)*0.06, m.y);
+    
+    if(m.dx !== 0 || m.dy !== 0) {
+      mMesh.group.rotation.y = Math.atan2(m.dx, m.dy) + Math.PI;
     }
-
-    // Ondulations physiques sur le corps spectral
-    mData.body.rotation.z = Math.sin(time * 1.6) * 0.06;
-    mData.body.rotation.x = Math.cos(time * 1.3) * 0.06;
+    mMesh.body.rotation.z = Math.sin(Date.now()*0.006) * 0.05;
   });
 
   renderer.render(scene, camera);
