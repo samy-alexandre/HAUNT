@@ -555,9 +555,10 @@ function render(){
     }
   }
 
-  // SPAWN glow
-  const{sx:spx,sy:spy}=w2s(0,0);
-  ctx.fillStyle='rgba(0,255,136,0.04)';ctx.beginPath();ctx.arc(spx+TILE*1.5,spy+TILE*1.5,TILE*3.5,0,Math.PI*2);ctx.fill();
+  // SPAWN glow — small, stays in map
+  const{sx:spx,sy:spy}=w2s(SPAWN_X,SPAWN_Y);
+  ctx.fillStyle='rgba(0,255,136,0.06)';ctx.beginPath();ctx.arc(spx,spy,TILE*2,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='rgba(0,255,136,0.12)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(spx,spy,TILE*2,0,Math.PI*2);ctx.stroke();
 
   // EXIT
   const ep=gameState.exit||{x:25.5,y:1.5};
@@ -649,8 +650,7 @@ function drawAnimal(p,isMe,rx,ry,dir){
   // Shadow
   ctx.fillStyle='rgba(0,0,0,0.22)';ctx.beginPath();ctx.ellipse(cx,cy+r*1.1,r*0.9,r*0.22,0,0,Math.PI*2);ctx.fill();
 
-  // Color ring
-  ctx.strokeStyle=p.color;ctx.lineWidth=3;ctx.beginPath();ctx.arc(cx,cy,r*0.95,0,Math.PI*2);ctx.stroke();
+
 
   // Animal emoji — rotates to face direction
   ctx.save();
@@ -728,8 +728,13 @@ function sendInput(){
     lstam=Math.min(STAMINA_MAX,lstam+STAMINA_REGEN);
   }
   const now=Date.now();
-  if(now-lastSent>=33){lastSent=now;if(dx||dy||boost)socket.emit('input',{dx,dy,action,boost:canBoost,dir:ldir});}
-  if(action)socket.emit('input',{dx:0,dy:0,action:true,boost:false,dir:ldir});
+  if(now-lastSent>=33){
+    lastSent=now;
+    // Always send our local position so other players see us correctly
+    socket.emit('input',{dx,dy,action,boost:canBoost,dir:ldir,lx,ly});
+  } else if(action){
+    socket.emit('input',{dx:0,dy:0,action:true,boost:false,dir:ldir,lx,ly});
+  }
 }
 
 function startGameLoop(){
