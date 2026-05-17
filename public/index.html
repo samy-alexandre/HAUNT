@@ -38,22 +38,21 @@ input[type=text]:focus{border-color:var(--accent);box-shadow:0 0 15px rgba(0,255
 .cbtn{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;background:rgba(0,0,0,0.5);}
 .cbtn.on{border-color:var(--accent);background:rgba(0,255,136,0.04);}
 .cbtn-dot{width:16px;height:16px;border-radius:50%;}
-.cbtn-lbl{font-size:0.55rem;color:var(--dim2);}
 
-/* ENGINE 3D CODES */
+/* INTERFACE JEU 3D */
 #gameScreen{display:none;position:fixed;inset:0;flex-direction:column;}
 #gameScreen.active{display:flex;}
 #gameBody{flex:1;display:flex;position:relative;min-height:0;}
 #canvas3d_container{flex:1;position:relative;background:#000001;}
 
-/* EFFETS VISUELS BANANA EXTRÊMES */
-#vignette{position:absolute;inset:0;pointer-events:none;z-index:2;background:radial-gradient(circle, transparent 15%, rgba(0,0,0,0.8) 55%, rgba(0,0,0,1) 100%);}
-#reticle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:4px;height:4px;background:rgba(255,255,255,0.4);border-radius:50%;pointer-events:none;z-index:4;}
+/* EFFETS EFFRAYANTS VISUELS */
+#vignette{position:absolute;inset:0;pointer-events:none;z-index:2;background:radial-gradient(circle, transparent 10%, rgba(0,0,0,0.85) 60%, rgba(0,0,0,1) 100%);}
+#reticle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:4px;height:4px;background:rgba(255,255,255,0.5);border-radius:50%;pointer-events:none;z-index:4;}
 
 #lock_notice{position:absolute;inset:0;background:rgba(0,0,0,0.95);z-index:15;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;backdrop-filter:blur(8px);}
 #lock_notice h2{font-family:'Bebas Neue',sans-serif;font-size:2.5rem;color:var(--accent);letter-spacing:4px;}
 
-/* ATH INTERFACE */
+/* HUD PRINCIPAL ACCROCHÉ AU SERVEUR */
 #hud{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-around;align-items:center;padding:1rem;background:linear-gradient(to bottom, rgba(0,0,0,0.95) 0%, transparent 100%);z-index:5;pointer-events:none;}
 .hi{display:flex;flex-direction:column;align-items:center;background:rgba(2,2,5,0.7);padding:0.5rem 1.4rem;border-radius:6px;border:1px solid rgba(255,255,255,0.01);backdrop-filter:blur(4px);}
 .hl{color:var(--dim2);font-size:0.55rem;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:3px;}
@@ -61,14 +60,14 @@ input[type=text]:focus{border-color:var(--accent);box-shadow:0 0 15px rgba(0,255
 #stBar{width:100px;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;margin-top:5px;}
 #stFill{height:100%;width:100%;background:var(--accent);transition:width 0.1s linear;}
 
-/* PANNEAU DE CONTRÔLE SIDEBAR */
-#sidebar{width:250px;background:rgba(2,2,4,0.98);border-left:1px solid var(--border);display:flex;flex-direction:column;z-index:5;}
+/* PANNEAU LATÉRAL CHAT + LEADERBOARD */
+#sidebar{width:260px;background:rgba(2,2,4,0.98);border-left:1px solid var(--border);display:flex;flex-direction:column;z-index:5;}
 .sbt{font-size:0.65rem;letter-spacing:0.2em;color:var(--accent);padding:0.7rem 0.9rem;border-bottom:1px solid var(--border);text-transform:uppercase;font-weight:bold;}
 #chatbox{flex:1;overflow-y:auto;padding:0.6rem;display:flex;flex-direction:column;gap:0.4rem;}
-.cm{font-size:0.75rem;line-height:1.4;}
+.cm{font-size:0.75rem;line-height:1.4;word-break:break-all;}
 #chatform{display:flex;border-top:1px solid var(--border);padding:0.5rem;}
 #chatinput{flex:1;background:transparent;border:none;color:#fff;font-family:inherit;font-size:0.75rem;outline:none;}
-#scorebox{border-top:1px solid var(--border);max-height:180px;overflow-y:auto;}
+#scorebox{border-top:1px solid var(--border);max-height:200px;overflow-y:auto;}
 .sr{display:flex;justify-content:space-between;padding:0.4rem 0.7rem;font-size:0.7rem;border-bottom:1px solid rgba(255,255,255,0.01);}
 
 #toast{position:fixed;top:85px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--accent);color:var(--accent);padding:0.6rem 1.4rem;border-radius:6px;font-size:0.8rem;z-index:200;opacity:0;transition:opacity 0.3s;}
@@ -87,7 +86,7 @@ input[type=text]:focus{border-color:var(--accent);box-shadow:0 0 15px rgba(0,255
 
 <div id="menuScreen" class="screen active">
   <h1>HAUNT 3D</h1>
-  <div class="sub">MOTEUR GRAPHIQUE CRASPEC BANANA EDITION</div>
+  <div class="sub">MOTEUR GRAPHIQUE BANANA HORREUR COOP</div>
   
   <div class="panel">
     <div class="ptitle">▸ Créer une session</div>
@@ -123,7 +122,7 @@ input[type=text]:focus{border-color:var(--accent);box-shadow:0 0 15px rgba(0,255
     <div class="hi"><span class="hl">Cargaison</span><span class="hv" id="hItems">0 / 0</span></div>
     <div class="hi"><span class="hl">Points</span><span class="hv" id="hScore">0</span></div>
     <div class="hi"><span class="hl">Vie</span><span class="hv" id="hLives">❤️❤️❤️</span></div>
-    <div class="hi"><span class="hl">Saison</span><span class="hv" id="hSeason">AUTUMN</span></div>
+    <div class="hi"><span class="hl">Saison</span><span class="hv" id="hSeason">WINTER</span></div>
     <div class="hi"><span class="hl">Stamina</span><div id="stBar"><div id="stFill"></div></div></div>
   </div>
 
@@ -132,13 +131,13 @@ input[type=text]:focus{border-color:var(--accent);box-shadow:0 0 15px rgba(0,255
       <div id="vignette"></div>
       <div id="reticle"></div>
       <div id="lock_notice">
-        <h2>CLIQUEZ ICI POUR VERROUILLER LE FLUX (FPS)</h2>
-        <p style="color:var(--dim2); font-size:0.8rem; margin-top:8px;">[ZQSD / Flèches] Bouger · [SOURIS] Regarder · [MAJ] Courir · [ESPACE] Prendre/Lâcher</p>
+        <h2>CLIQUEZ ICI POUR ACTIVER LE CURSEUR FPS</h2>
+        <p style="color:var(--dim2); font-size:0.8rem; margin-top:8px;">[ZQSD / WASD] Bouger · [SOURIS] Regarder · [MAJ] Courir · [ESPACE] Prendre/Lâcher Colis</p>
       </div>
     </div>
 
     <div id="sidebar">
-      <div class="sbt">💬 Radio</div>
+      <div class="sbt">💬 Radio Intercom</div>
       <div id="chatbox"></div>
       <form id="chatform">
         <input type="text" id="chatinput" placeholder="Parler..." maxlength="70" autocomplete="off"/>
@@ -171,14 +170,15 @@ input[type=text]:focus{border-color:var(--accent);box-shadow:0 0 15px rgba(0,255
 const socket = io();
 let myId = null, myRoom = null, gameMap = null, isHost = false, gameStarted = false;
 
-// Variables de positionnement fluides dictées par le serveur
+// Variables pour le calcul local de la physique fluide (synchronisées avec server.js)
+let lx = 1.5, ly = 1.5; 
 let currentPlayersData = {};
 let viewYaw = 0, viewPitch = 0;
 
 const COLORS = ['#00ff88', '#ff6b6b', '#ff9900', '#9b5de5', '#00bbf9', '#f15bb5'];
 let myColor = COLORS[0];
 
-// Interface choix couleur
+// Grille de choix des couleurs du Lobby
 const cgrid = document.getElementById('cgrid');
 COLORS.forEach((col, i) => {
   const b = document.createElement('div'); b.className = 'cbtn' + (i === 0 ? ' on' : '');
@@ -192,7 +192,7 @@ COLORS.forEach((col, i) => {
   cgrid.appendChild(b);
 });
 
-// Réseau et boutons d'interface
+// Événements d'envoi d'interface
 document.getElementById('btnCreate').onclick = () => {
   socket.emit('create_room', {name: document.getElementById('nameIn').value || 'SURVIVOR', color: myColor, animal: 0});
 };
@@ -205,7 +205,7 @@ document.getElementById('readyBtn').onclick = () => { socket.emit('start_game');
 document.getElementById('btnNext').onclick = () => { socket.emit('next_level'); };
 document.getElementById('btnRestart').onclick = () => { socket.emit('restart_game'); };
 
-// Événements réseau de base (alignés à 100% sur ton server.js)
+// Gestion de la connexion et salons
 socket.on('room_created', (data) => { myId = data.playerId; myRoom = data.roomId; isHost = true; setupLobby(); });
 socket.on('joined', (data) => { myId = data.playerId; myRoom = data.roomId; isHost = false; setupLobby(); });
 socket.on('error', (msg) => { toast(msg, '#ff1133'); });
@@ -228,41 +228,20 @@ const lockNotice = document.getElementById('lock_notice');
 lockNotice.onclick = () => { container3d.requestPointerLock(); };
 document.addEventListener('pointerlockchange', () => { lockNotice.style.display = (document.pointerLockElement === container3d) ? 'none' : 'flex'; });
 
-// Inputs clavier réactifs
-const keys = {up:false, down:false, left:false, right:false, shift:false, action:false};
-let actionCooldown = false;
-
-window.addEventListener('keydown', e => {
-  let k = e.key.toLowerCase();
-  if(k==='z' || k==='w' || e.code==='ArrowUp') keys.up = true;
-  if(k==='s' || e.code==='ArrowDown') keys.down = true;
-  if(k==='q' || k==='a' || e.code==='ArrowLeft') keys.left = true;
-  if(k==='d' || e.code==='ArrowRight') keys.right = true;
-  if(e.code==='ShiftLeft' || e.code==='ShiftRight') keys.shift = true;
-  if(e.code==='Space') {
-    if(!actionCooldown) { keys.action = true; actionCooldown = true; }
-  }
-});
-
-window.addEventListener('keyup', e => {
-  let k = e.key.toLowerCase();
-  if(k==='z' || k==='w' || e.code==='ArrowUp') keys.up = false;
-  if(k==='s' || e.code==='ArrowDown') keys.down = false;
-  if(k==='q' || k==='a' || e.code==='ArrowLeft') keys.left = false;
-  if(k==='d' || e.code==='ArrowRight') keys.right = false;
-  if(e.code==='ShiftLeft' || e.code==='ShiftRight') keys.shift = false;
-  if(e.code==='Space') { keys.action = false; actionCooldown = false; }
-});
+// Inputs claviers réactifs
+const keys = {};
+window.addEventListener('keydown', e => { keys[e.code] = true; });
+window.addEventListener('keyup', e => { keys[e.code] = false; });
 
 window.addEventListener('mousemove', e => {
   if (document.pointerLockElement === container3d) {
-    viewYaw -= e.movementX * 0.0025;
-    viewPitch -= e.movementY * 0.0025;
+    viewYaw -= e.movementX * 0.0022;
+    viewPitch -= e.movementY * 0.0022;
     viewPitch = Math.max(-1.3, Math.min(1.3, viewPitch));
   }
 });
 
-// Chat d'origine
+// Chat d'origine du serveur
 document.getElementById('chatform').onsubmit = (e) => {
   e.preventDefault();
   const inp = document.getElementById('chatinput');
@@ -274,21 +253,31 @@ socket.on('chat_msg', (data) => {
   m.className = 'cm'; m.innerHTML = `<span style="color:${data.color}"><b>${data.name}</b>:</span> ${data.msg}`;
   box.appendChild(m); box.scrollTop = box.scrollHeight;
 });
+socket.on('chat_history', (msgs) => {
+  const box = document.getElementById('chatbox'); box.innerHTML = '';
+  msgs.forEach(data => {
+    const m = document.createElement('div'); m.className = 'cm';
+    m.innerHTML = `<span style="color:${data.color}"><b>${data.name}</b>:</span> ${data.msg}`;
+    box.appendChild(m);
+  });
+  box.scrollTop = box.scrollHeight;
+});
 
-// GRAPHISMES ENGIN THREE.JS RENDU GLUANT BANANA 
+// GRAPHISMES THREE.JS 
 let scene, camera, renderer, wallMaterial, floorMaterial, exitMaterial;
 let wallsArray = [], meshesItems = {}, meshesMonsters = {}, meshesPlayers = {};
 let flashLight, ambientLight;
 
+// Génération de textures à la volée pour un look craspec haute qualité
 function buildHighEndTextures() {
   const wallCanvas = document.createElement('canvas'); wallCanvas.width = 512; wallCanvas.height = 512;
   const wCtx = wallCanvas.getContext('2d');
-  wCtx.fillStyle = '#06070a'; wCtx.fillRect(0,0,512,512);
-  for(let i=0; i<3000; i++) {
-    wCtx.fillStyle = Math.random() > 0.5 ? 'rgba(30,55,40,0.05)' : 'rgba(0,0,0,0.4)';
+  wCtx.fillStyle = '#0a0d14'; wCtx.fillRect(0,0,512,512);
+  for(let i=0; i<4000; i++) {
+    wCtx.fillStyle = Math.random() > 0.5 ? 'rgba(0,255,100,0.03)' : 'rgba(0,0,0,0.5)';
     wCtx.fillRect(Math.random()*512, Math.random()*512, 2, 4);
   }
-  wCtx.strokeStyle = '#010204'; wCtx.lineWidth = 6;
+  wCtx.strokeStyle = '#020306'; wCtx.lineWidth = 4;
   for(let y=0; y<512; y+=64) {
     wCtx.beginPath(); wCtx.moveTo(0, y); wCtx.lineTo(512, y); wCtx.stroke();
     let shift = (y/64)%2 * 64;
@@ -297,17 +286,17 @@ function buildHighEndTextures() {
     }
   }
   const wallTex = new THREE.CanvasTexture(wallCanvas);
-  wallMaterial = new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.18, metalness: 0.65 });
+  wallMaterial = new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.2, metalness: 0.5 });
 
   const floorCanvas = document.createElement('canvas'); floorCanvas.width = 256; floorCanvas.height = 256;
   const fCtx = floorCanvas.getContext('2d');
-  fCtx.fillStyle = '#020306'; fCtx.fillRect(0,0,256,256);
-  for(let i=0; i<500; i++){ fCtx.fillStyle = 'rgba(0,0,0,0.6)'; fCtx.fillRect(Math.random()*256, Math.random()*256, 4, 4); }
+  fCtx.fillStyle = '#030407'; fCtx.fillRect(0,0,256,256);
+  for(let i=0; i<1000; i++){ fCtx.fillStyle = 'rgba(0,0,0,0.4)'; fCtx.fillRect(Math.random()*256, Math.random()*256, 2, 2); }
   const floorTex = new THREE.CanvasTexture(floorCanvas);
-  floorTex.wrapS = THREE.RepeatWrapping; floorTex.wrapT = THREE.RepeatWrapping; floorTex.repeat.set(30, 30);
-  floorMaterial = new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.4 });
+  floorTex.wrapS = THREE.RepeatWrapping; floorTex.wrapT = THREE.RepeatWrapping; floorTex.repeat.set(40, 40);
+  floorMaterial = new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.5 });
 
-  exitMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff88, emissive: 0x00ff88, emissiveIntensity: 2.0 });
+  exitMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff88, emissive: 0x00ff88, emissiveIntensity: 2.5 });
 }
 
 function initEngine3D() {
@@ -315,21 +304,21 @@ function initEngine3D() {
   buildHighEndTextures();
 
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x000001);
-  scene.fog = new THREE.FogExp2(0x000001, 0.28); // Brouillard étouffant opaque
+  scene.background = new THREE.Color(0x000002);
+  scene.fog = new THREE.FogExp2(0x000002, 0.25); // Brume étouffante cache-misère AAA
 
-  camera = new THREE.PerspectiveCamera(70, container3d.clientWidth/container3d.clientHeight, 0.05, 40);
+  camera = new THREE.PerspectiveCamera(75, container3d.clientWidth/container3d.clientHeight, 0.05, 50);
   
   renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
   renderer.setSize(container3d.clientWidth, container3d.clientHeight);
   renderer.shadowMap.enabled = true;
   container3d.appendChild(renderer.domElement);
 
-  ambientLight = new THREE.AmbientLight(0x0d111a, 0.15);
+  ambientLight = new THREE.AmbientLight(0x080c15, 0.1);
   scene.add(ambientLight);
 
-  // Lampe torche
-  flashLight = new THREE.SpotLight(0xfff0d0, 18, 22, Math.PI/5.5, 0.4, 1.2);
+  // Lampe torche attachée aux yeux du joueur
+  flashLight = new THREE.SpotLight(0xfff5df, 15, 25, Math.PI/5, 0.5, 1.1);
   flashLight.castShadow = true;
   camera.add(flashLight);
 
@@ -343,7 +332,7 @@ function initEngine3D() {
   });
 }
 
-// Fonction de reconstruction complète de la carte transmise par le serveur
+// Reconstruction propre des murs selon la matrice du labyrinthe transmise
 function rebuildLabyrinth(mapData) {
   if(!scene) return;
   wallsArray.forEach(w => scene.remove(w)); wallsArray = [];
@@ -359,13 +348,13 @@ function rebuildLabyrinth(mapData) {
     }
   }
 
-  // Sol unique aligné sur les dimensions
-  const floorMesh = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), floorMaterial);
-  floorMesh.rotation.x = -Math.PI/2; position = 0;
+  // Grand sol unique
+  const floorMesh = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), floorMaterial);
+  floorMesh.rotation.x = -Math.PI/2;
   scene.add(floorMesh);
 }
 
-// Événements de démarrage de niveau (RECOIT LA CARTE SANS PERDRE DE BOUTS)
+// Événements d'activation réseau
 socket.on('map', (map) => {
   gameMap = map;
   initEngine3D();
@@ -377,12 +366,17 @@ socket.on('game_started', () => {
   document.getElementById('lobbyScreen').classList.remove('active');
   document.getElementById('gameScreen').classList.add('active');
   document.getElementById('ov').classList.remove('on');
+  
+  // Placement de départ initial
+  lx = 1.5; ly = 1.5;
+  camera.position.set(lx, 1.2, ly);
+  
   loop3D();
 });
 
 socket.on('level_start', (data) => {
   document.getElementById('ov').classList.remove('on');
-  toast(`Étage ${data.level} - Saison: ${data.season.toUpperCase()}`, '#00ff88');
+  toast(`Étage ${data.level} — Saison ${data.season.toUpperCase()}`, '#00ff88');
 });
 
 socket.on('back_to_lobby', () => {
@@ -392,23 +386,29 @@ socket.on('back_to_lobby', () => {
   document.getElementById('lobbyScreen').classList.add('active');
 });
 
-// Éléments d'ambiance sonore optionnels prévus par le serveur
+// Événements d'ambiances ou d'effets sonores couplés au serveur
 socket.on('sound', (type) => {
-  if(type === 'death') toast("💥 Un joueur a succombé !", "#ff1133");
-  if(type === 'score') toast("+1 Colis livré !", "#00ff88");
-  if(type === 'golden_score') toast("✨ COLIS EN OR LIVRÉ !!!", "#ffaa00");
-  if(type === 'cursed') toast("💀 MALÉDICTION ACTIVÉE (Vitesse monstres augmentée !)", "#aa22ff");
+  if(type === 'death') toast("💥 Un survivant s'est fait choper !", "#ff1133");
+  if(type === 'score') toast("📦 Colis sécurisé à la sortie !", "#00ff88");
+  if(type === 'golden_score') toast("✨ COLIS EN OR SÉCURISÉ ! MAGNIFIQUE !", "#ffaa00");
+  if(type === 'cursed') toast("💀 MALÉDICTION ! Les monstres s'excitent !", "#aa22ff");
+  if(type === 'pickup') toast("🎒 Colis ramassé. Ramenez-le à la porte !", "#00bbf9");
+  if(type === 'drop') toast("⚠️ Colis déposé au sol.", "#ff9900");
 });
 
-socket.on('player_eliminated', (data) => { toast(`❌ ${data.name} est éliminé !`, '#ff1133'); });
-socket.on('cursed_activated', (data) => { toast(`⚠️ ${data.name} a déclenché une malédiction !`, '#aa22ff'); });
-socket.on('combo_activated', (data) => { toast(`🔥 ${data.name} est en FEU (Combo x2 Actif) !`, data.color); });
+socket.on('player_eliminated', (data) => { toast(`❌ ${data.name} n'a plus de vie ! ÉLIMINÉ.`, '#ff1133'); });
+socket.on('cursed_activated', (data) => { toast(`⚠️ ${data.name} a déclenché le colis maudit !`, '#aa22ff'); });
+socket.on('combo_activated', (data) => { toast(`🔥 ${data.name} enchaîne ! Multiplicateur Actif !`, data.color); });
+socket.on('rush_hour', (data) => {
+  if(data.active) toast("🚨 HEURE DE POINTE ! Tous les colis réapparaissent !", "#ff1133");
+  else toast("⏰ Fin de la ruée.", "#606280");
+});
 
-// ECOUTE DU TICK SERVEUR PRINCIPAL
+// RECEPTION DU TICK SERVEUR PRINCIPAL (30 FPS)
 socket.on('state', (state) => {
   currentPlayersData = state.players;
   
-  // Mettre à jour l'ATH global
+  // HUD
   document.getElementById('hLvl').textContent = state.level;
   document.getElementById('hItems').textContent = `${state.itemsDelivered} / ${state.totalItems}`;
   document.getElementById('hScore').textContent = state.score;
@@ -417,51 +417,60 @@ socket.on('state', (state) => {
 
   const me = state.players[myId];
   if(me) {
-    document.getElementById('hLives').textContent = me.eliminated ? "ÉLIMINÉ" : (me.dead ? "⚠️ EN ATTENTE..." : '❤️'.repeat(Math.max(0, me.lives)));
+    document.getElementById('hLives').textContent = me.eliminated ? "ÉLIMINÉ" : (me.dead ? `⚠️ RÉINCARNATION (${Math.ceil(me.respawnTimer/30)}s)` : '❤️'.repeat(Math.max(0, me.lives)));
     document.getElementById('stFill').style.width = `${(me.stamina / 120) * 100}%`;
+    
+    // Forcer la synchronisation si le serveur nous ressuscite ou nous téléporte
+    if(me.dead || Math.hypot(lx - me.x, ly - me.y) > 2.0) {
+      lx = me.x; ly = me.y;
+    }
   }
 
-  // Actualisation de la porte de sortie (Exit Gate)
-  if(state.exit && !meshesItems['exit_gate']) {
-    const eMesh = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.2, 0.1), exitMaterial);
-    eMesh.position.set(state.exit.x, 1.1, state.exit.y);
-    scene.add(eMesh); meshesItems['exit_gate'] = eMesh;
+  // Porte de sortie (Exit Gate)
+  if(state.exit) {
+    if(!meshesItems['exit_gate']) {
+      const eMesh = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.4, 0.1), exitMaterial);
+      scene.add(eMesh); meshesItems['exit_gate'] = eMesh;
+    }
+    meshesItems['exit_gate'].position.set(state.exit.x, 1.2, state.exit.y);
   }
 
-  // Actualisation dynamique des items (Colis)
+  // Traitement synchrone des Colis
   state.items.forEach(item => {
     if(item.collected) {
       if(meshesItems[item.id]) { scene.remove(meshesItems[item.id]); delete meshesItems[item.id]; }
     } else {
       if(!meshesItems[item.id]) {
         let col = item.type === 'golden' ? 0xffaa00 : (item.type === 'cursed' ? 0xaa22ff : 0x00ff77);
-        const itemMesh = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.25, 0.25), new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.6 }));
+        const itemMesh = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.3), new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.5 }));
         scene.add(itemMesh); meshesItems[item.id] = itemMesh;
       }
-      meshesItems[item.id].position.set(item.x, 0.25, item.y);
-      meshesItems[item.id].rotation.y += 0.015;
+      meshesItems[item.id].position.set(item.x, 0.3, item.y);
+      meshesItems[item.id].rotation.y += 0.02;
     }
   });
+  // Nettoyage items
+  Object.keys(meshesItems).forEach(id => {
+    if(id !== 'exit_gate' && !state.items.some(i => i.id == id)) { scene.remove(meshesItems[id]); delete meshesItems[id]; }
+  });
 
-  // Gestion des monstres fantômes
+  // Traitement des Fantômes (Monsters)
   state.monsters.forEach(m => {
     if(!meshesMonsters[m.id]) {
       const group = new THREE.Group();
-      let mCol = m.type === 'hunter' ? 0xff0033 : (m.type === 'twin' ? 0x9b5de5 : 0xffaa00);
-      const bMesh = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 12), new THREE.MeshStandardMaterial({ color: mCol, emissive: mCol, emissiveIntensity: 1.5 }));
-      bMesh.position.y = 0.5; group.add(bMesh);
-      const pLight = new THREE.PointLight(mCol, 3, 5); pLight.position.y = 0.5; group.add(pLight);
+      let mCol = m.type === 'hunter' ? 0xff1133 : (m.type === 'twin' ? 0x9b5de5 : 0xffaa00);
+      const bMesh = new THREE.Mesh(new THREE.SphereGeometry(0.24, 16, 16), new THREE.MeshStandardMaterial({ color: mCol, emissive: mCol, emissiveIntensity: 1.8 }));
+      bMesh.position.y = 0.6; group.add(bMesh);
+      const pLight = new THREE.PointLight(mCol, 2, 6); pLight.position.y = 0.6; group.add(pLight);
       scene.add(group); meshesMonsters[m.id] = group;
     }
-    meshesMonsters[m.id].position.set(m.x, 0.5 + Math.sin(Date.now()*0.005 + m.id)*0.05, m.y);
+    meshesMonsters[m.id].position.set(m.x, 0.5 + Math.sin(Date.now()*0.006 + m.id)*0.08, m.y);
   });
-
-  // Nettoyer les monstres disparus (si le niveau change)
   Object.keys(meshesMonsters).forEach(mid => {
     if(!state.monsters.some(m => m.id == mid)) { scene.remove(meshesMonsters[mid]); delete meshesMonsters[mid]; }
   });
 
-  // Gestion des autres joueurs (Cylindres d'escouade)
+  // Traitement des Escouades de Joueurs connectés
   Object.keys(state.players).forEach(pid => {
     if(pid === myId) return;
     const p = state.players[pid];
@@ -469,18 +478,18 @@ socket.on('state', (state) => {
       if(meshesPlayers[pid]) { scene.remove(meshesPlayers[pid]); delete meshesPlayers[pid]; }
     } else {
       if(!meshesPlayers[pid]) {
-        const pMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 1.2, 8), new THREE.MeshStandardMaterial({ color: p.color, metalness: 0.5, roughness: 0.2 }));
+        const pMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 1.3, 12), new THREE.MeshStandardMaterial({ color: p.color, metalness: 0.3, roughness: 0.3 }));
         scene.add(pMesh); meshesPlayers[pid] = pMesh;
       }
-      meshesPlayers[pid].position.set(p.x, 0.6, p.y);
+      meshesPlayers[pid].position.set(p.x, 0.65, p.y);
     }
   });
   Object.keys(meshesPlayers).forEach(pid => {
     if(!state.players[pid]) { scene.remove(meshesPlayers[pid]); delete meshesPlayers[pid]; }
   });
 
-  // Rangs à droite
-  if(state.leaderboard && state.leaderboard.length) {
+  // Rangs en direct
+  if(state.leaderboard) {
     document.getElementById('scorebox').innerHTML = state.leaderboard.map((p, idx) => `
       <div class="sr" style="color:${p.color}">
         <span>${idx+1}. ${p.name} ${p.comboActive ? '🔥' : ''}</span>
@@ -489,11 +498,11 @@ socket.on('state', (state) => {
     `).join('');
   }
 
-  // Écran de fin de niveau / Game Over
+  // Séquence écran de victoire / Défaite Étage
   if(state.gameOver || state.gameWon) {
     document.exitPointerLock();
     document.getElementById('ov').classList.add('on');
-    document.getElementById('ovtitle').textContent = state.gameWon ? "ÉTAGE SÉCURISÉ ! ✨" : "SÉQUENCE TERMINÉE 💀";
+    document.getElementById('ovtitle').textContent = state.gameWon ? "ÉTAGE COMPLÉTÉ ! ✨" : "ÉQUIPE ÉLIMINÉE 💀";
     document.getElementById('ovtitle').style.color = state.gameWon ? "var(--accent)" : "var(--danger)";
     
     document.getElementById('btnNext').style.display = (isHost && state.gameWon) ? 'block' : 'none';
@@ -507,51 +516,80 @@ socket.on('state', (state) => {
   }
 });
 
+// Code local de vérification de collision identique au serveur (canMove)
+const R = 0.28;
+function canMoveLocal(x, y) {
+  if(!gameMap) return true;
+  for(const [cx, cy] of [[x-R, y-R], [x+R, y-R], [x-R, y+R], [x+R, y+R]]) {
+    const tx = Math.floor(cx), ty = Math.floor(cy);
+    if(tx < 0 || tx >= gameMap[0].length || ty < 0 || ty >= gameMap.length || gameMap[ty][tx] === 1) return false;
+  }
+  return true;
+}
+
+let lastSpacePressed = false;
 let bobTimer = 0;
 
-// BOUCLE FLUIDE EN PARFAITE HARMONIE AVEC SERVER.JS
+// BOUCLE PRINCIPALE FPS ULTRA FLUIDE
 function loop3D() {
   requestAnimationFrame(loop3D);
   if(!gameStarted) return;
 
-  // 1. LIRE LA DIRECTION DEPUIS NOTRE CAMÉRA FPS
-  let dx = 0, dy = 0;
-  if(keys.up) dy = 1; if(keys.down) dy = -1;
-  if(keys.left) dx = -1; if(keys.right) dx = 1;
-
-  let finalDx = -dy * Math.sin(viewYaw) + dx * Math.cos(viewYaw);
-  let finalDy = -dy * Math.cos(viewYaw) - dx * Math.sin(viewYaw);
-  if(dx !== 0 || dy !== 0) {
-    let len = Math.hypot(finalDx, finalDy); finalDx /= len; finalDy /= len;
-  }
-
-  // On extrait l'action instantanée et on la réinitialise aussitôt
-  let sendAction = keys.action;
-  if(sendAction) keys.action = false; 
-
-  // 2. ENVOYER DIRECTEMENT LES COMMANDES D'ENTRÉE AU SERVEUR (Comme demandé par socket.on('input'))
-  // Ne pas envoyer de fausses coordonnées lx/ly, laisser le serveur appliquer sa physique à 30fps
-  socket.emit('input', {
-    dx: finalDx,
-    dy: finalDy,
-    action: sendAction,
-    boost: keys.shift
-  });
-
-  // 3. APPLIQUER LA POSITION ENVOYÉE PAR LE SERVEUR SUR LA CAMÉRA CLIENT POUR ÉVITER LES BUGS DE MARCHE
   const me = currentPlayersData[myId];
-  if (me && !me.dead && !me.eliminated) {
-    // Interpolation douce pour masquer les saccades réseau à 30 FPS
-    camera.position.x = camera.position.x * 0.35 + me.x * 0.65;
-    camera.position.z = camera.position.z * 0.35 + me.y * 0.65;
+  
+  // Si on est en vie, on calcule notre pré-déplacement fluide en local
+  if(me && !me.dead && !me.eliminated) {
+    let dx = 0, dy = 0;
+    if(keys['KeyW'] || keys['KeyZ'] || keys['ArrowUp']) dy = 1;
+    if(keys['KeyS'] || keys['ArrowDown']) dy = -1;
+    if(keys['KeyA'] || keys['KeyQ'] || keys['ArrowLeft']) dx = -1;
+    if(keys['KeyD'] || keys['ArrowRight']) dx = 1;
 
-    // Oscillation de caméra immersive quand on marche
+    // Projection vectorielle liée à l'axe de vision de la souris
+    let finalDx = -dy * Math.sin(viewYaw) + dx * Math.cos(viewYaw);
+    let finalDy = -dy * Math.cos(viewYaw) - dx * Math.sin(viewYaw);
+    
     if(dx !== 0 || dy !== 0) {
-      bobTimer += keys.shift ? 0.15 : 0.09;
+      let len = Math.hypot(finalDx, finalDy); finalDx /= len; finalDy /= len;
+      
+      // Récupération de la vitesse du serveur : boost (0.18) ou normal (0.11)
+      const isBoosting = !!keys['ShiftLeft'];
+      const spd = (isBoosting && me.stamina > 0) ? 0.18 : 0.11;
+      
+      let nextX = lx + finalDx * spd;
+      let nextY = ly + finalDy * spd;
+      
+      if(canMoveLocal(nextX, ly)) lx = nextX;
+      if(canMoveLocal(lx, nextY)) ly = nextY;
+
+      // Effet de balancement de caméra immersif de marche (Head bobbing)
+      bobTimer += isBoosting ? 0.16 : 0.09;
       camera.position.y = 1.2 + Math.sin(bobTimer) * 0.04;
     } else {
       camera.position.y += (1.2 - camera.position.y) * 0.1;
     }
+
+    // Gestion de l'action unique sur la touche espace
+    let actionTrigger = false;
+    if(keys['Space']) {
+      if(!lastSpacePressed) { actionTrigger = true; lastSpacePressed = true; }
+    } else {
+      lastSpacePressed = false;
+    }
+
+    // ENVOI EXACT AU SERVEUR DES DONNÉES LX / LY SÉCURISÉES SANS AUCUNE COUPURE
+    socket.emit('input', {
+      dx: finalDx,
+      dy: finalDy,
+      action: actionTrigger,
+      boost: keys['ShiftLeft'],
+      lx: lx,
+      ly: ly
+    });
+
+    // Amortissement visuel léger de la caméra sur nos coordonnées validées pour éviter les micro-saccades
+    camera.position.x = camera.position.x * 0.2 + lx * 0.8;
+    camera.position.z = camera.position.z * 0.2 + ly * 0.8;
   }
 
   camera.rotation.set(viewPitch, viewYaw, 0, 'YXZ');
