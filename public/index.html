@@ -137,7 +137,7 @@ input[type=text]:focus{border-color:var(--accent);}
 
   <div id="lock_notice">
     <p>CLIQUEZ SUR L'ÉCRAN POUR ACTIVER LA CAMÉRA FPS</p>
-    <span style="font-size:0.8rem; margin-top:10px; color:#666;">Z,Q,S,D / Entrées Fléchées · SOURIS pour orienter la vue · ESPACE pour ramasser</span>
+    <span style="font-size:0.8rem; margin-top:10px; color:#666;">Z,Q,S,D / Flèches Clavier · SOURIS pour orienter la vue · ESPACE pour ramasser</span>
   </div>
 
   <div id="hud_overlay">
@@ -205,7 +205,7 @@ const ANIMALS=[
 ];
 let myAnimalIdx=0;
 
-// Peuplement de l'interface de sélection d'avatars
+// Sélection des hôtes
 const avatarGrid=document.getElementById('avatarGrid');
 ANIMALS.forEach((a,i)=>{
   const d=document.createElement('div');
@@ -220,7 +220,7 @@ ANIMALS.forEach((a,i)=>{
   avatarGrid.appendChild(d);
 });
 
-// Enclenchement réseau initial
+// Signaux réseau initiaux
 document.getElementById('btnCreate').onclick=()=>{
   const name=document.getElementById('nameIn').value.trim()||'Héros';
   socket.emit('create_room',{name, animal:myAnimalIdx, color:ANIMALS[myAnimalIdx].hex});
@@ -247,7 +247,7 @@ function updateLobbyList(data){
   document.getElementById('lStage').textContent="Survivants connectés : "+names;
 }
 
-// MANAGEMENT DU LOCK SOURIS
+// GESTION DU VERROUILLAGE ET LECTURE SOURIS
 const lockNotice = document.getElementById('lock_notice');
 const container3d = document.getElementById('canvas3d_container');
 
@@ -260,10 +260,28 @@ document.addEventListener('pointerlockchange', () => {
   }
 });
 
+// Système de capture des touches (Optimisé AZERTY avec e.key)
 const keys={};
 let viewYaw = 0; 
-window.addEventListener('keydown', e => { keys[e.code] = true; });
-window.addEventListener('keyup', e => { keys[e.code] = false; });
+window.addEventListener('keydown', e => { 
+  const k = e.key.toLowerCase();
+  if(k === 'z' || e.code === 'ArrowUp') keys['up'] = true;
+  if(k === 's' || e.code === 'ArrowDown') keys['down'] = true;
+  if(k === 'q' || e.code === 'ArrowLeft') keys['left'] = true;
+  if(k === 'd' || e.code === 'ArrowRight') keys['right'] = true;
+  if(e.code === 'ShiftLeft' || e.code === 'ShiftRight') keys['shift'] = true;
+  if(e.code === 'Space' || k === 'e') keys['action'] = true;
+});
+window.addEventListener('keyup', e => { 
+  const k = e.key.toLowerCase();
+  if(k === 'z' || e.code === 'ArrowUp') keys['up'] = false;
+  if(k === 's' || e.code === 'ArrowDown') keys['down'] = false;
+  if(k === 'q' || e.code === 'ArrowLeft') keys['left'] = false;
+  if(k === 'd' || e.code === 'ArrowRight') keys['right'] = false;
+  if(e.code === 'ShiftLeft' || e.code === 'ShiftRight') keys['shift'] = false;
+  if(e.code === 'Space' || k === 'e') keys['action'] = false;
+});
+
 window.addEventListener('mousemove', e => {
   if (document.pointerLockElement === container3d) {
     viewYaw -= e.movementX * 0.0025; 
@@ -294,7 +312,6 @@ function initThreeEngine() {
   const ambient = new THREE.AmbientLight(0x0b0d1a, 0.5);
   scene.add(ambient);
 
-  // Lampe torche directionnelle attachée à la vision FPS
   const flashlight = new THREE.SpotLight(0xfff3db, 3.0, 25, Math.PI / 4.5, 0.6, 1.2);
   flashlight.position.set(0, 0, 0);
   camera.add(flashlight);
@@ -325,7 +342,6 @@ function generate3DArchitecture() {
   floorMesh.rotation.x = -Math.PI / 2;
   scene.add(floorMesh);
 
-  // Épaisseur et hauteur du labyrinthe 3D
   const wallGeo = new THREE.BoxGeometry(1, 2.6, 1);
   const wallMat = new THREE.MeshStandardMaterial({ color: 0x141622, roughness: 0.7, metalness: 0.2 });
 
@@ -340,7 +356,6 @@ function generate3DArchitecture() {
     }
   }
 
-  // Puits de lumière de l'évacuation
   const exitGeo = new THREE.TorusGeometry(0.5, 0.08, 8, 24);
   const exitMat = new THREE.MeshBasicMaterial({ color: 0x00ff88, wireframe: true });
   meshExitPortal = new THREE.Mesh(exitGeo, exitMat);
@@ -349,17 +364,15 @@ function generate3DArchitecture() {
 }
 
 // ====================================================================
-//       INTERCEPTION DES SIGNAUX DU SERVEUR DE JEU (CORRECTIF)
+//       INTERCEPTION DES SIGNAUX DU SERVEUR DE JEU
 // ====================================================================
 let lastActionSent = false;
 let clientPosition = { x: 1.5, y: 1.5 };
 
-// Le serveur envoie la carte via l'événement 'map'
 socket.on('map', (mapData) => {
   gameMap = mapData;
 });
 
-// Le serveur démarre la partie via l'événement 'game_started'
 socket.on('game_started', () => {
   gameStarted = true;
   document.getElementById('lobbyScreen').classList.remove('active');
@@ -372,7 +385,6 @@ socket.on('game_started', () => {
   runExecution3D();
 });
 
-// Réception constante à 30 FPS des coordonnées calculées par server.js
 socket.on('state', (state) => {
   gameState = state;
   
@@ -407,7 +419,6 @@ socket.on('state', (state) => {
 
   const me = state.players[myId];
   if (me) {
-    // Aligner notre position 3D caméra locale sur celle validée par le serveur
     clientPosition.x = me.x;
     clientPosition.y = me.y;
 
@@ -418,15 +429,13 @@ socket.on('state', (state) => {
     document.getElementById('stFill').style.width = `${(me.stamina / 120) * 100}%`;
   }
 
-  // Mise à jour temps réel du classement à droite
   let lhtml = Object.values(state.players)
     .sort((a,b)=>b.score - a.score)
-    .map(p=>`<div style="color:${p.color}; font-weight:bold;">${p.name}: ${p.score} ${p.carrying!==null?'📦':''}</div>`)
+    .map(p=>`<div style="color:${p.color}; font-weight:bold;">${p.name}: ${p.score} ${p.carrying !== null ? '📦' : ''}</div>`)
     .join('');
   document.getElementById('leaderboard').innerHTML = lhtml;
 });
 
-// Événement d'actualisation de l'étage suivant
 socket.on('level_start', (data) => {
   document.getElementById('screen_msg').style.display = 'none';
   generate3DArchitecture();
@@ -440,68 +449,65 @@ function runExecution3D() {
   const me = gameState.players[myId];
   
   if (me && !me.dead && !me.eliminated) {
-    // 1. CALCULS TRIGONOMÉTRIQUES DE MOUVEMENT RELATIFS AU REGARD FPS
-    let dx = 0, dy = 0;
-    if (keys['KeyW'] || keys['ArrowUp'] || keys['KeyZ']) dy = -1;
-    if (keys['KeyS'] || keys['ArrowDown']) dy = 1;
-    if (keys['KeyA'] || keys['ArrowLeft'] || keys['KeyQ']) dx = -1;
-    if (keys['KeyD'] || keys['ArrowRight']) dx = 1;
+    // CALCUL EN COMPOSANTES : AVANCE/RECUL ET STRRAFE GAUCHE/DROITE
+    let fb = 0; // Forward-Backward
+    let lr = 0; // Left-Right
 
-    const boost = !!(keys['ShiftLeft'] || keys['ShiftRight']);
-    const action = !!(keys['Space'] || keys['KeyE']);
+    if (keys['up']) fb = -1;
+    if (keys['down']) fb = 1;
+    if (keys['left']) lr = -1;
+    if (keys['right']) lr = 1;
 
-    // Traduction de la visée de la caméra vers le plan 2D du serveur
+    const boost = !!keys['shift'];
+    const action = !!keys['action'];
+
     let finalDx = 0;
     let finalDy = 0;
     
-    if (dx !== 0 || dy !== 0) {
+    if (fb !== 0 || lr !== 0) {
       let cosY = Math.cos(viewYaw);
       let sinY = Math.sin(viewYaw);
-      finalDx = dx * cosY - dy * sinY;
-      finalDy = dx * sinY + dy * cosY;
       
-      // Normalisation du vecteur pour éviter d'avancer plus vite en diagonale
+      // Matrice de rotation : combine l'orientation caméra avec les vecteurs de poussée
+      finalDx = lr * cosY - fb * sinY;
+      finalDy = lr * sinY + fb * cosY;
+      
       let len = Math.hypot(finalDx, finalDy);
       finalDx /= len;
       finalDy /= len;
     }
 
-    // Capture de l'action de ramassage (Déclenchement unique par appui)
     let actionTrigger = false;
     if (action && !lastActionSent) {
       actionTrigger = true;
     }
     lastActionSent = action;
 
-    // Émission du paquet d'entrées exact attendu par server.js (méthode socket.on('input'))
+    // Envoi des directions absolues calculées au serveur
     socket.emit('input', {
       dx: finalDx,
       dy: finalDy,
       action: actionTrigger,
       boost: boost,
-      dir: dy < 0 ? 'up' : (dy > 0 ? 'down' : (dx < 0 ? 'left' : 'right'))
+      dir: fb < 0 ? 'up' : (fb > 0 ? 'down' : (lr < 0 ? 'left' : 'right'))
     });
 
-    // Verrouillage de la caméra à hauteur d'homme sur les coordonnées synchronisées
     camera.position.set(clientPosition.x, 1.15, clientPosition.y);
     camera.rotation.set(0, viewYaw, 0, 'YXZ');
 
   } else if (me && (me.dead || me.eliminated)) {
-    // Caméra spectateur si mort clinique
     let elapsed = Date.now() * 0.0005;
     camera.position.set(14 + Math.sin(elapsed)*8, 12, 10 + Math.cos(elapsed)*8);
     camera.lookAt(14, 1, 10);
   }
 
-  // 2. RENDU ET RENDU ET MISE À JOUR DES OBJETS DANS L'ESPACE 3D
-  
-  // Portail d'Évacuation
+  // Portail
   if (gameState.exit && meshExitPortal) {
     meshExitPortal.position.set(gameState.exit.x, 0.1, gameState.exit.y);
     meshExitPortal.rotation.z += 0.02;
   }
 
-  // Colis 3D
+  // Objets
   gameState.items.forEach(item => {
     if (item.collected || item.carriedBy !== null) {
       if (meshesItems[item.id]) {
@@ -534,7 +540,7 @@ function runExecution3D() {
     }
   });
 
-  // Fantômes Complexes
+  // Monstres
   gameState.monsters.forEach(m => {
     if (!meshesMonsters[m.id]) {
       let fCol = m.type === 'hunter' ? 0xff1144 : (m.type === 'twin' ? 0xaa00ff : 0xffaa00);
@@ -549,7 +555,7 @@ function runExecution3D() {
     meshesMonsters[m.id].rotation.y += 0.03;
   });
 
-  // Alliés Connectés
+  // Joueurs
   Object.values(gameState.players).forEach(p => {
     if (p.id === myId || p.eliminated || p.dead) {
       if (meshesPlayers[p.id]) { scene.remove(meshesPlayers[p.id]); delete meshesPlayers[p.id]; }
@@ -571,9 +577,7 @@ function runExecution3D() {
   renderRadarMap();
 }
 
-// ====================================================================
-//                       RADAR PROXIMITÉ HUD
-// ====================================================================
+// Radar
 function renderRadarMap() {
   const rad = document.getElementById('radarCanvas');
   const rctx = rad.getContext('2d');
@@ -593,8 +597,6 @@ function renderRadarMap() {
   const me = gameState.players[myId];
   if (!me) return;
 
-  // Murs
-  rctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
   for (let y = 0; y < gameMap.length; y++) {
     for (let x = 0; x < gameMap[y].length; x++) {
       if (gameMap[y][x] === 1) {
@@ -602,33 +604,30 @@ function renderRadarMap() {
         if (Math.abs(dx) < radarRange && Math.abs(dy) < radarRange) {
           let rx = center + (dx / radarRange) * center;
           let ry = center + (dy / radarRange) * center;
+          rctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
           rctx.fillRect(rx - 2, ry - 2, 4, 4);
         }
       }
     }
   }
 
-  // Colis
-  rctx.fillStyle = '#ffcc00';
   gameState.items.forEach(item => {
     if (!item.collected && item.carriedBy === null) {
       let dx = item.x - me.x; let dy = item.y - me.y;
       let rx = center + (dx / radarRange) * center; let ry = center + (dy / radarRange) * center;
-      if (Math.hypot(dx, dy) < radarRange) rctx.fillRect(rx - 2, ry - 2, 4, 4);
+      if (Math.hypot(dx, dy) < radarRange) { rctx.fillStyle = '#ffcc00'; rctx.fillRect(rx - 2, ry - 2, 4, 4); }
     }
   });
 
-  // Monstres
-  rctx.fillStyle = `rgba(255, 42, 95, ${0.6 + Math.sin(Date.now()*0.01)*0.4})`;
   gameState.monsters.forEach(m => {
     let dx = m.x - me.x; let dy = m.y - me.y;
     let rx = center + (dx / radarRange) * center; let ry = center + (dy / radarRange) * center;
     if (Math.hypot(dx, dy) < radarRange) {
+      rctx.fillStyle = `rgba(255, 42, 95, ${0.6 + Math.sin(Date.now()*0.01)*0.4})`;
       rctx.beginPath(); rctx.arc(rx, ry, 3.5, 0, Math.PI*2); rctx.fill();
     }
   });
 
-  // Flèche d'orientation joueur
   rctx.save();
   rctx.translate(center, center);
   rctx.rotate(-viewYaw); 
@@ -639,7 +638,7 @@ function renderRadarMap() {
   rctx.restore();
 }
 
-// CHAT RECEIVER
+// Chat
 const chatForm = document.getElementById('chat_form');
 chatForm.onsubmit=(e)=>{
   e.preventDefault();
