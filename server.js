@@ -185,7 +185,10 @@ function generateMonsters(map,level,reachable){
   return monsters;
 }
 
+const SEASON_NAMES=['winter','spring','summer','autumn'];
+
 function buildLevel(level){
+  const season=SEASON_NAMES[Math.floor(Math.random()*SEASON_NAMES.length)];
   let baseMap=generateMap();
   baseMap=ensureConnected(baseMap);
   const reachable=floodFill(baseMap,SPAWN_X,SPAWN_Y);
@@ -194,7 +197,7 @@ function buildLevel(level){
   const exit={x:exitData.x,y:exitData.y,gx:exitData.gx,gy:exitData.gy};
   const reachable2=floodFill(map,SPAWN_X,SPAWN_Y);
   return{
-    map,exit,
+    map,exit,season,
     items:generateItems(map,level,exit,reachable2),
     monsters:generateMonsters(map,level,reachable2),
   };
@@ -296,7 +299,7 @@ setInterval(()=>{
         score:room.score,gameOver:room.gameOver,gameWon:room.gameWon,
         itemsDelivered:room.itemsDelivered,totalItems:room.totalItems,
         level:room.level,leaderboard:room.leaderboard,
-        hostId:room.hostId,exit:room.exit
+        hostId:room.hostId,exit:room.exit,season:room.season||'autumn'
       });
     }
   });
@@ -357,7 +360,7 @@ io.on('connection',socket=>{
     if(room.hostId!==playerId||!room.gameWon)return;
     room.level++;
     const lvl=buildLevel(room.level);
-    Object.assign(room,{map:lvl.map,exit:lvl.exit,items:lvl.items,monsters:lvl.monsters});
+    Object.assign(room,{map:lvl.map,exit:lvl.exit,season:lvl.season,items:lvl.items,monsters:lvl.monsters});
     room.itemsDelivered=0;room.totalItems=6+room.level*2;room.gameWon=false;
     Object.values(room.players).forEach(p=>{
       p.x=SPAWN_X;p.y=SPAWN_Y;p.carrying=null;
@@ -365,7 +368,7 @@ io.on('connection',socket=>{
       p.lives=Math.min(5,(p.lives||0)+1);
     });
     io.to(currentRoom).emit('map',room.map);
-    io.to(currentRoom).emit('level_start',{level:room.level,totalItems:room.totalItems});
+    io.to(currentRoom).emit('level_start',{level:room.level,totalItems:room.totalItems,season:room.season});
   });
 
   socket.on('chat',({msg})=>{
