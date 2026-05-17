@@ -272,7 +272,7 @@ function updateRoom(room){
         item.collected=true;item.carriedBy=null;carrier.carrying=null;
         room.itemsDelivered++;
         const pts=100+room.level*50;
-        room.score+=pts;carrier.score=(carrier.score||0)+pts;
+        room.score+=pts;carrier.score=(carrier.score||0)+pts;carrier.itemsDelivered=(carrier.itemsDelivered||0)+1;
         io.to(room.id).emit('sound','score');
       }
     }
@@ -281,7 +281,7 @@ function updateRoom(room){
   if(room.itemsDelivered>=room.totalItems&&!room.gameWon){
     room.gameWon=true;
     room.leaderboard=Object.values(room.players)
-      .map(p=>({name:p.name,score:p.score||0,deaths:p.deaths||0,color:p.color,lives:p.lives||0,animal:p.animal||0}))
+      .map(p=>({name:p.name,score:p.score||0,deaths:p.deaths||0,color:p.color,lives:p.lives||0,animal:p.animal||0,itemsDelivered:p.itemsDelivered||0}))
       .sort((a,b)=>b.score-a.score);
     io.to(room.id).emit('sound','win');
   }
@@ -313,7 +313,7 @@ io.on('connection',socket=>{
       id:playerId,x:SPAWN_X,y:SPAWN_Y,name:name||'Joueur',
       color:color||'#00ff88',animal:animal||0,carrying:null,dead:false,eliminated:false,
       respawnTimer:0,score:0,deaths:0,lives:MAX_LIVES,
-      stamina:STAMINA_MAX,boosting:false,dir:'down'
+      stamina:STAMINA_MAX,boosting:false,dir:'down',itemsDelivered:0
     };
     socket.emit('room_created',{roomId,playerId,isHost:true});
     io.to(roomId).emit('lobby_state',{players:rooms[roomId].players,hostId:rooms[roomId].hostId});
@@ -330,7 +330,7 @@ io.on('connection',socket=>{
       id:playerId,x:SPAWN_X+num*0.7,y:SPAWN_Y,name:name||`Joueur ${num+1}`,
       color:color||'#ff6b6b',animal:animal||1,carrying:null,dead:false,eliminated:false,
       respawnTimer:0,score:0,deaths:0,lives:MAX_LIVES,
-      stamina:STAMINA_MAX,boosting:false,dir:'down'
+      stamina:STAMINA_MAX,boosting:false,dir:'down',itemsDelivered:0
     };
     socket.emit('joined',{playerId,roomId,isHost:false});
     socket.emit('chat_history',room.chatMessages.slice(-20));
@@ -361,7 +361,7 @@ io.on('connection',socket=>{
     room.itemsDelivered=0;room.totalItems=6+room.level*2;room.gameWon=false;
     Object.values(room.players).forEach(p=>{
       p.x=SPAWN_X;p.y=SPAWN_Y;p.carrying=null;
-      p.dead=false;p.eliminated=false;p.stamina=STAMINA_MAX;
+      p.dead=false;p.eliminated=false;p.stamina=STAMINA_MAX;p.itemsDelivered=0;
       p.lives=Math.min(5,(p.lives||0)+1);
     });
     io.to(currentRoom).emit('map',room.map);
