@@ -378,7 +378,7 @@ io.on('connection',socket=>{
     io.to(currentRoom).emit('chat_msg',message);
   });
 
-  socket.on('input',({dx,dy,action,boost,dir})=>{
+  socket.on('input',({dx,dy,action,boost,dir,lx,ly})=>{
     if(!currentRoom||!rooms[currentRoom])return;
     const room=rooms[currentRoom],player=room.players[playerId];
     if(!player||player.dead||player.eliminated||!room.started)return;
@@ -387,8 +387,14 @@ io.on('connection',socket=>{
     player.boosting=canBoost;
     if(canBoost)player.stamina=Math.max(0,(player.stamina||0)-STAMINA_DRAIN);
     else player.stamina=Math.min(STAMINA_MAX,(player.stamina||0)+STAMINA_REGEN);
-    const spd=canBoost?0.18:0.11;
-    if(dx||dy){
+    // Use client position directly (client is authoritative for movement)
+    // Validate it is not inside a wall before accepting
+    if(lx!==undefined&&ly!==undefined){
+      if(canMove(room.map,lx,ly)){
+        player.x=lx;player.y=ly;
+      }
+    } else if(dx||dy){
+      const spd=canBoost?0.18:0.11;
       const nx=player.x+dx*spd,ny=player.y+dy*spd;
       if(canMove(room.map,nx,player.y))player.x=nx;
       if(canMove(room.map,player.x,ny))player.y=ny;
