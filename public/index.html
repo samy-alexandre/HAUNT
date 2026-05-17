@@ -115,6 +115,7 @@ input[type=text]:focus{border-color:#00ff88;}
 <div id="xh"><div class="xv"></div><div class="xh"></div></div>
 <div id="hud">
   <div id="hud-bg"></div>
+  <button id="settingsBtn" onclick="openSettings()" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.6);font-size:.65rem;padding:4px 8px;border-radius:4px;cursor:pointer;letter-spacing:.1em;font-family:'Share Tech Mono',monospace;">⚙ PARAMÈTRES</button>
   <div id="hud-inner">
     <div class="hb"><span class="hl">Niveau</span><span class="hv" id="hLvl">1</span></div>
     <div class="hb"><span class="hl">Colis</span><span class="hv" id="hItems">0/8</span></div>
@@ -250,7 +251,7 @@ let playerYaw=0,playerPitch=0;
 let lstam=STAM_MAX,isSprinting=false,isMoving=false;
 let headBobT=0,headBob=0;
 let shakeT=0;
-let actionPending=false,lastSent=0;
+let actionPending=false,lastSent=0,stepTimer=0,stepSide=0;
 
 // Texture cache
 const texCache={};
@@ -330,6 +331,8 @@ function snd(n){
   else if(n==='combo'){tone(660,'sine',.15,.28);setTimeout(()=>tone(880,'sine',.2,.3),100);setTimeout(()=>tone(1047,'sine',.25,.38),220);}
   else if(n==='rush'){[200,300,400,300,200,400].forEach((f,i)=>setTimeout(()=>tone(f,'sawtooth',.1,.13),i*80));}
   else if(n==='cursed'){[300,200,150].forEach((f,i)=>setTimeout(()=>tone(f,'triangle',.15,.22),i*100));}
+  else if(n==='step_l'){tone(80+Math.random()*20,'triangle',.06,.04);}
+  else if(n==='step_r'){tone(70+Math.random()*20,'triangle',.06,.035);}
 }
 socket.on('sound',snd);
 
@@ -537,7 +540,7 @@ function makeSprite(text,color='#fff',bg='rgba(0,0,0,.75)'){
   ctx.font='bold 20px Share Tech Mono,monospace';ctx.fillStyle=color;
   ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,128,32);
   const tex=new THREE.CanvasTexture(c);
-  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}));
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:true}));
   sp.scale.set(2.2,.55,1);return sp;
 }
 
@@ -855,8 +858,8 @@ function updateMovement(dt){
   if(isSprinting)lstam=Math.max(0,lstam-STAM_DRAIN*dt*60);
   else lstam=Math.min(STAM_MAX,lstam+STAM_REGEN*dt*60);
 
-  const targetSpd=(isSprinting?9:5.5);
-  const acc=28,drag=18;
+  const targetSpd=(isSprinting?6.5:3.2); // marche lente par défaut, sprint modéré
+  const acc=12,drag=22; // accél douce, arrêt précis
   // World direction from yaw
   const worldX=-Math.sin(playerYaw)*iz+Math.cos(playerYaw)*ix;
   const worldZ=Math.cos(playerYaw)*iz+Math.sin(playerYaw)*ix;
@@ -874,17 +877,23 @@ function updateMovement(dt){
   if(Math.abs(res.z-nz)>.01)velZ*=-.3;
   wx=res.x;wz=res.z;
 
-  // Head bob
-  if(isMoving&&pointerLocked){headBobT+=dt*(isSprinting?13:8);headBob=Math.sin(headBobT)*.045;}
-  else{headBobT*=.82;headBob*=.82;}
+  // Head bob — plus lent et naturel à la marche
+  if(isMoving&&pointerLocked){
+    headBobT+=dt*(isSprinting?11:6);
+    headBob=Math.sin(headBobT)*(isSprinting?.038:.055); // plus prononcé à la marche
+  } else{headBobT*=.88;headBob*=.88;}
 
   // Screen shake
   let shakeX=0,shakeY=0;
   if(shakeT>0){shakeT-=dt*60;const s=shakeT*.004;shakeX=(Math.random()-.5)*s;shakeY=(Math.random()-.5)*s;}
 
-  // FOV sprint
-  camera.fov=THREE.MathUtils.lerp(camera.fov,isSprinting?88:75,.1);
+  // FOV — 72 marche naturelle, 82 sprint
+  camera.fov=THREE.MathUtils.lerp(camera.fov,isSprinting?82:72,.08);
   camera.updateProjectionMatrix();
+
+  // Footstep timing
+  if(isMoving&&pointerLocked){const stepInterval=isSprinting?.32:.52;stepTimer+=dt;if(stepTimer>=stepInterval){stepTimer=0;stepSide=1-stepSide;snd(stepSide?'step_l':'step_r');}}
+  else stepTimer=Math.min(stepTimer,.1); // reset rapide
 
   camera.position.x=wx+shakeX;camera.position.z=wz+shakeY;camera.position.y=EYE_H+headBob;
   camera.rotation.order='YXZ';camera.rotation.y=playerYaw;camera.rotation.x=playerPitch;
