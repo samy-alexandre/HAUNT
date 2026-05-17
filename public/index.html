@@ -1,117 +1,886 @@
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HAUNT — Jeu Coopératif</title>
+<link href="https://fonts.googleapis.com/css2?family=Creepster&family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
 
+/* === THEME VARIABLES === */
+[data-theme="dark"]{
+  --bg:#07070d;--bg2:#0d0d1a;--border:#1a1a2e;
+  --accent:#00ff88;--danger:#ff3355;--warn:#ffcc00;
+  --text:#e0e0f0;--dim:#5a5a7a;--dim2:#9090b0;
+  --floor-a:#0c0c1a;--floor-b:#0e0e1e;--canvas-bg:#060610;
+  --wall-inner:rgba(0,0,0,0.42);--wall-stroke:rgba(255,255,255,0.18);
+  --vignette:rgba(0,0,12,0.65);
+  --sp-bg:#0d0d1a;--sp-border:#1a1a2e;
+}
+[data-theme="light"]{
+  --bg:#f0f0f8;--bg2:#ffffff;--border:#d0d0e8;
+  --accent:#00aa55;--danger:#ee2244;--warn:#dd9900;
+  --text:#1a1a3a;--dim:#7070a0;--dim2:#5050a0;
+  --floor-a:#eeeeff;--floor-b:#e8e8fa;--canvas-bg:#e0e0f0;
+  --wall-inner:rgba(255,255,255,0.3);--wall-stroke:rgba(0,0,0,0.12);
+  --vignette:rgba(200,200,230,0.3);
+  --sp-bg:#ffffff;--sp-border:#d0d0e8;
+}
+
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;transition:background 0.3s,color 0.3s;}
+
+/* SCREENS SYSTEM */
+.screen{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;gap:0.9rem;padding:1.5rem;overflow-y:auto;background:var(--bg);}
+.screen.active{display:flex;}
+
+h1{font-family:'Creepster',cursive;font-size:clamp(2.8rem,6vw,4.5rem);color:var(--accent);text-shadow:0 0 30px rgba(0,255,136,0.5);letter-spacing:0.15em;}
+.sub{color:var(--dim);font-size:0.8rem;letter-spacing:0.3em;text-transform:uppercase;}
+.panel{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:1.3rem;width:100%;max-width:480px;}
+.ptitle{font-size:0.65rem;letter-spacing:0.3em;color:var(--dim);text-transform:uppercase;margin-bottom:0.8rem;}
+
+input[type=text]{background:var(--bg);border:1px solid var(--border);color:var(--accent);font-family:'Share Tech Mono',monospace;font-size:1.05rem;padding:0.55rem 0.9rem;width:100%;border-radius:4px;text-transform:uppercase;letter-spacing:0.15em;outline:none;transition:border-color 0.2s;}
+input[type=text]:focus{border-color:var(--accent);}
+
+.btn{display:block;width:100%;padding:0.75rem 1.2rem;background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:'Share Tech Mono',monospace;font-size:0.88rem;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;border-radius:4px;margin-top:0.7rem;transition:background 0.15s;}
+.btn:hover{background:rgba(0,170,85,0.09);}
+.btn.primary{background:var(--accent);color:#000;font-weight:bold;}
+.btn.primary:hover{filter:brightness(1.1);}
+
+.divider{display:flex;align-items:center;gap:1rem;color:var(--dim);font-size:0.7rem;letter-spacing:0.2em;width:100%;max-width:480px;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
+.err{color:var(--danger);font-size:0.78rem;text-align:center;min-height:1.3em;}
+
+/* GLOBAL SETTINGS BUTTON */
+#settingsBtn{
+  position:fixed;top:12px;right:16px;z-index:300;
+  background:transparent;border:1px solid var(--border);
+  color:var(--dim2);font-size:1.2rem;cursor:pointer;
+  width:36px;height:36px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.15s;
+}
+#settingsBtn:hover{border-color:var(--accent);color:var(--accent);}
+#settingsBtn.hidden{display:none;}
+
+/* SETTINGS MODAL */
+#settingsBg{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:400;display:none;backdrop-filter:blur(3px);}
+#settingsBg.on{display:block;}
+#settingsPanel{
+  position:fixed;top:0;right:-360px;width:340px;height:100%;
+  background:var(--sp-bg);border-left:2px solid var(--border);
+  z-index:401;display:flex;flex-direction:column;
+  transition:right 0.25s ease;overflow-y:auto;
+}
+#settingsPanel.on{right:0;}
+.sp-header{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.2rem;border-bottom:1px solid var(--border);}
+.sp-header h3{font-family:'Creepster',cursive;font-size:1.5rem;color:var(--accent);letter-spacing:0.1em;}
+.sp-close{background:transparent;border:none;color:var(--dim);font-size:1.3rem;cursor:pointer;padding:0.2rem 0.4rem;border-radius:3px;}
+.sp-close:hover{color:var(--danger);}
+
+.sp-section{padding:1rem 1.2rem;border-bottom:1px solid var(--border);}
+.sp-title{font-size:0.65rem;letter-spacing:0.25em;color:var(--dim);text-transform:uppercase;margin-bottom:0.8rem;}
+.sp-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.6rem;font-size:0.82rem;color:var(--text);}
+.sp-row label{color:var(--dim2);font-size:0.75rem;}
+
+.toggle{width:48px;height:24px;border-radius:12px;background:var(--border);cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0;}
+.toggle.on{background:var(--accent);}
+.toggle::after{content:'';position:absolute;width:20px;height:20px;border-radius:50%;background:#fff;top:2px;left:2px;transition:left 0.2s;}
+.toggle.on::after{left:26px;}
+
+input[type=range]{width:120px;accent-color:var(--accent);}
+
+.theme-btns, .mm-btns{display:flex;gap:0.5rem;}
+.theme-btn, .mm-btn{padding:0.35rem 0.7rem;border:1px solid var(--border);border-radius:4px;background:transparent;color:var(--dim2);font-family:'Share Tech Mono',monospace;font-size:0.72rem;cursor:pointer;transition:all 0.15s;letter-spacing:0.1em;}
+.theme-btn:hover, .mm-btn:hover{border-color:var(--accent);color:var(--accent);}
+.theme-btn.on, .mm-btn.on{border-color:var(--accent);color:var(--accent);background:rgba(0,255,136,0.08);}
+
+.copy-btn{width:100%;padding:0.55rem;border:1px solid var(--border);border-radius:4px;background:transparent;color:var(--dim2);font-family:'Share Tech Mono',monospace;font-size:0.72rem;cursor:pointer;text-align:left;letter-spacing:0.05em;transition:all 0.15s;}
+.copy-btn:hover{border-color:var(--accent);color:var(--accent);}
+.sp-info{font-size:0.65rem;color:var(--dim);margin-top:0.3rem;}
+
+/* SEASON BADGE */
+#seasonBadge{
+  position:fixed;bottom:20px;left:20px;z-index:100;
+  font-size:0.75rem;letter-spacing:0.15em;color:#fff;
+  background:rgba(0,0,0,0.75);padding:0.4rem 0.8rem;border-radius:4px;
+  border:1px solid var(--border);pointer-events:none;opacity:0;transition:opacity 0.5s;
+}
+#seasonBadge.show{opacity:1;}
+
+/* LOBBY SCREEN */
+#lobbyScreen{display:none;position:fixed;inset:0;flex-direction:column;background:linear-gradient(135deg,#080814 0%,#0c1022 50%,#080814 100%);}
+#lobbyScreen.active{display:flex;}
+[data-theme="light"] #lobbyScreen{background:linear-gradient(135deg,#e8eaf6 0%,#f0f2ff 50%,#e8eaf6 100%);}
+
+#lTop{display:flex;align-items:center;justify-content:space-between;padding:0.7rem 1.5rem;padding-right:60px;background:rgba(0,0,0,0.6);border-bottom:2px solid rgba(0,255,136,0.2);flex-shrink:0;}
+[data-theme="light"] #lTop{background:rgba(255,255,255,0.7);border-color:rgba(0,170,85,0.3);}
+#lTop h2{font-family:'Creepster',cursive;font-size:2rem;color:var(--accent);letter-spacing:0.2em;}
+
+.ltabs{display:flex;gap:0.5rem;}
+.ltab{font-size:0.72rem;letter-spacing:0.2em;padding:0.35rem 0.9rem;border:1px solid var(--border);border-radius:3px;color:var(--dim);cursor:pointer;transition:all 0.15s;}
+.ltab:hover{border-color:var(--dim2);}
+.ltab.on{color:var(--accent);border-color:var(--accent);}
+
+#lCodeVal{font-family:'Bebas Neue',cursive;font-size:1.8rem;color:var(--accent);letter-spacing:0.3em;text-shadow:0 0 15px rgba(0,255,136,0.4);}
+#lCodeSub{color:var(--dim);font-size:0.58rem;letter-spacing:0.2em;text-align:right;}
+
+#lPanelLobby{flex:1;display:flex;flex-direction:column;min-height:0;position:relative;}
+#lPanelRegles{flex:1;display:none;flex-direction:column;align-items:center;justify-content:center;padding:2rem;overflow-y:auto;}
+
+#lStage{flex:1;display:flex;align-items:center;justify-content:center;padding:1.5rem 2rem;gap:1.5rem;position:relative;min-height:0;overflow:hidden;flex-wrap:wrap;}
+#lStage::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(0,255,136,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,136,0.03) 1px,transparent 1px);background-size:40px 40px;}
+
+.lslot{background:var(--bg2);border:1px solid var(--border);border-radius:6px;width:140px;height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.5rem;position:relative;z-index:1;}
+.lslot.empty{border:2px dashed rgba(255,255,255,0.1);background:transparent;}
+.lslot .avatar{font-size:2.5rem;}
+.lslot .name{font-size:0.85rem;font-weight:bold;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.lslot .role{font-size:0.6rem;color:var(--dim);text-transform:uppercase;letter-spacing:0.1em;}
+
+#lColor{display:flex;flex-direction:column;align-items:center;gap:0.4rem;padding:0.8rem;background:rgba(0,0,0,0.2);border-top:1px solid var(--border);}
+#lColorLbl{font-size:0.65rem;color:var(--dim2);letter-spacing:0.2em;text-transform:uppercase;}
+.cgrid{display:flex;gap:0.5rem;}
+.cbtn{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:4px;border-radius:6px;border:2px solid transparent;transition:all 0.15s;}
+.cbtn:hover{border-color:rgba(255,255,255,0.3);background:rgba(255,255,255,0.05);}
+.cbtn.on{border-color:#fff;background:rgba(255,255,255,0.08);}
+.cbtn-dot{width:20px;height:20px;border-radius:50%;}
+.cbtn-emoji{font-size:1.2rem;line-height:1;}
+
+#lBot{display:flex;align-items:center;justify-content:space-between;padding:0.8rem 1.5rem;background:rgba(0,0,0,0.6);border-top:2px solid rgba(0,255,136,0.2);flex-shrink:0;}
+[data-theme="light"] #lBot{background:rgba(255,255,255,0.7);}
+.lctrl{font-size:0.78rem;color:var(--dim2);line-height:1.5;}
+
+#readyBtn{font-family:'Bebas Neue',cursive;font-size:1.8rem;letter-spacing:0.15em;padding:0.5rem 2.8rem;background:var(--accent);color:#000;border:none;cursor:pointer;border-radius:4px;transition:all 0.15s;box-shadow:0 0 25px rgba(0,255,136,0.35);}
+#readyBtn:hover{filter:brightness(1.1);transform:scale(1.04);}
+#waitMsg{color:var(--dim);font-size:0.82rem;letter-spacing:0.15em;font-style:italic;}
+
+/* RULES CONTAINER */
+.rules-box{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1.5rem;max-width:700px;width:100%;}
+.rules-box h3{font-family:'Creepster',cursive;font-size:1.8rem;color:var(--accent);margin-bottom:1rem;letter-spacing:0.1em;}
+.rule{display:flex;gap:0.8rem;align-items:flex-start;margin-bottom:0.8rem;font-size:0.85rem;line-height:1.5;color:var(--dim2);}
+.rule-icon{font-size:1.3rem;flex-shrink:0;}
+.rule b{color:var(--accent);}
+.rule-sep{height:1px;background:var(--border);margin:1rem 0;}
+.lives-row{display:flex;gap:1rem;flex-wrap:wrap;margin-top:0.5rem;}
+.life-card{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:0.5rem 0.8rem;font-size:0.78rem;color:var(--dim2);text-align:center;}
+.life-card b{display:block;color:var(--accent);font-size:1rem;}
+
+/* GAME SCREEN */
+#gameScreen{display:none;position:fixed;inset:0;flex-direction:column;}
+#gameScreen.active{display:flex;}
+
+#hud{display:flex;justify-content:space-around;align-items:center;padding:0.5rem 1rem;padding-right:56px;background:var(--bg);border-bottom:2px solid var(--border);flex-shrink:0;gap:0.5rem;}
+.hi{display:flex;flex-direction:column;align-items:center;}
+.hl{color:var(--dim);font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;}
+.hv{color:var(--accent);font-size:1rem;font-weight:bold;}
+
+#stBar{width:80px;height:9px;background:var(--border);border-radius:5px;overflow:hidden;border:1px solid var(--border);margin-top:2px;}
+#stFill{height:100%;width:100%;background:var(--accent);border-radius:5px;transition:width 0.05s linear;}
+
+#gameBody{flex:1;display:flex;min-height:0;}
+#cwrap{flex:1;position:relative;min-width:0;overflow:hidden;background:var(--canvas-bg);}
+#gc{position:absolute;top:0;left:0;width:100%;height:100%;display:block;}
+
+/* SIDEBAR & CHAT */
+#sidebar{width:240px;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
+.sbt{background:var(--bg);padding:0.4rem 0.8rem;font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--dim);border-bottom:1px solid var(--border);border-top:1px solid var(--border);}
+#chatbox, #scorebox{flex:1;overflow-y:auto;padding:0.5rem;display:flex;flex-direction:column;gap:0.3rem;}
+#scorebox{flex:0;gantt-height:150px;max-height:180px;}
+
+.c-msg{font-size:0.8rem;line-height:1.4;word-break:break-all;}
+.c-sys{color:var(--warn);font-style:italic;}
+.c-name{font-weight:bold;margin-right:4px;}
+
+#chatform{display:flex;border-top:1px solid var(--border);background:var(--bg);}
+#chatinput{flex:1;background:transparent;border:none;color:var(--text);font-family:inherit;padding:0.5rem;font-size:0.82rem;outline:none;}
+#chatsend{background:transparent;border:none;color:var(--accent);padding:0 0.8rem;cursor:pointer;font-weight:bold;}
+
+.sr{display:flex;justify-content:space-between;align-items:center;padding:0.3rem 0.5rem;font-size:0.75rem;border-bottom:1px solid rgba(0,0,0,0.05);}
+.sn{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+#hint{padding:0.3rem;background:var(--bg);border-top:1px solid var(--border);font-size:0.68rem;color:var(--dim);text-align:center;flex-shrink:0;}
+
+/* END GAME OVERLAY */
+#ov{position:fixed;inset:0;background:rgba(0,0,0,0.9);display:none;align-items:center;justify-content:center;z-index:500;}
+#ov.on{display:flex;}
+#ovbox{background:var(--bg2);border:2px solid var(--accent);padding:2rem;border-radius:8px;text-align:center;max-width:500px;width:90%;box-shadow:0 0 40px rgba(0,255,136,0.2);}
+#ovtitle{font-family:'Creepster',cursive;font-size:2.5rem;margin-bottom:0.4rem;color:var(--accent);}
+#ovsub{font-size:0.9rem;color:var(--dim2);margin-bottom:1.5rem;}
+#statsTable{width:100%;border-collapse:collapse;margin-bottom:1.5rem;font-size:0.82rem;}
+#statsTable th{padding:0.5rem;color:var(--dim);text-transform:uppercase;font-size:0.65rem;border-bottom:1px solid var(--border);}
+#statsTable td{padding:0.6rem 0.5rem;border-bottom:1px solid rgba(255,255,255,0.05);}
+</style>
+</head>
+<body data-theme="dark">
+
+<button id="settingsBtn" title="Options">⚙</button>
+<div id="settingsBg"></div>
+<div id="settingsPanel">
+  <div class="sp-header">
+    <h3>OPTIONS</h3>
+    <button class="sp-close" id="settingsClose">✕</button>
+  </div>
+  <div class="sp-section">
+    <div class="sp-title">Rendu & Thème</div>
+    <div class="sp-row">
+      <label>Thème visuel</label>
+      <div class="theme-btns">
+        <button class="theme-btn on" id="tDark">Sombre</button>
+        <button class="theme-btn" id="tLight">Clair</button>
+      </div>
+    </div>
+    <div class="sp-row">
+      <label>Taille Minimap</label>
+      <div class="mm-btns">
+        <button class="mm-btn" id="mS">Min</button>
+        <button class="mm-btn on" id="mM">Med</button>
+        <button class="mm-btn" id="mL">Max</button>
+      </div>
+    </div>
+  </div>
+  <div class="sp-section">
+    <div class="sp-title">Audio & Ambiance</div>
+    <div class="sp-row">
+      <label>Activer la musique</label>
+      <div class="toggle on" id="togMusic"></div>
+    </div>
+    <div class="sp-row">
+      <label>Effets sonores (SFX)</label>
+      <div class="toggle on" id="togSfx"></div>
+    </div>
+    <div class="sp-row">
+      <label>Volume Général</label>
+      <input type="range" id="volRange" min="0" max="100" value="70"/>
+    </div>
+  </div>
+  <div class="sp-section" id="spRoomSection" style="display:none">
+    <div class="sp-title">Partage</div>
+    <div class="sp-row">
+      <button class="copy-btn" id="copyLinkBtn">📋 Copier le lien d'invitation</button>
+    </div>
+    <div class="sp-info">Partage ce lien direct pour faire rejoindre tes amis instantanément.</div>
+  </div>
+</div>
+
+<div class="screen active" id="menuScreen">
+  <h1>HAUNT</h1>
+  <div class="sub">Survie Coopérative Multijoueur</div>
+  
+  <div class="panel" style="margin-top:1rem">
+    <div class="ptitle">Identification</div>
+    <input type="text" id="usernameInput" placeholder="Ton Pseudo..." maxlength="12" autocomplete="off"/>
+    
+    <button class="btn primary" id="btnCreate" style="margin-top:1.2rem">Créer une maison hantée</button>
+    <div class="divider" style="margin:1.2rem 0">OU REJOINDRE</div>
+    
+    <input type="text" id="roomInput" placeholder="Code de la pièce..." maxlength="5" autocomplete="off"/>
+    <button class="btn" id="btnJoin">Rejoindre la partie</button>
+    <div class="err" id="menuErr" style="margin-top:0.8rem"></div>
+  </div>
+</div>
+
+<div class="screen" id="lobbyScreen">
+  <div id="lTop">
+    <div>
+      <h2>Maison Hantée</h2>
+      <div class="ltabs">
+        <div class="ltab on" id="tabLobby">Salon d'attente</div>
+        <div class="ltab" id="tabRegles">Règles du jeu</div>
+      </div>
+    </div>
+    <div>
+      <div id="lCodeVal">-----</div>
+      <div id="lCodeSub">CODE DE REJOINDRE</div>
+    </div>
+  </div>
+
+  <div id="lPanelLobby">
+    <div id="lStage"></div>
+    
+    <div id="lColor">
+      <div id="lColorLbl">Personnalise ton apparence</div>
+      <div class="cgrid" id="avatarGrid"></div>
+    </div>
+  </div>
+
+  <div id="lPanelRegles">
+    <div class="rules-box">
+      <h3>Comment survivre ?</h3>
+      <div class="rule"><span class="rule-icon">📦</span><div>Trouve les <b>colis perdus</b> dans la maison hantée, approche-toi et appuie sur <b>ESPACE</b> ou <b>E</b> pour les ramasser. Tu ne peux en porter qu'un à la fois.</div></div>
+      <div class="rule"><span class="rule-icon">🚪</span><div>Livre le colis à la <b>SORTIE</b> (indiquée en vert clignotant sur ta carte). Elle change à chaque niveau !</div></div>
+      <div class="rule"><span class="rule-icon">👻</span><div>Évite absolument les <b>fantômes</b>. S'ils te touchent, tu perds une vie et lâches ton colis. La zone de spawn est sécurisée.</div></div>
+      <div class="rule"><span class="rule-icon">⚡</span><div>Maintiens <b>SHIFT</b> pour courir plus vite. Courir consomme de l'endurance, gère-la bien pour fuir en cas de danger.</div></div>
+      <div class="rule-sep"></div>
+      <div class="rule"><span class="rule-icon">❤️</span><div><b>Système de Vies Collectives</b></div></div>
+      <div class="lives-row">
+        <div class="life-card"><b>3 Vies</b> par défaut au départ</div>
+        <div class="life-card"><b>+1 Vie</b> par niveau réussi (Max 5)</div>
+        <div class="life-card"><b>Game Over</b> si le compteur global tombe à 0 !</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="lBot">
+    <div class="lctrl">
+      Déplacements : <b>ZQSD / WASD / Flèches</b><br/>
+      Interactions : <b>ESPACE / E</b>
+    </div>
+    <div>
+      <button id="readyBtn" style="display:none">LANCER LA PARTIE ➔</button>
+      <div id="waitMsg">En attente de l'hôte pour démarrer...</div>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="gameScreen">
+  <div id="hud">
+    <div class="hi"><span class="hl">Niveau</span><span class="hv" id="hLvl">1</span></div>
+    <div class="hi"><span class="hl">Colis Livrés</span><span class="hv" id="hItems">0/10</span></div>
+    <div class="hi"><span class="hl">Score</span><span class="hv" id="hScore">0</span></div>
+    <div class="hi"><span class="hl">Vies Restantes</span><span class="hv" id="hLives">❤️❤️❤️</span></div>
+    <div class="hi"><span class="hl">Statut</span><span class="hv" id="hStatus" style="color:var(--accent)">EN VIE</span></div>
+    <div class="hi">
+      <span class="hl">Sprint (Shift)</span>
+      <div id="stBar"><div id="stFill"></div></div>
+    </div>
+  </div>
+
+  <div id="gameBody">
+    <div id="cwrap">
+      <canvas id="gc"></canvas>
+    </div>
+    <div id="sidebar">
+      <div class="sbt">💬 Chat Local</div>
+      <div id="chatbox"></div>
+      <form id="chatform">
+        <input type="text" id="chatinput" placeholder="Écrire un message..." maxlength="80" autocomplete="off"/>
+        <button type="submit" id="chatsend">↵</button>
+      </form>
+      <div class="sbt">🏆 Classement</div>
+      <div id="scorebox"></div>
+    </div>
+  </div>
+  <div id="hint">Déplacement : ZQSD/Flèches | Action : ESPACE/E | Courir : SHIFT | Envoyer Chat : ENTRÉE</div>
+</div>
+
+<div id="seasonBadge"></div>
+
+<div id="ov">
+  <div id="ovbox">
+    <div id="ovtitle">VICTOIRE !</div>
+    <div id="ovsub">Le niveau a été purifié avec succès.</div>
+    <table id="statsTable">
+      <thead>
+        <tr>
+          <th style="text-align:left">Joueur</th>
+          <th>Score</th>
+          <th>Livrées</th>
+          <th>Morts</th>
+        </tr>
+      </thead>
+      <tbody id="statsBody"></tbody>
+    </table>
+    <div id="ovnote" style="font-size:0.8rem; color:var(--dim); margin-bottom:1rem;"></div>
+    <button class="btn primary" id="btnNext" style="display:none; margin:0 auto;">NIVEAU SUIVANT ➔</button>
+    <button class="btn primary" id="btnRestart" style="display:none; margin:0 auto;">REJOUER DU DÉBUT ↺</button>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
 <script>
-  // ... Tes variables globales existantes (socket, joueurs, etc.) ...
+// ==========================================
+// CONFIGURATION GLOBALE & ETATS CONSTANTS
+// ==========================================
+const socket = io();
+let playerId = null;
+let currentRoom = null;
+let isHost = false;
 
-  // === INITIALISATION TROIS.JS ===
-  let scene, camera, renderer;
-  let meshJoueurs = {}; // Pour stocker les objets 3D des joueurs
-  let meshMonstres = {}; // Pour stocker les fantômes 3D
-  let meshDecors = [];
+const ANIMALS = [
+  { emoji: '🦊', label: 'Renard' }, { emoji: '🐱', label: 'Chat' },
+  { emoji: '🐸', label: 'Grenouille' }, { emoji: '🐼', label: 'Panda' },
+  { emoji: '🐯', label: 'Tigre' }, { emoji: '🦉', label: 'Chouette' },
+  { emoji: '🐧', label: 'Manchot' }, { emoji: '🐹', label: 'Hamster' }
+];
 
-  function init3D() {
-    // 1. Créer la scène
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x07070d); // Ton thème sombre
-    // Ajout du brouillard vert/sombre comme sur l'image
-    scene.fog = new THREE.FogExp2(0x0a1a12, 0.15); 
+const COLORS = [
+  { hex: '#ff3333', name: 'Rouge' }, { hex: '#33ff55', name: 'Vert' },
+  { hex: '#3377ff', name: 'Bleu' }, { hex: '#ffcc00', name: 'Jaune' },
+  { hex: '#ff33cc', name: 'Rose' }, { hex: '#00ffff', name: 'Cyan' },
+  { hex: '#ff8800', name: 'Orange' }, { hex: '#9933ff', name: 'Violet' }
+];
 
-    // 2. Caméra (Perspective pour la 3D, inclinée style "Lethal Company/Repo top-down")
-    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 8, 6); // Positionnée en hauteur et reculée
+// Options locales sauvegardées
+let S = {
+  theme: 'dark',
+  minimap: 'medium',
+  music: true,
+  sfx: true,
+  volume: 70
+};
+
+// ==========================================
+// AUDIO ENGINE (WEB AUDIO API SYNTHESIZER)
+// ==========================================
+let actx = null;
+let masterGain = null;
+
+const SEASONS = {
+  winter: { label: '❄️ Hiver', melody: [261, 293, 329, 349, 392], tempo: 2000, dark: '#112244', light: '#cceeff' },
+  spring: { label: '🌱 Printemps', melody: [293, 329, 392, 440, 523], tempo: 1600, dark: '#113311', light: '#ccffcc' },
+  summer: { label: '☀️ Été', melody: [329, 392, 440, 523, 587], tempo: 1400, dark: '#442211', light: '#ffeecc' },
+  autumn: { label: '🍂 Automne', melody: [220, 246, 261, 293, 329], tempo: 1800, dark: '#331100', light: '#ffddbb' }
+};
+let currentSeason = 'autumn';
+let audioLoop = null;
+
+function initAudio() {
+  if (actx) return;
+  try {
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = actx.createGain();
+    masterGain.gain.value = S.volume / 100;
+    masterGain.connect(actx.destination);
+    if (S.music) startMusic();
+  } catch (e) { console.error("Audio init error", e); }
+}
+
+function startMusic() {
+  if (!actx || audioLoop) return;
+  let idx = 0;
+  audioLoop = setInterval(() => {
+    if (!S.music) return;
+    const seasonData = SEASONS[currentSeason];
+    const freq = seasonData.melody[idx % seasonData.melody.length];
+    idx++;
     
-    // 3. Renderer
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    // On remplace ton ancien canvas par celui de Three.js
-    document.body.appendChild(renderer.domElement); 
+    try {
+      let osc = actx.createOscillator();
+      let gain = actx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, actx.currentTime);
+      
+      gain.gain.setValueAtTime(0, actx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.15, actx.currentTime + 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 1.2);
+      
+      osc.connect(gain);
+      gain.connect(masterGain);
+      osc.start();
+      osc.stop(actx.currentTime + 1.3);
+    } catch(err){}
+  }, 900);
+}
 
-    // 4. Lumières (Ambiance glauque + lumière directionnelle)
-    const ambientLight = new THREE.AmbientLight(0x112211, 1.5);
-    scene.add(ambientLight);
+function playSound(type) {
+  if (!actx || !S.sfx) return;
+  try {
+    let osc = actx.createOscillator();
+    let gain = actx.createGain();
+    osc.connect(gain);
+    gain.connect(masterGain);
+    
+    if (type === 'pickup') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, actx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, actx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.2, actx.currentTime);
+      gain.gain.linearRampToValueAtTime(0, actx.currentTime + 0.15);
+      osc.start(); osc.stop(actx.currentTime + 0.15);
+    } else if (type === 'hit' || type === 'death') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(180, actx.currentTime);
+      osc.frequency.linearRampToValueAtTime(60, actx.currentTime + 0.4);
+      gain.gain.setValueAtTime(0.3, actx.currentTime);
+      gain.gain.linearRampToValueAtTime(0, actx.currentTime + 0.4);
+      osc.start(); osc.stop(actx.currentTime + 0.4);
+    } else if (type === 'deliver') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587, actx.currentTime);
+      osc.frequency.setValueAtTime(880, actx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.25, actx.currentTime);
+      gain.gain.linearRampToValueAtTime(0, actx.currentTime + 0.3);
+      osc.start(); osc.stop(actx.currentTime + 0.3);
+    }
+  } catch(e){}
+}
 
-    const dirLight = new THREE.DirectionalLight(0x00ff88, 0.5); // Reflet vert
-    dirLight.position.set(5, 10, 7);
-    scene.add(dirLight);
+function triggerSeasonBadge(label) {
+  const b = document.getElementById('seasonBadge');
+  b.textContent = label; b.classList.add('show');
+  clearTimeout(b._t); b._t = setTimeout(() => b.classList.remove('show'), 3000);
+}
+
+// ==========================================
+// GESTIONNAIRES D'INTERFACE (SCREENS)
+// ==========================================
+function showScreen(name) {
+  document.getElementById('menuScreen').classList.toggle('active', name === 'menu');
+  document.getElementById('lobbyScreen').classList.toggle('active', name === 'lobby');
+  document.getElementById('gameScreen').classList.toggle('active', name === 'game');
+  document.getElementById('settingsBtn').classList.toggle('hidden', name === 'menu');
+}
+
+document.getElementById('tabLobby').addEventListener('click', () => {
+  document.getElementById('tabLobby').classList.add('on');
+  document.getElementById('tabRegles').classList.remove('on');
+  document.getElementById('lPanelLobby').style.display = 'flex';
+  document.getElementById('lPanelRegles').style.display = 'none';
+});
+
+document.getElementById('tabRegles').addEventListener('click', () => {
+  document.getElementById('tabRegles').classList.add('on');
+  document.getElementById('tabLobby').classList.remove('on');
+  document.getElementById('lPanelLobby').style.display = 'none';
+  document.getElementById('lPanelRegles').style.display = 'flex';
+});
+
+// Options UI
+const sPanel = document.getElementById('settingsPanel');
+const sBg = document.getElementById('settingsBg');
+document.getElementById('settingsBtn').addEventListener('click', () => { sPanel.classList.add('on'); sBg.classList.add('on'); });
+document.getElementById('settingsClose').addEventListener('click', () => { sPanel.classList.remove('on'); sBg.classList.remove('on'); });
+sBg.addEventListener('click', () => { sPanel.classList.remove('on'); sBg.classList.remove('on'); });
+
+// Configuration Thème & Audio interactions
+document.getElementById('tDark').addEventListener('click', () => { document.body.setAttribute('data-theme', 'dark'); S.theme = 'dark'; updateOptionsUI(); });
+document.getElementById('tLight').addEventListener('click', () => { document.body.setAttribute('data-theme', 'light'); S.theme = 'light'; updateOptionsUI(); });
+
+const tm = document.getElementById('togMusic');
+tm.addEventListener('click', () => { S.music = !S.music; tm.classList.toggle('on', S.music); if(S.music) startMusic(); });
+const ts = document.getElementById('togSfx');
+ts.addEventListener('click', () => { S.sfx = !S.sfx; ts.classList.toggle('on', S.sfx); });
+
+document.getElementById('volRange').addEventListener('input', (e) => {
+  S.volume = parseInt(e.target.value);
+  if (masterGain) masterGain.gain.value = S.volume / 100;
+});
+
+function updateOptionsUI() {
+  document.getElementById('tDark').classList.toggle('on', S.theme === 'dark');
+  document.getElementById('tLight').classList.toggle('on', S.theme === 'light');
+}
+
+// Customisation avatar dans le lobby
+const avGrid = document.getElementById('avatarGrid');
+function buildAvatarGrid() {
+  avGrid.innerHTML = '';
+  ANIMALS.forEach((an, index) => {
+    COLORS.forEach(col => {
+      let b = document.createElement('div');
+      b.className = 'cbtn';
+      b.innerHTML = `<span class="cbtn-emoji">${an.emoji}</span><div class="cbtn-dot" style="background:${col.hex}"></div>`;
+      b.addEventListener('click', () => {
+        socket.emit('update_profile', { animal: index, color: col.hex });
+        document.querySelectorAll('.cbtn').forEach(x => x.classList.remove('on'));
+        b.classList.add('on');
+      });
+      avGrid.appendChild(b);
+    });
+  });
+}
+
+// ==========================================
+// ENGINE DE RENDU JEU (CANVAS 2D CONTEXT)
+// ==========================================
+const canvas = document.getElementById('gc');
+const ctx = canvas.getContext('2d');
+let TILE = 32;
+let mapData = [];
+let gameState = { players: {}, items: [], monsters: [], exit: {x:0,y:0} };
+
+function resizeCanvas() {
+  const wrap = document.getElementById('cwrap');
+  canvas.width = wrap.clientWidth;
+  canvas.height = wrap.clientHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+
+// Inputs du clavier local
+const keys = {};
+window.addEventListener('keydown', e => { 
+  keys[e.code] = true; 
+  if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code) && document.activeElement !== document.getElementById('chatinput')) {
+    e.preventDefault();
   }
+});
+window.addEventListener('keyup', e => { keys[e.code] = false; });
 
-  // === GÉNÉRATION DE LA CARTE EN 3D ===
-  // Appelle cette fonction quand tu reçois la map du serveur ('map_data' ou 'game_start')
-  function genererCarte3D(mapMatrix) {
-    // Nettoyer l'ancien décor si besoin
-    meshDecors.forEach(m => scene.add(m));
-    
-    const geoMur = new THREE.BoxGeometry(1, 2, 1); // Murs de 2 de hauteur
-    const matMur = new THREE.MeshStandardMaterial({ color: 0x1a2e26, roughness: 0.8 }); // Style pierre sombre
-    
-    const geoSol = new THREE.PlaneGeometry(1, 1);
-    const matSol = new THREE.MeshStandardMaterial({ color: 0x0c0c1a, roughness: 0.5 });
+// Boucle réseau locale d'input vers le serveur
+setInterval(() => {
+  if (document.activeElement === document.getElementById('chatinput')) return;
+  let dx = 0, dy = 0;
+  if (keys['KeyW'] || keys['ArrowUp'] || keys['KeyZ']) dy = -1;
+  if (keys['KeyS'] || keys['ArrowDown']) dy = 1;
+  if (keys['KeyA'] || keys['ArrowLeft'] || keys['KeyQ']) dx = -1;
+  if (keys['KeyD'] || keys['ArrowRight']) dx = 1;
+  
+  const sprint = keys['ShiftLeft'] || keys['ShiftRight'];
+  const action = keys['Space'] || keys['KeyE'];
+  
+  if (dx !== 0 || dy !== 0 || action || sprint) {
+    socket.emit('move', { dx, dy, sprint, action });
+  }
+}, 1000 / 45);
 
-    for(let y = 0; y < mapMatrix.length; y++) {
-      for(let x = 0; x < mapMatrix[y].length; x++) {
-        // Si c'est un mur (généralement 1 dans ton tableau)
-        if(mapMatrix[y][x] === 1) {
-          const mur = new THREE.Mesh(geoMur, matMur);
-          mur.position.set(x, 1, y); // x et y de ta grille deviennent X et Z en 3D
-          scene.add(mur);
-          meshDecors.push(mur);
+// Dessin de la frame de jeu 2D
+function renderGame() {
+  if (!canvas.width) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  const me = gameState.players[playerId];
+  if (!me) return;
+  
+  // Calcul du décalage caméra centré sur le joueur local
+  const camX = canvas.width / 2 - me.x * TILE;
+  const camY = canvas.height / 2 - me.y * TILE;
+  
+  // 1. Dessiner la carte (sols et murs)
+  if (mapData) {
+    for (let y = 0; y < mapData.length; y++) {
+      for (let x = 0; x < mapData[y].length; x++) {
+        const val = mapData[y][x];
+        const px = x * TILE + camX;
+        const py = y * TILE + camY;
+        
+        if (val === 1) {
+          ctx.fillStyle = S.theme === 'dark' ? '#1c1a2e' : '#b0b0cc';
+          ctx.fillRect(px, py, TILE, TILE);
+          ctx.strokeStyle = S.theme === 'dark' ? '#2a264f' : '#9090b0';
+          ctx.strokeRect(px, py, TILE, TILE);
         } else {
-          // Sol
-          const sol = new THREE.Mesh(geoSol, matSol);
-          sol.rotation.x = -Math.PI / 2;
-          sol.position.set(x, 0, y);
-          scene.add(sol);
+          ctx.fillStyle = (x + y) % 2 === 0 ? 'var(--floor-a)' : 'var(--floor-b)';
+          ctx.fillRect(px, py, TILE, TILE);
         }
       }
     }
   }
-
-  // === BOUCLE DE RENDU (À mettre à la place de ton ancienne fonction draw()) ===
-  function animate() {
-    requestAnimationFrame(animate);
-
-    // 1. Mettre à jour la position des joueurs selon les données reçues de socket.io
-    Object.keys(roomPlayers).forEach(id => {
-      const pData = roomPlayers[id];
-      
-      // Si le mesh du joueur n'existe pas encore dans la scène, on le crée (ici un cube low-poly ou une capsule)
-      if (!meshJoueurs[id]) {
-        let color = (id === geometry.id) ? 0x00ff88 : 0xff3355; // Toi en vert, les autres en rouge
-        const geoP = new THREE.BoxGeometry(0.6, 1, 0.6); 
-        const matP = new THREE.MeshStandardMaterial({ color: color });
-        meshJoueurs[id] = new THREE.Mesh(geoP, matP);
-        scene.add(meshJoueurs[id]);
-      }
-      
-      // Update des coordonnées (on mappe la 2D sur le plan X/Z de la 3D)
-      meshJoueurs[id].position.set(pData.x, 0.5, pData.y);
-      
-      // Si c'est le joueur local, la caméra le suit
-      if (id === socket.id) {
-        camera.position.set(pData.x, pData.x + 8, pData.y + 6);
-        camera.lookAt(pData.x, 0, pData.y);
-      }
+  
+  // 2. Dessiner la sortie (Exit)
+  if (gameState.exit) {
+    const ex = gameState.exit.x * TILE + camX;
+    const ey = gameState.exit.y * TILE + camY;
+    ctx.fillStyle = 'rgba(0, 255, 136, 0.2)';
+    ctx.fillRect(ex, ey, TILE, TILE);
+    ctx.strokeStyle = 'var(--accent)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(ex, ey, TILE, TILE);
+    ctx.font = `${TILE * 0.6}px serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('🚪', ex + TILE/2, ey + TILE/2);
+  }
+  
+  // 3. Dessiner les objets / colis
+  if (gameState.items) {
+    gameState.items.forEach(it => {
+      if (it.collected || it.carriedBy) return;
+      const ix = it.x * TILE + camX + TILE/2;
+      const iy = it.y * TILE + camY + TILE/2;
+      ctx.font = `${TILE * 0.7}px serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('📦', ix, iy);
     });
-
-    // 2. Mettre à jour les monstres/fantômes (On crée des cubes violets lumineux)
-    roomMonsters.forEach(m => {
-      if (!meshMonstres[m.id]) {
-        const geoM = new THREE.ConeGeometry(0.4, 1, 4); // Forme de fantôme pointu
-        const matM = new THREE.MeshBasicMaterial({ color: 0x9933ff });
-        meshMonstres[m.id] = new THREE.Mesh(geoM, matM);
-        scene.add(meshMonstres[m.id]);
-      }
-      // Les fantômes lévitent légèrement (Math.sin pour l'effet de flottaison)
-      meshMonstres[m.id].position.set(m.x, 0.6 + Math.sin(Date.now() * 0.005) * 0.1, m.y);
+  }
+  
+  // 4. Dessiner les monstres / fantômes
+  if (gameState.monsters) {
+    gameState.monsters.forEach(m => {
+      const mx = m.x * TILE + camX + TILE/2;
+      const my = m.y * TILE + camY + TILE/2;
+      ctx.font = `${TILE * 0.8}px serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('👻', mx, my);
     });
-
-    // Rendu de la scène
-    renderer.render(scene, camera);
   }
 
-  // Lance l'init au chargement
-  window.onload = () => {
-    init3D();
-    animate();
-  };
+  // 5. Dessiner les joueurs
+  Object.keys(gameState.players).forEach(id => {
+    const p = gameState.players[id];
+    const px = p.x * TILE + camX + TILE/2;
+    const py = p.y * TILE + camY + TILE/2;
+    
+    // Ombre sous l'avatar
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.beginPath(); ctx.arc(px, py + TILE*0.3, TILE*0.3, 0, Math.PI*2); ctx.fill();
+    
+    // Avatar animal
+    const config = ANIMALS[p.animal] || ANIMALS[0];
+    ctx.font = `${TILE * 0.75}px serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(config.emoji, px, py);
+    
+    // Nom et indicateur colis porté
+    ctx.font = '10px "Share Tech Mono"';
+    ctx.fillStyle = p.color || 'var(--text)';
+    ctx.fillText(p.name + (p.carrying ? ' 📦' : ''), px, py - TILE*0.6);
+  });
+  
+  requestAnimationFrame(renderGame);
+}
+
+// ==========================================
+// CONNEXIONS RESEAU & EVENEMENTS SOCKET.IO
+// ==========================================
+document.getElementById('btnCreate').addEventListener('click', () => {
+  const name = document.getElementById('usernameInput').value.trim();
+  if(!name) return document.getElementById('menuErr').textContent = "Veuillez entrer un pseudo !";
+  initAudio();
+  socket.emit('create_room', { name });
+});
+
+document.getElementById('btnJoin').addEventListener('click', () => {
+  const name = document.getElementById('usernameInput').value.trim();
+  const code = document.getElementById('roomInput').value.trim().toUpperCase();
+  if(!name || !code) return document.getElementById('menuErr').textContent = "Pseudo et Code requis !";
+  initAudio();
+  socket.emit('join_room', { name, roomCode: code });
+});
+
+socket.on('room_created', data => {
+  playerId = data.playerId; currentRoom = data.roomCode; isHost = true;
+  document.getElementById('lCodeVal').textContent = currentRoom;
+  document.getElementById('readyBtn').style.display = 'block';
+  document.getElementById('waitMsg').style.display = 'none';
+  document.getElementById('spRoomSection').style.display = 'block';
+  buildAvatarGrid(); showScreen('lobby');
+});
+
+socket.on('room_joined', data => {
+  playerId = data.playerId; currentRoom = data.roomCode; isHost = false;
+  document.getElementById('lCodeVal').textContent = currentRoom;
+  document.getElementById('readyBtn').style.display = 'none';
+  document.getElementById('waitMsg').style.display = 'block';
+  document.getElementById('spRoomSection').style.display = 'block';
+  buildAvatarGrid(); showScreen('lobby');
+});
+
+socket.on('lobby_state', data => {
+  const stage = document.getElementById('lStage');
+  stage.innerHTML = '';
+  
+  Object.keys(data.players).forEach(id => {
+    const p = data.players[id];
+    const ani = ANIMALS[p.animal] || ANIMALS[0];
+    let slot = document.createElement('div');
+    slot.className = 'lslot';
+    slot.innerHTML = `
+      <div class="avatar">${ani.emoji}</div>
+      <div class="name" style="color:${p.color}">${p.name}</div>
+      <div class="role">${data.hostId === id ? '👑 Hôte' : 'Prêt'}</div>
+    `;
+    stage.appendChild(slot);
+  });
+});
+
+document.getElementById('readyBtn').addEventListener('click', () => {
+  socket.emit('start_game');
+});
+
+socket.on('game_started', data => {
+  mapData = data.map;
+  resizeCanvas();
+  showScreen('game');
+  requestAnimationFrame(renderGame);
+});
+
+socket.on('state', state => {
+  gameState = state;
+  const me = state.players[playerId];
+  if(me) {
+    document.getElementById('hLvl').textContent = state.level || 1;
+    document.getElementById('hItems').textContent = `${state.deliveredItems || 0}/${state.requiredItems || 10}`;
+    document.getElementById('hScore').textContent = me.score || 0;
+    document.getElementById('hLives').textContent = '❤️'.repeat(state.lives > 0 ? state.lives : 0);
+    document.getElementById('hStatus').textContent = state.lives <= 0 ? "GAME OVER" : (me.dead ? "💀 MORT" : "EN VIE");
+    document.getElementById('hStatus').style.color = me.dead ? 'var(--danger)' : 'var(--accent)';
+    
+    // Barre d'endurance
+    const stamPercent = ((me.stamina || 120) / 120) * 100;
+    document.getElementById('stFill').style.width = `${stamPercent}%`;
+  }
+  
+  // Classement de la barre latérale
+  const sBox = document.getElementById('scorebox');
+  sBox.innerHTML = Object.values(state.players)
+    .sort((a,b) => b.score - a.score)
+    .map(p => `<div class="sr"><span class="sn" style="color:${p.color}">${p.name}</span><b>${p.score}</b></div>`)
+    .join('');
+});
+
+// Système Audio Réseau
+socket.on('sound', type => { playSound(type); });
+socket.on('season', season => {
+  if(season && SEASONS[season] && season !== currentSeason) {
+    currentSeason = season;
+    triggerSeasonBadge(SEASONS[season].label);
+  }
+});
+
+// Gestion du Chat local
+const cForm = document.getElementById('chatform');
+const cInput = document.getElementById('chatinput');
+const cBox = document.getElementById('chatbox');
+
+cForm.addEventListener('submit', e => {
+  e.preventDefault();
+  const m = cInput.value.trim();
+  if(!m) return;
+  socket.emit('chat_msg', m);
+  cInput.value = '';
+});
+
+socket.on('chat', data => {
+  let item = document.createElement('div');
+  item.className = 'c-msg';
+  if(data.sys) {
+    item.classList.add('c-sys');
+    item.textContent = data.msg;
+  } else {
+    item.innerHTML = `<span class="c-name" style="color:${data.color}">${data.name} :</span><span>${data.msg}</span>`;
+  }
+  cBox.appendChild(item);
+  cBox.scrollTop = cBox.scrollHeight;
+});
+
+// Écrans de fin de niveau / Match
+socket.on('level_end', data => {
+  document.getElementById('ovtitle').textContent = data.win ? "NIVEAU RÉUSSI !" : "GAME OVER !";
+  document.getElementById('ovtitle').style.color = data.win ? 'var(--accent)' : 'var(--danger)';
+  document.getElementById('ovsub').textContent = data.win ? "La zone a été temporairement sécurisée." : "Tous les esprits ont pris le dessus.";
+  
+  const tbody = document.getElementById('statsBody');
+  tbody.innerHTML = Object.values(data.players)
+    .map(p => `<tr><td style="text-align:left; color:${p.color}">${p.name}</td><td>${p.score}</td><td>${p.itemsDelivered || 0}</td><td>${p.deaths || 0}</td></tr>`)
+    .join('');
+    
+  document.getElementById('btnNext').style.display = (isHost && data.win) ? 'block' : 'none';
+  document.getElementById('btnRestart').style.display = (isHost && !data.win) ? 'block' : 'none';
+  document.getElementById('ov').classList.add('on');
+});
+
+document.getElementById('btnNext').addEventListener('click', () => {
+  document.getElementById('ov').classList.remove('on');
+  socket.emit('next_level');
+});
+
+document.getElementById('btnRestart').addEventListener('click', () => {
+  document.getElementById('ov').classList.remove('on');
+  socket.emit('restart_game');
+});
+
+document.getElementById('copyLinkBtn').addEventListener('click', () => {
+  const url = `${window.location.origin}/?room=${currentRoom}`;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('copyLinkBtn');
+    btn.textContent = "✅ Code Copié !";
+    setTimeout(() => { btn.textContent = "📋 Copier le lien d'invitation"; }, 2000);
+  });
+});
+
+// Pré-remplissage auto du code via l'URL si existant
+const urlParams = new URLSearchParams(window.location.search);
+const rParam = urlParams.get('room');
+if (rParam) { document.getElementById('roomInput').value = rParam.toUpperCase(); }
 </script>
+</body>
+</html>
