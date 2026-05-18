@@ -12,11 +12,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 const rooms = {};
 const MAP_W=28, MAP_H=20;
 const SPAWN_X=1.5, SPAWN_Y=1.5, SPAWN_SAFE_R=3.5;
-const MAX_LIVES=3, STAMINA_MAX=120, STAMINA_DRAIN=2, STAMINA_REGEN=0.67;
+const MAX_LIVES=3, STAMINA_MAX=120, STAMINA_DRAIN=2, STAMINA_REGEN=0.667;
 const MONSTER_HIT_R=0.55;
 const SEASON_NAMES=['winter','spring','summer','autumn'];
-const RUSH_INTERVAL=90*30; // 90s at 30fps
-const RUSH_DURATION=30*30; // 30s
+const RUSH_INTERVAL=90*30, RUSH_DURATION=30*30;
 
 function getPlayableDims(level) {
   if(level<=2) return {w:18,h:14};
@@ -45,9 +44,7 @@ function generateMap(level) {
    [17,3],[20,3],[17,10],[20,10],[17,16],[20,16],
    [23,2],[26,2],[23,9],[26,9],[23,16],[26,16]
   ].forEach(([x,y])=>{ if(map[y]&&map[y][x]!==undefined) map[y][x]=1; });
-  // Restrict to playable area
   for(let y=0;y<MAP_H;y++) for(let x=0;x<MAP_W;x++) if(x>=pw||y>=ph) map[y][x]=1;
-  // Clear spawn
   for(let dy=0;dy<3&&1+dy<ph;dy++) for(let dx=0;dx<3&&1+dx<pw;dx++) map[1+dy][1+dx]=0;
   return map;
 }
@@ -69,8 +66,7 @@ function floodFill(map,sx,sy){
   return reachable;
 }
 
-function distPt(ax,ay,bx,by){return Math.sqrt((ax-bx)**2+(ay-by)**2);}
-function dist(a,b){return Math.sqrt((a.x-b.x)**2+(a.y-b.y)**2);}
+function dist(ax,ay,bx,by){return Math.sqrt((ax-bx)**2+(ay-by)**2);}
 
 function generateExit(map,reachable,pw,ph){
   const candidates=[
@@ -112,15 +108,21 @@ function generateItems(map,level,exit,reachable,pw,ph){
   }
   return positions.map((p,i)=>{
     const r=Math.random();
-    // 65% normal, 22% golden, 13% cursed
-    const itemType=r<0.65?'normal':r<0.87?'golden':'cursed';
-    return{id:i,x:p.x,y:p.y,collected:false,carriedBy:null,type:itemType};
+    let itemType='normal',powerUpType=null;
+    // 5% chance power-up
+    if(r<0.05){
+      itemType='powerup';
+      const powerups=['speed','shield','freeze'];
+      powerUpType=powerups[Math.floor(Math.random()*3)];
+    } else if(r<0.70){itemType='normal';}
+    else if(r<0.87){itemType='golden';}
+    else{itemType='cursed';}
+    return{id:i,x:p.x,y:p.y,collected:false,carriedBy:null,type:itemType,powerUpType};
   });
 }
 
 function generateMonsters(map,level,reachable,pw,ph){
   const baseSpd=0.018+level*0.003;
-  // Ghost types by level
   const typePool=level<=2
     ?['rover','hunter','rover','hunter','rover','rover']
     :level<=4
@@ -140,7 +142,6 @@ function generateMonsters(map,level,reachable,pw,ph){
   for(let i=0;i<count;i++){
     const c=positions[i];
     const mtype=typePool[i]||'rover';
-    // Speed varies by type
     const speedMult=mtype==='hunter'?1.4:mtype==='twin'?1.1:0.7;
     const speed=baseSpd*speedMult;
     let placed=false;
@@ -150,7 +151,7 @@ function generateMonsters(map,level,reachable,pw,ph){
         if(nx<1||nx>=MAP_W-1||ny<1||ny>=MAP_H-1) continue;
         if(map[ny][nx]!==0) continue;
         if(!reachable.has(`${nx},${ny}`)) continue;
-        if(distPt(nx,ny,SPAWN_X,SPAWN_Y)<SPAWN_SAFE_R+2) continue;
+        if(dist(nx,ny,SPAWN_X,SPAWN_Y)<SPAWN_SAFE_R+2) continue;
         monsters.push({id:i,x:nx+0.5,y:ny+0.5,dx:c.dx,dy:c.dy,speed,type:mtype});
         placed=true;break outer;
       }
@@ -158,6 +159,20 @@ function generateMonsters(map,level,reachable,pw,ph){
     if(!placed) console.log(`Monster ${i} skipped`);
   }
   return monsters;
+}
+
+function createBoss(level,pw,ph){
+  const hp=80+level*30;
+  return{
+    id:'boss',
+    x:pw*0.5,y:ph*0.5,
+    dx:0,dy:1,
+    speed:0.015+level*0.002,
+    type:'boss',
+    hp,maxHp:hp,
+    phase:1,
+    spawnTimer:0,
+  };
 }
 
 function buildLevel(level){
@@ -169,10 +184,14 @@ function buildLevel(level){
   const map=exitData.map;
   const exit={x:exitData.x,y:exitData.y,gx:exitData.gx,gy:exitData.gy};
   const reachable2=floodFill(map,SPAWN_X,SPAWN_Y);
+
+  const isBoss=level%5===0&&level>0;
+  const items=isBoss?[]:generateItems(map,level,exit,reachable2,pw,ph);
+  const monsters=isBoss?[]:(generateMonsters(map,level,reachable2,pw,ph));
+  const boss=isBoss?createBoss(level,pw,ph):null;
+
   return{
-    map,exit,season,pw,ph,
-    items:generateItems(map,level,exit,reachable2,pw,ph),
-    monsters:generateMonsters(map,level,reachable2,pw,ph),
+    map,exit,season,pw,ph,items,monsters,boss,isBossLevel:isBoss
   };
 }
 
@@ -203,25 +222,24 @@ function wallSimple(map,x,y){
   if(tx<0||tx>=MAP_W||ty<0||ty>=MAP_H) return true;
   return map[ty][tx]===1;
 }
-function inSpawn(x,y){return distPt(x,y,SPAWN_X,SPAWN_Y)<SPAWN_SAFE_R;}
+function inSpawn(x,y){return dist(x,y,SPAWN_X,SPAWN_Y)<SPAWN_SAFE_R;}
 
 function updateRoom(room){
   if(room.gameOver||room.gameWon||!room.started) return;
   const players=Object.values(room.players);
   if(!players.length) return;
 
-  // === RUSH HOUR ===
-  if(!room.rushActive){
+  // RUSH HOUR
+  if(!room.rushActive&&!room.isBossLevel){
     room.rushTimer++;
     if(room.rushTimer>=RUSH_INTERVAL){
       room.rushActive=true; room.rushTimer=0; room.rushDuration=RUSH_DURATION;
-      // Respawn all collected items
       room.items.forEach(item=>{
         if(item.collected){item.collected=false;item.carriedBy=null;}
       });
       io.to(room.id).emit('rush_hour',{active:true});
     }
-  } else {
+  } else if(room.rushActive){
     room.rushDuration--;
     if(room.rushDuration<=0){
       room.rushActive=false;
@@ -229,47 +247,88 @@ function updateRoom(room){
     }
   }
 
-  // === CURSED TIMER ===
   if(room.cursedTimer>0) room.cursedTimer--;
   const cursedSpeedMult=room.cursedTimer>0?1.6:1.0;
 
-  // === MONSTERS ===
+  // BOSS AI
+  if(room.boss&&room.boss.hp>0){
+    const b=room.boss;
+    let target=null,minD=Infinity;
+    players.forEach(p=>{
+      if(!p.dead&&!inSpawn(p.x,p.y)){const d=dist(b.x,b.y,p.x,p.y);if(d<minD){minD=d;target=p;}}
+    });
+    
+    // Boss movement
+    if(target){const a=Math.atan2(target.y-b.y,target.x-b.x);b.dx=Math.cos(a);b.dy=Math.sin(a);}
+    const spd=b.speed*2;
+    const nx=b.x+b.dx*spd,ny=b.y+b.dy*spd;
+    if(!wallSimple(room.map,nx,b.y)&&!inSpawn(nx,b.y)) b.x=nx; else b.dx=-b.dx;
+    if(!wallSimple(room.map,b.x,ny)&&!inSpawn(b.x,ny)) b.y=ny; else b.dy=-b.dy;
+
+    // Boss phase change
+    const hpPct=b.hp/b.maxHp;
+    if(hpPct<0.66&&b.phase===1){b.phase=2;b.speed*=1.2;io.to(room.id).emit('boss_phase',{phase:2});}
+    if(hpPct<0.33&&b.phase===2){b.phase=3;b.speed*=1.3;io.to(room.id).emit('boss_phase',{phase:3});}
+
+    // Boss hits players
+    players.forEach(p=>{
+      if(!p.dead&&!inSpawn(p.x,p.y)&&dist(b.x,b.y,p.x,p.y)<1.0){
+        if(p.shieldActive)return;
+        if(p.carrying!==null){
+          const item=room.items.find(i=>i.id===p.carrying);
+          if(item){item.carriedBy=null;item.x=p.x;item.y=p.y;}p.carrying=null;
+        }
+        p.consecutiveDeliveries=0; p.comboActive=false;
+        p.lives=(p.lives||MAX_LIVES)-1; p.dead=true; p.deaths=(p.deaths||0)+1;
+        if(p.lives<=0){p.lives=0;p.eliminated=true;io.to(room.id).emit('player_eliminated',{name:p.name});}
+        else p.respawnTimer=120;
+        io.to(room.id).emit('sound','death');
+      }
+    });
+
+    // Boss takes damage (not implemented - would need shooting mechanic)
+    // For now, boss HP only decreases via special trigger (placeholder)
+  }
+
+  // MONSTERS
   room.monsters.forEach((m,mi)=>{
     let target=null,minD=Infinity;
     players.forEach(p=>{
-      if(!p.dead&&!inSpawn(p.x,p.y)){const d=dist(m,p);if(d<minD){minD=d;target=p;}}
+      if(!p.dead&&!inSpawn(p.x,p.y)){const d=dist(m.x,m.y,p.x,p.y);if(d<minD){minD=d;target=p;}}
     });
 
     let dx=m.dx,dy=m.dy;
 
-    if(m.type==='hunter'){
-      // Ultra-fast, always targets directly
-      if(target){const a=Math.atan2(target.y-m.y,target.x-m.x);dx=Math.cos(a);dy=Math.sin(a);}
-    } else if(m.type==='twin'){
-      // Flanks from perpendicular angle
-      if(target){
-        const a=Math.atan2(target.y-m.y,target.x-m.x)+Math.PI*0.5;
-        dx=Math.cos(a);dy=Math.sin(a);
+    // Apply freeze power-up
+    const frozen=players.some(p=>p.freezeActive&&p.freezeActive>0);
+    if(frozen){dx=0;dy=0;}
+    else{
+      if(m.type==='hunter'){
+        if(target){const a=Math.atan2(target.y-m.y,target.x-m.x);dx=Math.cos(a);dy=Math.sin(a);}
+      } else if(m.type==='twin'){
+        if(target){
+          const a=Math.atan2(target.y-m.y,target.x-m.x)+Math.PI*0.5;
+          dx=Math.cos(a);dy=Math.sin(a);
+        }
+      } else {
+        if(target&&minD<5){const a=Math.atan2(target.y-m.y,target.x-m.x);dx=Math.cos(a)*0.6+m.dx*0.4;dy=Math.sin(a)*0.6+m.dy*0.4;}
+        else{dx=m.dx;dy=m.dy;}
       }
-    } else {
-      // rover — basic bounce, chases loosely if close
-      if(target&&minD<5){const a=Math.atan2(target.y-m.y,target.x-m.x);dx=Math.cos(a)*0.6+m.dx*0.4;dy=Math.sin(a)*0.6+m.dy*0.4;}
-      else{dx=m.dx;dy=m.dy;}
     }
 
-    const spd=m.speed*2*cursedSpeedMult;
+    const spd=frozen?0:(m.speed*2*cursedSpeedMult);
     const nx=m.x+dx*spd,ny=m.y+dy*spd;
     if(!wallSimple(room.map,nx,m.y)&&!inSpawn(nx,m.y)) m.x=nx; else m.dx=-m.dx;
     if(!wallSimple(room.map,m.x,ny)&&!inSpawn(m.x,ny)) m.y=ny; else m.dy=-m.dy;
 
     // Hit detection
     players.forEach(p=>{
-      if(!p.dead&&!inSpawn(p.x,p.y)&&dist(m,p)<MONSTER_HIT_R){
+      if(!p.dead&&!inSpawn(p.x,p.y)&&dist(m.x,m.y,p.x,p.y)<MONSTER_HIT_R){
+        if(p.shieldActive)return; // shield blocks damage
         if(p.carrying!==null){
           const item=room.items.find(i=>i.id===p.carrying);
           if(item){item.carriedBy=null;item.x=p.x;item.y=p.y;}p.carrying=null;
         }
-        // Reset combo on death
         p.consecutiveDeliveries=0; p.comboActive=false;
         p.lives=(p.lives||MAX_LIVES)-1; p.dead=true; p.deaths=(p.deaths||0)+1;
         if(p.lives<=0){p.lives=0;p.eliminated=true;io.to(room.id).emit('player_eliminated',{name:p.name});}
@@ -279,19 +338,30 @@ function updateRoom(room){
     });
   });
 
-  // Respawn & regen
+  // Respawn & regen & power-up timers
   players.forEach(p=>{
     if(p.dead&&!p.eliminated){p.respawnTimer--;if(p.respawnTimer<=0){p.dead=false;p.x=SPAWN_X;p.y=SPAWN_Y;}}
+    // Power-up timers
+    if(p.speedActive>0){p.speedActive--;if(p.speedActive===0)io.to(room.id).emit('powerup_end',{playerId:p.id,type:'speed'});}
+    if(p.shieldActive>0){p.shieldActive--;if(p.shieldActive===0)io.to(room.id).emit('powerup_end',{playerId:p.id,type:'shield'});}
+    if(p.freezeActive>0){p.freezeActive--;if(p.freezeActive===0)io.to(room.id).emit('powerup_end',{playerId:p.id,type:'freeze'});}
   });
   if(players.filter(p=>!p.eliminated).length===0&&players.length>0){room.gameOver=true;return;}
 
-  // === ITEM DELIVERY ===
+  // ITEM DELIVERY
   room.items.forEach(item=>{
     if(!item.collected&&item.carriedBy!==null){
       const carrier=room.players[item.carriedBy];
-      if(carrier&&dist(carrier,room.exit)<1.5){
+      if(carrier&&dist(carrier.x,carrier.y,room.exit.x,room.exit.y)<1.5){
         item.collected=true; item.carriedBy=null; carrier.carrying=null;
         room.itemsDelivered++;
+
+        // Power-up activation
+        if(item.type==='powerup'){
+          if(item.powerUpType==='speed'){carrier.speedActive=10*30;io.to(room.id).emit('powerup_start',{playerId:carrier.id,type:'speed'});io.to(room.id).emit('sound','powerup');}
+          if(item.powerUpType==='shield'){carrier.shieldActive=12*30;io.to(room.id).emit('powerup_start',{playerId:carrier.id,type:'shield'});io.to(room.id).emit('sound','powerup');}
+          if(item.powerUpType==='freeze'){carrier.freezeActive=8*30;io.to(room.id).emit('powerup_start',{playerId:carrier.id,type:'freeze'});io.to(room.id).emit('sound','powerup');}
+        }
 
         // Combo tracking
         carrier.consecutiveDeliveries=(carrier.consecutiveDeliveries||0)+1;
@@ -303,14 +373,14 @@ function updateRoom(room){
 
         // Cursed effect
         if(item.type==='cursed'){
-          room.cursedTimer=10*30; // 10 seconds
+          room.cursedTimer=10*30;
           io.to(room.id).emit('cursed_activated',{name:carrier.name});
           io.to(room.id).emit('sound','cursed');
         }
 
-        // Points (combo x2, golden x3)
+        // Points
         const comboMult=carrier.comboActive?2:1;
-        const itemMult=item.type==='golden'?3:item.type==='cursed'?0:1;
+        const itemMult=item.type==='golden'?3:item.type==='cursed'?0:item.type==='powerup'?2:1;
         const pts=Math.round((100+room.level*50)*comboMult*itemMult);
         room.score+=pts; carrier.score=(carrier.score||0)+pts;
         carrier.itemsDelivered=(carrier.itemsDelivered||0)+1;
@@ -319,24 +389,34 @@ function updateRoom(room){
     }
   });
 
-  // === WIN CHECK ===
-  if(room.itemsDelivered>=room.totalItems&&!room.gameWon){
+  // WIN CHECK
+  const winCondition=room.isBossLevel?(room.boss&&room.boss.hp<=0):(room.itemsDelivered>=room.totalItems);
+  if(winCondition&&!room.gameWon){
     room.gameWon=true;
     const elapsed=(Date.now()-room.levelStartTime)/1000;
     const totalP=players.length;
     const totalDeaths=players.reduce((s,p)=>s+(p.deaths||0),0);
     const hadCombo=players.some(p=>(p.maxCombo||0)>=3);
-    // Stars: 3=fast+few deaths+combo, 2=ok, 1=baseline
     let stars=1;
     if(elapsed<180&&totalDeaths<=totalP*2) stars=2;
     if(elapsed<120&&totalDeaths<=totalP&&hadCombo) stars=3;
     room.stars=stars;
+
+    // XP calculation
+    const baseXP=100+room.level*20;
+    const bonusXP=(stars-1)*50+totalDeaths*(-5);
+    const xpEarned=Math.max(50,baseXP+bonusXP);
+    
     room.leaderboard=players
-      .map(p=>({name:p.name,score:p.score||0,deaths:p.deaths||0,color:p.color,
+      .map(p=>{
+        p.xpEarned=xpEarned;
+        return{name:p.name,score:p.score||0,deaths:p.deaths||0,color:p.color,
                 lives:p.lives||0,animal:p.animal||0,itemsDelivered:p.itemsDelivered||0,
-                maxCombo:p.maxCombo||0,comboActive:p.comboActive||false}))
+                maxCombo:p.maxCombo||0,comboActive:p.comboActive||false,xpEarned};
+      })
       .sort((a,b)=>b.score-a.score);
     io.to(room.id).emit('sound','win');
+    io.to(room.id).emit('xp_earned',{xp:xpEarned});
   }
 }
 
@@ -345,14 +425,14 @@ setInterval(()=>{
     updateRoom(room);
     if(Object.keys(room.players).length>0){
       io.to(room.id).emit('state',{
-        players:room.players,items:room.items,monsters:room.monsters,
+        players:room.players,items:room.items,monsters:room.monsters,boss:room.boss,
         score:room.score,gameOver:room.gameOver,gameWon:room.gameWon,
         itemsDelivered:room.itemsDelivered,totalItems:room.totalItems,
         level:room.level,leaderboard:room.leaderboard,
         hostId:room.hostId,exit:room.exit,
         season:room.season||'autumn',pw:room.pw||MAP_W,ph:room.ph||MAP_H,
         rushActive:room.rushActive,cursedActive:room.cursedTimer>0,
-        stars:room.stars||0
+        stars:room.stars||0,isBossLevel:room.isBossLevel||false
       });
     }
   });
@@ -370,7 +450,8 @@ io.on('connection',socket=>{
       color:color||'#00ff88',animal:animal||0,carrying:null,dead:false,eliminated:false,
       respawnTimer:0,score:0,deaths:0,lives:MAX_LIVES,itemsDelivered:0,
       stamina:STAMINA_MAX,boosting:false,dir:'down',
-      consecutiveDeliveries:0,comboActive:false,maxCombo:0,yaw:0
+      consecutiveDeliveries:0,comboActive:false,maxCombo:0,yaw:0,
+      speedActive:0,shieldActive:0,freezeActive:0
     };
     socket.emit('room_created',{roomId,playerId,isHost:true});
     io.to(roomId).emit('lobby_state',{players:rooms[roomId].players,hostId:rooms[roomId].hostId});
@@ -380,7 +461,7 @@ io.on('connection',socket=>{
     const room=rooms[roomId];
     if(!room){socket.emit('error','Salle introuvable !');return;}
     if(room.started){socket.emit('error','Partie déjà lancée !');return;}
-    if(Object.keys(room.players).length>=6){socket.emit('error','Salle pleine !');return;}
+    if(Object.keys(room.players).length>=10){socket.emit('error','Salle pleine !');return;}
     currentRoom=roomId; socket.join(roomId);
     const num=Object.keys(room.players).length;
     room.players[playerId]={
@@ -388,7 +469,8 @@ io.on('connection',socket=>{
       color:color||'#ff6b6b',animal:animal||1,carrying:null,dead:false,eliminated:false,
       respawnTimer:0,score:0,deaths:0,lives:MAX_LIVES,itemsDelivered:0,
       stamina:STAMINA_MAX,boosting:false,dir:'down',
-      consecutiveDeliveries:0,comboActive:false,maxCombo:0,yaw:0
+      consecutiveDeliveries:0,comboActive:false,maxCombo:0,yaw:0,
+      speedActive:0,shieldActive:0,freezeActive:0
     };
     socket.emit('joined',{playerId,roomId,isHost:false});
     socket.emit('chat_history',room.chatMessages.slice(-20));
@@ -417,7 +499,7 @@ io.on('connection',socket=>{
     if(room.hostId!==playerId||!room.gameWon) return;
     room.level++;
     const lvl=buildLevel(room.level);
-    Object.assign(room,{map:lvl.map,exit:lvl.exit,season:lvl.season,pw:lvl.pw,ph:lvl.ph,items:lvl.items,monsters:lvl.monsters});
+    Object.assign(room,{map:lvl.map,exit:lvl.exit,season:lvl.season,pw:lvl.pw,ph:lvl.ph,items:lvl.items,monsters:lvl.monsters,boss:lvl.boss,isBossLevel:lvl.isBossLevel});
     room.itemsDelivered=0; room.totalItems=6+room.level*2;
     room.gameWon=false; room.stars=0;
     room.rushTimer=0; room.rushActive=false; room.rushDuration=0;
@@ -428,9 +510,10 @@ io.on('connection',socket=>{
       p.lives=Math.min(5,(p.lives||0)+1);
       p.itemsDelivered=0;p.consecutiveDeliveries=0;
       p.comboActive=false;p.maxCombo=0;p.deaths=0;
+      p.speedActive=0;p.shieldActive=0;p.freezeActive=0;
     });
     io.to(currentRoom).emit('map',room.map);
-    io.to(currentRoom).emit('level_start',{level:room.level,totalItems:room.totalItems,season:room.season});
+    io.to(currentRoom).emit('level_start',{level:room.level,totalItems:room.totalItems,season:room.season,isBossLevel:room.isBossLevel});
   });
 
   socket.on('restart_game',()=>{
@@ -439,7 +522,7 @@ io.on('connection',socket=>{
     if(room.hostId!==playerId) return;
     room.level=1;
     const lvl=buildLevel(1);
-    Object.assign(room,{map:lvl.map,exit:lvl.exit,season:lvl.season,pw:lvl.pw,ph:lvl.ph,items:lvl.items,monsters:lvl.monsters});
+    Object.assign(room,{map:lvl.map,exit:lvl.exit,season:lvl.season,pw:lvl.pw,ph:lvl.ph,items:lvl.items,monsters:lvl.monsters,boss:lvl.boss,isBossLevel:lvl.isBossLevel});
     room.started=false;room.gameOver=false;room.gameWon=false;
     room.score=0;room.itemsDelivered=0;room.totalItems=8;room.stars=0;
     room.rushTimer=0;room.rushActive=false;room.rushDuration=0;room.cursedTimer=0;
@@ -449,6 +532,7 @@ io.on('connection',socket=>{
       p.score=0;p.deaths=0;p.carrying=null;p.itemsDelivered=0;
       p.x=SPAWN_X;p.y=SPAWN_Y;p.stamina=STAMINA_MAX;
       p.consecutiveDeliveries=0;p.comboActive=false;p.maxCombo=0;
+      p.speedActive=0;p.shieldActive=0;p.freezeActive=0;
     });
     io.to(currentRoom).emit('back_to_lobby');
     io.to(currentRoom).emit('lobby_state',{players:room.players,hostId:room.hostId});
@@ -462,6 +546,19 @@ io.on('connection',socket=>{
     room.chatMessages.push(message);
     if(room.chatMessages.length>50) room.chatMessages.shift();
     io.to(currentRoom).emit('chat_msg',message);
+  });
+
+  socket.on('boss_damage',({damage})=>{
+    if(!currentRoom||!rooms[currentRoom]) return;
+    const room=rooms[currentRoom];
+    if(room.boss&&room.boss.hp>0){
+      room.boss.hp=Math.max(0,room.boss.hp-damage);
+      io.to(currentRoom).emit('boss_hp',{hp:room.boss.hp,maxHp:room.boss.maxHp});
+      if(room.boss.hp<=0){
+        io.to(currentRoom).emit('boss_defeated');
+        io.to(currentRoom).emit('sound','boss_death');
+      }
+    }
   });
 
   socket.on('input',({dx,dy,action,boost,dir,lx,ly,yaw})=>{
@@ -495,7 +592,7 @@ io.on('connection',socket=>{
         let nearest=null,minD=Infinity;
         room.items.forEach(item=>{
           if(!item.collected&&item.carriedBy===null){
-            const d=dist(player,item);if(d<2.0&&d<minD){minD=d;nearest=item;}
+            const d=dist(player.x,player.y,item.x,item.y);if(d<2.0&&d<minD){minD=d;nearest=item;}
           }
         });
         if(nearest){nearest.carriedBy=playerId;player.carrying=nearest.id;io.to(currentRoom).emit('sound','pickup');}
@@ -526,4 +623,4 @@ io.on('connection',socket=>{
 });
 
 const PORT=process.env.PORT||3000;
-server.listen(PORT,()=>console.log(`HAUNT v17 running on port ${PORT}`));
+server.listen(PORT,()=>console.log(`HAUNT v2.0 Party Edition on ${PORT}`));
