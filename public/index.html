@@ -334,19 +334,27 @@ button.primary:hover {
   border: 2px solid var(--border);
 }
 .player-slot {
-  background: var(--surface-light);
-  border: 2px solid var(--border);
-  padding: 1rem;
+  background: rgba(255,255,255,0.05);
+  border: 2px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 1.2rem;
   text-align: center;
-  min-height: 100px;
+  min-height: 110px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 0.5rem;
+  font-family: 'Rajdhani', sans-serif;
+  transition: all 0.3s ease;
 }
-.player-slot.you { border-color: var(--accent); }
-.player-emoji { font-size: 2.5rem; }
-.player-name { font-size: 0.9rem; }
+.player-slot:hover { transform: translateY(-3px); box-shadow: var(--glow-cyan); }
+.player-slot.you {
+  border-color: var(--accent-cyan);
+  background: linear-gradient(135deg, rgba(0,255,170,0.1), rgba(255,0,255,0.1));
+  box-shadow: var(--glow-cyan);
+}
+.player-emoji { font-size: 2.8rem; }
+.player-name { font-size: 1rem; font-weight: 600; }
 
 .animal-picker {
   display: flex;
@@ -894,31 +902,33 @@ input[type="text"]:focus {
 </div>
 
 <!-- LOBBY -->
-<div id="lobbyScreen" class="screen hidden">
-  <div class="lobby-header">
-    <div class="room-code" id="roomCodeDisplay"></div>
-  </div>
-  
-  <div class="xp-display">
-    <div class="xp-level">Niveau <span id="playerLevelLobby">1</span></div>
-    <div class="xp-bar-container">
-      <div class="xp-bar-fill" id="xpBarLobby" style="width:0%"></div>
-      <div class="xp-text" id="xpTextLobby">0 / 200 XP</div>
+<div id="lobbyScreen" class="screen hidden" style="background:var(--bg);">
+  <canvas id="lobbyBg3d2" style="position:absolute;inset:0;z-index:1;"></canvas>
+  <div style="position:relative;z-index:5;width:100%;max-width:900px;padding:2rem;">
+    <div style="text-align:center;margin-bottom:2rem;">
+      <div class="aaa-logo" style="font-size:2rem;margin-bottom:0.5rem;">SALLE D'ATTENTE</div>
+      <div style="font-family:'Rajdhani',sans-serif;color:var(--text-dim);font-size:1rem;letter-spacing:2px;">CODE DE LA PARTIE</div>
+      <div id="roomCodeDisplay" style="font-family:'Rajdhani',sans-serif;font-size:3.5rem;font-weight:700;letter-spacing:8px;background:linear-gradient(135deg,var(--accent-cyan),var(--accent-magenta));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;text-shadow:var(--glow-cyan);"></div>
+      <div style="font-family:'Rajdhani',sans-serif;color:var(--text-dim);font-size:0.9rem;margin-top:0.5rem;">Partage ce code avec tes potes 🎮</div>
+    </div>
+
+    <div class="aaa-glass" style="margin-bottom:1.5rem;">
+      <div class="aaa-ptitle">Joueurs</div>
+      <div class="players-grid" id="playersGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:1rem;"></div>
+    </div>
+
+    <div class="aaa-playrow">
+      <button class="aaa-secbtn" onclick="leaveLobby()">Quitter</button>
+      <button class="aaa-playbtn" id="startBtn" onclick="startGame()" style="display:none;">▶ Lancer</button>
     </div>
   </div>
-
-  <div class="trail-picker">
-    <h3>🎨 COSMÉTIQUE — TRAINÉE</h3>
-    <div class="trail-options" id="trailOptions"></div>
-  </div>
-
-  <div class="animal-picker" id="animalPicker"></div>
-  
-  <div class="players-grid" id="playersGrid"></div>
-  
-  <div class="lobby-actions">
-    <button class="primary" id="startBtn" onclick="startGame()" style="display:none;">LANCER LA PARTIE</button>
-    <button onclick="leaveLobby()">QUITTER</button>
+  <!-- Hidden legacy elements (kept for JS compat) -->
+  <div style="display:none;">
+    <span id="playerLevelLobby">1</span>
+    <div id="xpBarLobby"></div>
+    <div id="xpTextLobby"></div>
+    <div id="trailOptions"></div>
+    <div id="animalPicker"></div>
   </div>
 </div>
 
@@ -1021,7 +1031,7 @@ input[type="text"]:focus {
 <script>
 const socket=io();
 const TILE=2, WALL_H=3.5, EYE_H=1.72, PLAYER_R=0.44;
-const STAM_MAX=120, STAM_DRAIN=2, STAM_REGEN=0.667;
+const STAM_MAX=120, STAM_DRAIN=0.5, STAM_REGEN=0.4;
 const SPAWN_X=1.5, SPAWN_Y=1.5, SPAWN_SAFE_R=3.5;
 
 const animals=[
@@ -2268,10 +2278,10 @@ function updateMovement(dt){
   if(keys['d']) inputX+=1;
   const moving=inputX!==0||inputZ!==0;
   
-  // Speed
-  const walking=!keys['shift']||stamina<=0;
-  const targetSpd=walking?5.5:7.5; // sprint moins extrême
-  const acc=22, drag=18;
+  // Speed (en unités monde/sec — TILE=2, donc /2 pour tiles/sec)
+  const wantSprint=keys['shift']&&stamina>0;
+  const targetSpd=wantSprint?14:8.5;   // 4.25 / 7 tiles/sec
+  const acc=45, drag=12;               // accél snappy, arrêt fluide
   
   if(moving){
     const angle=yaw+Math.atan2(inputX,inputZ);
@@ -2286,7 +2296,7 @@ function updateMovement(dt){
   if(Math.abs(velZ)<0.01) velZ=0;
   
   const speed=Math.sqrt(velX*velX+velZ*velZ);
-  const sprinting=speed>4.5;
+  const sprinting=speed>10;
   
   // Collision
   const wx=(camera.position.x+velX*dt)/TILE;
