@@ -12,7 +12,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 const rooms = {};
 const MAP_W=28, MAP_H=20;
 const SPAWN_X=1.5, SPAWN_Y=1.5, SPAWN_SAFE_R=3.5;
-const MAX_LIVES=3, STAMINA_MAX=120, STAMINA_DRAIN=2, STAMINA_REGEN=0.667;
+const MAX_LIVES=3, STAMINA_MAX=120, STAMINA_DRAIN=0.5, STAMINA_REGEN=0.4;
 const MONSTER_HIT_R=0.55;
 const SEASON_NAMES=['winter','spring','summer','autumn'];
 const RUSH_INTERVAL=90*30, RUSH_DURATION=30*30;
