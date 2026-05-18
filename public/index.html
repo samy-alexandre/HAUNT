@@ -756,7 +756,7 @@ let spectating=false, spectateIdx=0;
 let bobT=0, shakeT=0, shakeAmt=0;
 let stepTimer=0, stepSide=0;
 let particles=[];
-let actx, musMaster, sfxMaster;
+let actx, musMaster, sfxMaster, musicInterval;
 let prevItemIds=new Set(), comboTimer=0, killedTimer=0;
 let rushActive=false, cursedActive=false;
 let trailParticles=[];
@@ -1634,8 +1634,8 @@ function updateMovement(dt){
   
   // Speed
   const walking=!keys['shift']||stamina<=0;
-  const targetSpd=walking?3.2:6.5;
-  const acc=12, drag=22;
+  const targetSpd=walking?5.5:9.0;
+  const acc=22, drag=18;
   
   if(moving){
     const angle=yaw+Math.atan2(inputX,inputZ);
@@ -1953,13 +1953,14 @@ socket.on('sound',name=>playSound(name));
 
 function playMusic(){
   if(!actx) return;
+  if(musicInterval) clearInterval(musicInterval);
   const s=seasons[season]||seasons.autumn;
   const notes={winter:[330,370,440,494],spring:[392,440,494,523],summer:[440,494,554,587],autumn:[294,330,370,392]};
   const chords={winter:[[330,392,494]],spring:[[392,494,587]],summer:[[440,554,659]],autumn:[[294,370,440]]};
   const tempo={winter:600,spring:500,summer:450,autumn:550};
   const n=notes[season], c=chords[season], bpm=tempo[season];
   let idx=0;
-  setInterval(()=>{
+  musicInterval=setInterval(()=>{
     if(paused) return;
     const osc=actx.createOscillator(), gain=actx.createGain();
     osc.type='sine'; osc.frequency.value=n[idx%n.length];
