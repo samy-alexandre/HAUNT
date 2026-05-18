@@ -762,8 +762,14 @@ let trailParticles=[];
 
 // SCREENS
 function showScreen(id){
-  ['menuScreen','createRoomScreen','joinRoomScreen','lobbyScreen','pauseScreen','endScreen'].forEach(s=>document.getElementById(s).classList.add('hidden'));
-  document.getElementById(id).classList.remove('hidden');
+  ['menuScreen','createRoomScreen','joinRoomScreen','lobbyScreen','pauseScreen','endScreen'].forEach(s=>{
+    const el=document.getElementById(s);
+    if(el) el.classList.add('hidden');
+  });
+  if(id){
+    const el=document.getElementById(id);
+    if(el) el.classList.remove('hidden');
+  }
 }
 function showCreateRoom(){showScreen('createRoomScreen');}
 function showJoinRoom(){showScreen('joinRoomScreen');}
