@@ -1424,7 +1424,7 @@ socket.on('game_started',()=>{
   startPointerLock();
   velX=0;velZ=0;stamina=STAM_MAX;paused=false;spectating=false;
   yaw=0;pitch=0;
-  requestAnimationFrame(animate);
+  startLoop();
 });
 
 socket.on('level_start',({level,totalItems,season:s,isBossLevel})=>{
@@ -1520,7 +1520,13 @@ function showUnlockNotification(){
 }
 
 socket.on('back_to_lobby',()=>{
+  stopLoop();                    // kill game loop (no orphan RAF)
   cleanupScene();
+  paused=false;
+  velX=0;velZ=0;stamina=STAM_MAX;
+  spectating=false;
+  _accum=0;
+  window._lastStateT=0; window._netLatency=0;
   showScreen('lobbyScreen');
   stopPointerLock();
   updateXPDisplay();
@@ -1530,6 +1536,13 @@ socket.on('back_to_lobby',()=>{
 });
 
 socket.on('state',state=>{
+  // Latency proxy: time between state packets (server ticks at 30Hz = ~33ms ideal)
+  const nowT=performance.now();
+  if(window._lastStateT){
+    const delta=nowT-window._lastStateT;
+    window._netLatency=Math.round(window._netLatency?window._netLatency*0.8+delta*0.2:delta);
+  }
+  window._lastStateT=nowT;
   gameState=state;
   const me=state.players[myId];
   if(me){
@@ -1642,6 +1655,8 @@ function nextLevel(){
   socket.emit('next_level');
   showScreen('');
   paused=false;
+  _accum=0;
+  startLoop();
   startPointerLock();
 }
 
@@ -1655,6 +1670,8 @@ function quitToLobby(){
 
 function resumeGame(){
   paused=false;
+  _accum=0;
+  _lastTime=performance.now();
   showScreen('');
   startPointerLock();
 }
@@ -2216,6 +2233,12 @@ document.addEventListener('mousemove',e=>{
 document.addEventListener('keydown',e=>{
   if(document.activeElement.tagName==='INPUT') return;
   keys[e.key.toLowerCase()]=true;
+  if(e.key==='F3'){
+    e.preventDefault();
+    debugMode=!debugMode;
+    const el=document.getElementById('debugHUD');
+    if(!debugMode&&el) el.remove();
+  }
   if(e.key==='Escape'&&!paused){
     paused=true;
     stopPointerLock();
@@ -2278,10 +2301,12 @@ function updateMovement(dt){
   if(keys['d']) inputX+=1;
   const moving=inputX!==0||inputZ!==0;
   
-  // Speed (en unités monde/sec — TILE=2, donc /2 pour tiles/sec)
+  // Speed — SHARED DETERMINISTIC CONSTANTS (must match server)
+  // WALK_SPEED=4.25 tiles/s, SPRINT_MULT=1.65 → world units = tiles*TILE
+  const C_WALK=4.25*TILE, C_SPRINT=4.25*1.65*TILE; // 8.5 / 14.02 world u/s
   const wantSprint=keys['shift']&&stamina>0;
-  const targetSpd=wantSprint?14:8.5;   // 4.25 / 7 tiles/sec
-  const acc=45, drag=12;               // accél snappy, arrêt fluide
+  const targetSpd=wantSprint?C_SPRINT:C_WALK;
+  const acc=45, drag=12;               // snappy accel, smooth stop
   
   if(moving){
     const angle=yaw+Math.atan2(inputX,inputZ);
@@ -2296,7 +2321,7 @@ function updateMovement(dt){
   if(Math.abs(velZ)<0.01) velZ=0;
   
   const speed=Math.sqrt(velX*velX+velZ*velZ);
-  const sprinting=speed>10;
+  const sprinting=speed>C_WALK+1;
   
   // Collision
   const wx=(camera.position.x+velX*dt)/TILE;
@@ -2618,15 +2643,88 @@ function playMusic(){
   },bpm);
 }
 
-// MAIN LOOP
-function animate(){
-  if(!paused) requestAnimationFrame(animate);
-  const dt=1/60;
-  updateMovement(dt);
-  updateObjects(dt);
-  sendNet();
-  drawMinimap();
+// MAIN LOOP — FIXED TIMESTEP ACCUMULATOR (deterministic, frame-rate independent)
+const FIXED_DT=1/30;          // simulation step matches server TICK_RATE
+const MAX_ACCUM=0.25;          // clamp spiral-of-death
+let _accum=0, _lastTime=0, _rafId=0, _loopRunning=false;
+let _fpsFrames=0, _fpsLast=0, _fpsAvg=0, _fpsInstant=0, _frameMs=0;
+let debugMode=false;
+
+function startLoop(){
+  if(_loopRunning) return;       // ANTI MULTI-RAF GUARD
+  _loopRunning=true;
+  _lastTime=performance.now();
+  _accum=0;
+  _rafId=requestAnimationFrame(animate);
+}
+function stopLoop(){
+  _loopRunning=false;
+  if(_rafId) cancelAnimationFrame(_rafId);
+  _rafId=0;
+}
+
+function animate(now){
+  if(!_loopRunning) return;
+  _rafId=requestAnimationFrame(animate);
+
+  now=now||performance.now();
+  const frameStart=now;
+  let frameTime=(now-_lastTime)/1000;
+  _lastTime=now;
+  if(frameTime>MAX_ACCUM) frameTime=MAX_ACCUM;  // clamp
+  _accum+=frameTime;
+
+  // Fixed-step simulation: same input → same outcome regardless of FPS
+  let steps=0;
+  while(_accum>=FIXED_DT && steps<8){
+    if(!paused){
+      updateMovement(FIXED_DT);
+      updateObjects(FIXED_DT);
+    }
+    _accum-=FIXED_DT;
+    steps++;
+  }
+
+  if(!paused){
+    sendNet();
+    drawMinimap();
+  }
   if(renderer&&scene&&camera) renderer.render(scene,camera);
+
+  // FPS / debug metrics
+  _fpsFrames++;
+  if(now-_fpsLast>=500){
+    _fpsInstant=Math.round(_fpsFrames*1000/(now-_fpsLast));
+    _fpsAvg=_fpsAvg?Math.round(_fpsAvg*0.7+_fpsInstant*0.3):_fpsInstant;
+    _fpsFrames=0; _fpsLast=now;
+  }
+  _frameMs=performance.now()-frameStart;
+  if(debugMode) updateDebugHUD();
+}
+
+function updateDebugHUD(){
+  let el=document.getElementById('debugHUD');
+  if(!el){
+    el=document.createElement('div');
+    el.id='debugHUD';
+    el.style.cssText='position:fixed;top:8px;left:8px;z-index:9999;background:rgba(0,0,0,0.85);color:#0f8;font-family:monospace;font-size:12px;padding:10px 14px;border:1px solid #0f8;border-radius:6px;line-height:1.6;pointer-events:none;white-space:pre;';
+    document.body.appendChild(el);
+  }
+  const gs=gameState||{};
+  const ghosts=(gs.monsters||[]);
+  const stateNames=['IDLE','PATROL','CHASE','SEARCH','RESET'];
+  const stateCounts=[0,0,0,0,0];
+  ghosts.forEach(m=>{if(m.state!==undefined)stateCounts[m.state]++;});
+  const lat=window._netLatency||0;
+  el.textContent=
+`HAUNT DEBUG (F3)
+FPS  inst:${_fpsInstant}  avg:${_fpsAvg}
+frame:${_frameMs.toFixed(1)}ms
+entities: ghosts=${ghosts.length} items=${(gs.items||[]).length} players=${Object.keys(gs.players||{}).length}
+ghost AI: ${stateNames.map((n,i)=>n+':'+stateCounts[i]).join('  ')}
+net latency: ${lat}ms
+particles: ${particles.length}
+accum: ${_accum.toFixed(3)}s`;
 }
 
 window.addEventListener('resize',()=>{
