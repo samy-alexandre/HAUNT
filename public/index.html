@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HAUNT — Party Edition</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #0a0a0f;
@@ -16,6 +17,10 @@
   --text: #e8e8f0;
   --text-dim: #9090a0;
   --border: #2a2a38;
+  --accent-cyan: #00ffaa;
+  --accent-magenta: #ff00ff;
+  --bg-glass: rgba(22, 22, 31, 0.7);
+  --glow-cyan: 0 0 20px rgba(0, 255, 170, 0.5);
 }
 
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -26,6 +31,230 @@ body {
   overflow: hidden;
   user-select: none;
 }
+
+/* ===== AAA LOBBY STYLES ===== */
+#menuScreen {
+  background: var(--bg) !important;
+  padding: 0 !important;
+  overflow: hidden;
+}
+#lobbyBg3d {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+#menuParticles {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+.mp-particle {
+  position: absolute;
+  width: 4px; height: 4px;
+  background: var(--accent-cyan);
+  border-radius: 50%;
+  opacity: 0.3;
+  box-shadow: 0 0 10px var(--accent-cyan);
+  animation: mpFloat linear infinite;
+}
+@keyframes mpFloat {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  10%,90% { opacity: 0.4; }
+  100% { transform: translateY(-100vh) translateX(40px); opacity: 0; }
+}
+.aaa-topbar {
+  position: relative; z-index: 10;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1.5rem 3rem;
+  background: linear-gradient(180deg, rgba(10,10,15,0.9) 0%, transparent 100%);
+  animation: aaaSlideDown 0.6s ease-out 0.2s backwards;
+}
+@keyframes aaaSlideDown { from { transform: translateY(-100%); } }
+.aaa-logo {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 3rem; font-weight: 700; letter-spacing: 10px;
+  background: linear-gradient(135deg, var(--accent-cyan) 0%, var(--accent-magenta) 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: var(--glow-cyan);
+}
+.aaa-level {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.2rem; color: var(--text-dim);
+  display: flex; align-items: center; gap: 0.6rem;
+}
+.aaa-level-badge {
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+  color: #000; padding: 0.3rem 1rem; border-radius: 20px;
+  font-weight: 700; box-shadow: var(--glow-cyan);
+}
+.aaa-content {
+  position: relative; z-index: 5; flex: 1;
+  display: grid; grid-template-columns: 320px 1fr 320px;
+  gap: 2rem; padding: 1rem 3rem; align-items: center;
+  max-width: 1800px; margin: 0 auto; width: 100%;
+}
+.aaa-glass {
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px; padding: 1.8rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+.aaa-left { animation: aaaSlideLeft 0.6s ease-out 0.4s backwards; }
+@keyframes aaaSlideLeft { from { transform: translateX(-100%); opacity:0; } }
+.aaa-right { animation: aaaSlideRight 0.6s ease-out 0.4s backwards; }
+@keyframes aaaSlideRight { from { transform: translateX(100%); opacity:0; } }
+.aaa-ptitle {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.3rem; font-weight: 700; margin-bottom: 1.2rem;
+  color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 3px;
+}
+.aaa-modebtn {
+  width: 100%; padding: 0.9rem 1.3rem; margin-bottom: 0.8rem;
+  background: rgba(255,255,255,0.05);
+  border: 2px solid rgba(255,255,255,0.1); border-radius: 8px;
+  color: var(--text); font-family: 'Rajdhani', sans-serif;
+  font-size: 1.05rem; font-weight: 600; cursor: pointer;
+  transition: all 0.3s ease; text-align: left;
+  display: flex; align-items: center; gap: 0.8rem;
+}
+.aaa-modebtn:hover {
+  background: rgba(0,255,170,0.1); border-color: var(--accent-cyan);
+  transform: translateX(8px); box-shadow: var(--glow-cyan);
+}
+.aaa-modebtn.active {
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+  border-color: transparent; color: #000; box-shadow: var(--glow-cyan);
+}
+.aaa-center {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  animation: aaaScaleIn 0.8s ease-out 0.6s backwards;
+}
+@keyframes aaaScaleIn { from { transform: scale(0.8); opacity:0; } }
+#charCanvas {
+  width: 100%; height: 480px;
+  filter: drop-shadow(0 20px 60px rgba(0,255,170,0.3));
+}
+.aaa-charname {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.8rem; font-weight: 700; margin-top: 0.5rem;
+  background: linear-gradient(135deg, var(--accent-cyan), white);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.aaa-stat {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.9rem; margin-bottom: 0.8rem;
+  background: rgba(255,255,255,0.05); border-radius: 8px;
+  border-left: 3px solid var(--accent-cyan);
+  transition: all 0.3s ease;
+  font-family: 'Rajdhani', sans-serif;
+}
+.aaa-stat:hover { background: rgba(0,255,170,0.1); transform: translateX(-5px); }
+.aaa-stat-val { font-size: 1.6rem; font-weight: 700; color: var(--accent-cyan); }
+.aaa-bottom {
+  position: relative; z-index: 10;
+  padding: 1rem 3rem 2rem;
+  background: linear-gradient(0deg, rgba(10,10,15,0.95) 0%, transparent 100%);
+  animation: aaaSlideUp 0.6s ease-out 0.8s backwards;
+}
+@keyframes aaaSlideUp { from { transform: translateY(100%); } }
+.aaa-customize {
+  background: var(--bg-glass); backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.1); border-radius: 16px;
+  padding: 1.2rem 1.8rem; margin-bottom: 1rem;
+  display: flex; align-items: center; gap: 1.5rem;
+}
+.aaa-ctitle {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.9rem; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 2px;
+  min-width: 90px;
+}
+.aaa-cgrid { display: flex; gap: 0.7rem; flex-wrap: wrap; flex: 1; }
+.aaa-cbtn {
+  background: rgba(255,255,255,0.05);
+  border: 2px solid rgba(255,255,255,0.1); border-radius: 12px;
+  padding: 0.6rem 1.2rem; color: var(--text);
+  font-family: 'Rajdhani', sans-serif; font-size: 0.95rem; font-weight: 600;
+  cursor: pointer; transition: all 0.3s ease;
+  display: flex; align-items: center; gap: 0.4rem; position: relative;
+}
+.aaa-cbtn:hover {
+  transform: scale(1.05) rotate(-2deg);
+  border-color: var(--accent-cyan); box-shadow: var(--glow-cyan);
+}
+.aaa-cbtn.selected {
+  background: linear-gradient(135deg, rgba(0,255,170,0.2), rgba(255,0,255,0.2));
+  border-color: var(--accent-cyan); box-shadow: var(--glow-cyan);
+}
+.aaa-cbtn.locked { opacity: 0.4; cursor: not-allowed; }
+.aaa-cbtn.locked::after {
+  content: '🔒'; position: absolute; top: -8px; right: -8px; font-size: 0.75rem;
+}
+.aaa-playrow {
+  display: flex; justify-content: center; gap: 1rem; align-items: center;
+}
+.aaa-playbtn {
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+  border: none; border-radius: 50px; padding: 1.1rem 4rem;
+  font-family: 'Rajdhani', sans-serif; font-size: 1.7rem; font-weight: 700;
+  color: #000; cursor: pointer; letter-spacing: 4px; text-transform: uppercase;
+  box-shadow: var(--glow-cyan); transition: all 0.3s ease;
+  position: relative; overflow: hidden;
+  animation: aaaPulse 2s ease-in-out infinite;
+}
+@keyframes aaaPulse {
+  0%,100% { box-shadow: var(--glow-cyan); }
+  50% { box-shadow: 0 0 40px rgba(0,255,170,0.8); }
+}
+.aaa-playbtn::before {
+  content: ''; position: absolute; top: 50%; left: 50%;
+  width: 0; height: 0; border-radius: 50%;
+  background: rgba(255,255,255,0.3); transform: translate(-50%,-50%);
+  transition: width 0.6s, height 0.6s;
+}
+.aaa-playbtn:hover::before { width: 350px; height: 350px; }
+.aaa-playbtn:hover { transform: scale(1.05); box-shadow: 0 0 60px rgba(0,255,170,0.9); }
+.aaa-playbtn:active { transform: scale(0.98); }
+.aaa-secbtn {
+  background: rgba(255,255,255,0.1);
+  border: 2px solid var(--accent-cyan); border-radius: 50px;
+  padding: 1.1rem 2.5rem; font-family: 'Rajdhani', sans-serif;
+  font-size: 1.2rem; font-weight: 600; color: var(--text);
+  cursor: pointer; letter-spacing: 2px; text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+.aaa-secbtn:hover {
+  background: rgba(0,255,170,0.1); transform: translateY(-2px);
+  box-shadow: var(--glow-cyan);
+}
+.aaa-modal {
+  position: fixed; inset: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
+}
+.aaa-modal-box {
+  background: var(--bg-glass); backdrop-filter: blur(20px);
+  border: 1px solid rgba(0,255,170,0.3); border-radius: 16px;
+  padding: 2.5rem; min-width: 400px; text-align: center;
+  box-shadow: var(--glow-cyan);
+  animation: aaaScaleIn 0.3s ease-out;
+}
+.aaa-modal-box h2 {
+  font-family: 'Rajdhani', sans-serif; font-size: 2rem;
+  color: var(--accent-cyan); margin-bottom: 1.5rem; letter-spacing: 2px;
+}
+.aaa-input {
+  width: 100%; padding: 1rem; margin-bottom: 1rem;
+  background: rgba(255,255,255,0.05);
+  border: 2px solid rgba(255,255,255,0.1); border-radius: 8px;
+  color: var(--text); font-family: 'Rajdhani', sans-serif;
+  font-size: 1.1rem; text-align: center;
+}
+.aaa-input:focus { outline: none; border-color: var(--accent-cyan); }
 
 #canvas3d { display:block; width:100%; height:100vh; }
 .screen {
@@ -558,32 +787,109 @@ input[type="text"]:focus {
 
 <!-- MENU -->
 <div id="menuScreen" class="screen">
-  <div class="logo">HAUNT</div>
-  <div class="subtitle">PARTY EDITION</div>
-  <div class="menu-buttons">
-    <button class="primary" onclick="showCreateRoom()">CRÉER UNE PARTIE</button>
-    <button onclick="showJoinRoom()">REJOINDRE</button>
+  <canvas id="lobbyBg3d"></canvas>
+  <div id="menuParticles"></div>
+
+  <div class="aaa-topbar">
+    <div class="aaa-logo">HAUNT</div>
+    <div class="aaa-level">
+      <span>NIVEAU</span>
+      <span class="aaa-level-badge" id="aaaLevelBadge">1</span>
+    </div>
+  </div>
+
+  <div class="aaa-content">
+    <div class="aaa-glass aaa-left">
+      <div class="aaa-ptitle">Modes</div>
+      <button class="aaa-modebtn active" onclick="aaaSelectMode(this,'coop')">
+        <span style="font-size:1.4rem;">👥</span><span>Co-op</span>
+      </button>
+      <button class="aaa-modebtn" onclick="aaaSelectMode(this,'solo')">
+        <span style="font-size:1.4rem;">🎮</span><span>Solo</span>
+      </button>
+      <div class="aaa-ptitle" style="margin-top:2rem;">Comment Jouer</div>
+      <button class="aaa-modebtn" onclick="showHowToPlay()">
+        <span style="font-size:1.4rem;">📖</span><span>Règles</span>
+      </button>
+    </div>
+
+    <div class="aaa-center">
+      <canvas id="charCanvas"></canvas>
+      <div class="aaa-charname" id="aaaCharName">TON PERSO</div>
+    </div>
+
+    <div class="aaa-glass aaa-right">
+      <div class="aaa-ptitle">Stats</div>
+      <div class="aaa-stat">
+        <div><span style="font-size:1.3rem;">🏆</span> <span style="margin-left:0.5rem;">Niveau</span></div>
+        <div class="aaa-stat-val" id="aaaStatLevel">1</div>
+      </div>
+      <div class="aaa-stat">
+        <div><span style="font-size:1.3rem;">⭐</span> <span style="margin-left:0.5rem;">XP</span></div>
+        <div class="aaa-stat-val" id="aaaStatXP">0</div>
+      </div>
+      <div class="aaa-stat">
+        <div><span style="font-size:1.3rem;">🎮</span> <span style="margin-left:0.5rem;">Parties</span></div>
+        <div class="aaa-stat-val" id="aaaStatGames">0</div>
+      </div>
+      <div class="aaa-stat">
+        <div><span style="font-size:1.3rem;">📦</span> <span style="margin-left:0.5rem;">Colis</span></div>
+        <div class="aaa-stat-val" id="aaaStatItems">0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="aaa-bottom">
+    <div class="aaa-customize">
+      <div class="aaa-ctitle">Animal</div>
+      <div class="aaa-cgrid" id="aaaAnimalGrid"></div>
+    </div>
+    <div class="aaa-customize">
+      <div class="aaa-ctitle">Trainée</div>
+      <div class="aaa-cgrid" id="aaaTrailGrid"></div>
+    </div>
+    <div class="aaa-playrow">
+      <button class="aaa-secbtn" onclick="showCreateRoom()">Créer Partie</button>
+      <button class="aaa-playbtn" onclick="showJoinRoom()">▶ Jouer</button>
+      <button class="aaa-secbtn" onclick="showJoinRoom()">Rejoindre</button>
+    </div>
+  </div>
+</div>
+
+<!-- HOW TO PLAY MODAL -->
+<div id="howToPlayModal" class="aaa-modal hidden">
+  <div class="aaa-modal-box" style="max-width:600px; text-align:left;">
+    <h2 style="text-align:center;">COMMENT JOUER</h2>
+    <div style="font-family:'Rajdhani',sans-serif; line-height:1.8;">
+      <p style="margin-bottom:1rem;"><b style="color:var(--accent-cyan);">🎯 OBJECTIF</b><br>Livrez tous les colis à la sortie 🚪 sans vous faire attraper par les fantômes.</p>
+      <p style="margin-bottom:1rem;"><b style="color:var(--accent-cyan);">🎮 CONTRÔLES</b><br>WASD/ZQSD — Se déplacer<br>SHIFT — Sprinter (jauge stamina)<br>E / ESPACE — Ramasser / Poser colis<br>SOURIS — Regarder<br>ESC — Pause</p>
+      <p style="margin-bottom:1rem;"><b style="color:var(--accent-cyan);">📦 COLIS</b><br>📦 Normal — 100 pts<br>💰 Doré — 300 pts<br>💀 Maudit — 0 pts, fantômes +60% vitesse</p>
+      <p style="margin-bottom:1rem;"><b style="color:var(--accent-cyan);">👻 FANTÔMES</b><br>🟠 Rover — Patrouille<br>🔴 Hunter — Te poursuit<br>🟣 Twin — Attaque en flanc</p>
+      <p style="margin-bottom:1rem;"><b style="color:var(--accent-cyan);">🔥 COMBO ×2</b><br>3 livraisons d'affilée sans mourir = points doublés</p>
+      <p><b style="color:var(--accent-cyan);">⚠️ RUSH HOUR</b><br>Toutes les 90s : tous les colis réapparaissent pendant 30s</p>
+    </div>
+    <button class="aaa-secbtn" style="margin-top:1.5rem; width:100%;" onclick="hideHowToPlay()">Compris !</button>
   </div>
 </div>
 
 <!-- CREATE ROOM -->
 <div id="createRoomScreen" class="screen hidden">
-  <h2 style="margin-bottom:2rem; font-size:2rem;">Créer une partie</h2>
-  <div style="display:flex; flex-direction:column; gap:1rem;">
-    <input type="text" id="createName" placeholder="Ton pseudo" maxlength="12">
-    <button class="primary" onclick="createRoom()">C'EST PARTI</button>
-    <button onclick="backToMenu()">Retour</button>
+  <div class="aaa-modal-box">
+    <h2>CRÉER UNE PARTIE</h2>
+    <input type="text" id="createName" class="aaa-input" placeholder="Ton pseudo" maxlength="12">
+    <button class="aaa-playbtn" style="width:100%; margin-bottom:1rem; padding:1rem;" onclick="createRoom()">C'EST PARTI</button>
+    <button class="aaa-secbtn" style="width:100%;" onclick="backToMenu()">Retour</button>
   </div>
 </div>
 
 <!-- JOIN ROOM -->
 <div id="joinRoomScreen" class="screen hidden">
-  <h2 style="margin-bottom:2rem; font-size:2rem;">Rejoindre une partie</h2>
-  <div style="display:flex; flex-direction:column; gap:1rem;">
-    <input type="text" id="joinCode" placeholder="CODE" maxlength="6" style="text-transform:uppercase;">
-    <input type="text" id="joinName" placeholder="Ton pseudo" maxlength="12">
-    <button class="primary" onclick="joinRoom()">REJOINDRE</button>
-    <button onclick="backToMenu()">Retour</button>
+  <div class="aaa-modal-box">
+    <h2>REJOINDRE</h2>
+    <input type="text" id="joinCode" class="aaa-input" placeholder="CODE" maxlength="6" style="text-transform:uppercase; letter-spacing:4px; font-size:1.5rem;">
+    <input type="text" id="joinName" class="aaa-input" placeholder="Ton pseudo" maxlength="12">
+    <button class="aaa-playbtn" style="width:100%; margin-bottom:1rem; padding:1rem;" onclick="joinRoom()">REJOINDRE</button>
+    <button class="aaa-secbtn" style="width:100%;" onclick="backToMenu()">Retour</button>
   </div>
 </div>
 
@@ -774,19 +1080,241 @@ function showScreen(id){
 }
 function showCreateRoom(){showScreen('createRoomScreen');}
 function showJoinRoom(){showScreen('joinRoomScreen');}
-function backToMenu(){showScreen('menuScreen');}
+function backToMenu(){
+  showScreen('menuScreen');
+  if(!lobbyActive){ lobbyActive=true; animateCharacter(); animateLobbyBg(); }
+}
+
+// ============================================================================
+// AAA LOBBY SYSTEM
+// ============================================================================
+let aaaSelectedAnimal=0, aaaSelectedTrail='none', aaaMode='coop';
+let charScene,charCam,charRenderer,charModel,charAnimId;
+let lobbyBgScene,lobbyBgCam,lobbyBgRenderer,lobbyBgAnimId;
+let lobbyActive=false;
+
+function aaaSelectMode(btn,mode){
+  aaaMode=mode;
+  document.querySelectorAll('.aaa-modebtn').forEach(b=>b.classList.remove('active'));
+  if(mode==='coop'||mode==='solo') btn.classList.add('active');
+}
+
+function showHowToPlay(){document.getElementById('howToPlayModal').classList.remove('hidden');}
+function hideHowToPlay(){document.getElementById('howToPlayModal').classList.add('hidden');}
+
+function initAAALobby(){
+  if(lobbyActive) return;
+  lobbyActive=true;
+
+  // Stats from localStorage
+  const pd=playerData;
+  document.getElementById('aaaLevelBadge').textContent=pd.level||1;
+  document.getElementById('aaaStatLevel').textContent=pd.level||1;
+  document.getElementById('aaaStatXP').textContent=pd.xp||0;
+  document.getElementById('aaaStatGames').textContent=pd.gamesPlayed||0;
+  document.getElementById('aaaStatItems').textContent=pd.totalItems||0;
+
+  buildAnimalGrid();
+  buildTrailGrid();
+  createMenuParticles();
+  initLobbyBg3D();
+  initCharacter3D();
+}
+
+function buildAnimalGrid(){
+  const grid=document.getElementById('aaaAnimalGrid');
+  if(!grid) return;
+  grid.innerHTML='';
+  animals.forEach((a,i)=>{
+    const btn=document.createElement('button');
+    btn.className='aaa-cbtn'+(i===aaaSelectedAnimal?' selected':'');
+    btn.innerHTML=`${a.emoji} ${a.name}`;
+    btn.onclick=()=>{
+      aaaSelectedAnimal=i;
+      document.querySelectorAll('#aaaAnimalGrid .aaa-cbtn').forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+      rebuildCharacter();
+    };
+    grid.appendChild(btn);
+  });
+}
+
+function buildTrailGrid(){
+  const grid=document.getElementById('aaaTrailGrid');
+  if(!grid) return;
+  grid.innerHTML='';
+  Object.keys(trails).forEach(key=>{
+    const t=trails[key];
+    const unlocked=(playerData.level||1)>=t.unlockLevel;
+    const btn=document.createElement('button');
+    btn.className='aaa-cbtn'+(aaaSelectedTrail===key?' selected':'')+(unlocked?'':' locked');
+    const icons={none:'🚫',fire:'🔥',ice:'❄️',gold:'💰',rainbow:'🌈'};
+    btn.innerHTML=`${icons[key]||''} ${t.name}`;
+    if(unlocked){
+      btn.onclick=()=>{
+        aaaSelectedTrail=key;
+        playerData.selectedTrail=key;
+        savePlayerData();
+        document.querySelectorAll('#aaaTrailGrid .aaa-cbtn').forEach(b=>b.classList.remove('selected'));
+        btn.classList.add('selected');
+      };
+    }
+    grid.appendChild(btn);
+  });
+}
+
+function createMenuParticles(){
+  const c=document.getElementById('menuParticles');
+  if(!c) return;
+  c.innerHTML='';
+  for(let i=0;i<40;i++){
+    const p=document.createElement('div');
+    p.className='mp-particle';
+    p.style.left=Math.random()*100+'%';
+    p.style.bottom='-10px';
+    p.style.animationDelay=Math.random()*10+'s';
+    p.style.animationDuration=(8+Math.random()*5)+'s';
+    c.appendChild(p);
+  }
+}
+
+function initLobbyBg3D(){
+  const canvas=document.getElementById('lobbyBg3d');
+  if(!canvas) return;
+  lobbyBgScene=new THREE.Scene();
+  lobbyBgScene.fog=new THREE.Fog(0x0a0a0f,6,28);
+  lobbyBgCam=new THREE.PerspectiveCamera(70,window.innerWidth/window.innerHeight,0.1,100);
+  lobbyBgCam.position.set(0,3,10);
+  lobbyBgCam.lookAt(0,0,0);
+  lobbyBgRenderer=new THREE.WebGLRenderer({canvas,antialias:false});
+  lobbyBgRenderer.setSize(window.innerWidth,window.innerHeight);
+  lobbyBgRenderer.setPixelRatio(Math.min(window.devicePixelRatio,1.5));
+  lobbyBgScene.add(new THREE.AmbientLight(0x445566,0.5));
+  const dl=new THREE.DirectionalLight(0x00ffaa,0.4);
+  dl.position.set(5,8,5);
+  lobbyBgScene.add(dl);
+  // Floating maze blocks
+  const wallMat=new THREE.MeshStandardMaterial({color:0x2a3a4a,transparent:true,opacity:0.5,roughness:0.8});
+  for(let i=0;i<25;i++){
+    const w=new THREE.Mesh(new THREE.BoxGeometry(2,3+Math.random()*2,2),wallMat);
+    w.position.set((Math.random()-0.5)*45,Math.random()*3,(Math.random()-0.5)*45-5);
+    w.userData.floatOffset=Math.random()*Math.PI*2;
+    lobbyBgScene.add(w);
+  }
+  // Floating ghost orbs
+  for(let i=0;i<8;i++){
+    const ghost=new THREE.Mesh(
+      new THREE.SphereGeometry(0.5,12,12),
+      new THREE.MeshStandardMaterial({color:0x8800ff,emissive:0x4400aa,emissiveIntensity:0.5,transparent:true,opacity:0.4})
+    );
+    ghost.position.set((Math.random()-0.5)*40,1+Math.random()*4,(Math.random()-0.5)*30-5);
+    ghost.userData.floatOffset=Math.random()*Math.PI*2;
+    ghost.userData.isGhost=true;
+    lobbyBgScene.add(ghost);
+  }
+  animateLobbyBg();
+}
+
+let lobbyBgT=0;
+function animateLobbyBg(){
+  if(!lobbyActive) return;
+  lobbyBgAnimId=requestAnimationFrame(animateLobbyBg);
+  lobbyBgT+=0.008;
+  lobbyBgCam.position.x=Math.sin(lobbyBgT*0.3)*3;
+  lobbyBgCam.position.y=3+Math.sin(lobbyBgT*0.2)*0.5;
+  lobbyBgCam.lookAt(0,0,-5);
+  lobbyBgScene.children.forEach(ch=>{
+    if(ch.userData.floatOffset!==undefined){
+      ch.position.y+=Math.sin(lobbyBgT*2+ch.userData.floatOffset)*0.005;
+      if(ch.userData.isGhost) ch.rotation.y+=0.01;
+    }
+  });
+  lobbyBgRenderer.render(lobbyBgScene,lobbyBgCam);
+}
+
+function initCharacter3D(){
+  const canvas=document.getElementById('charCanvas');
+  if(!canvas) return;
+  const w=canvas.clientWidth||500, h=canvas.clientHeight||480;
+  charScene=new THREE.Scene();
+  charCam=new THREE.PerspectiveCamera(45,w/h,0.1,100);
+  charCam.position.set(0,1.3,4.2);
+  charCam.lookAt(0,0.9,0);
+  charRenderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
+  charRenderer.setSize(w,h);
+  charRenderer.setPixelRatio(window.devicePixelRatio);
+  // Dramatic lighting
+  const key=new THREE.DirectionalLight(0xffffff,1.2);
+  key.position.set(3,5,4);
+  charScene.add(key);
+  const rim=new THREE.DirectionalLight(0x00ffaa,0.8);
+  rim.position.set(-4,3,-4);
+  charScene.add(rim);
+  const fill=new THREE.DirectionalLight(0xff00ff,0.3);
+  fill.position.set(4,1,-3);
+  charScene.add(fill);
+  charScene.add(new THREE.AmbientLight(0x334455,0.4));
+  rebuildCharacter();
+  animateCharacter();
+}
+
+function rebuildCharacter(){
+  if(!charScene) return;
+  if(charModel) charScene.remove(charModel);
+  const a=animals[aaaSelectedAnimal];
+  charModel=makePlayer(a.color,aaaSelectedAnimal,'');
+  // Remove nameplate sprite in lobby
+  charModel.children=charModel.children.filter(c=>!(c instanceof THREE.Sprite));
+  charModel.scale.set(1.4,1.4,1.4);
+  charModel.position.y=-0.5;
+  charScene.add(charModel);
+  // Platform
+  const plat=new THREE.Mesh(
+    new THREE.CylinderGeometry(1.1,1.3,0.15,32),
+    new THREE.MeshStandardMaterial({color:0x00ffaa,emissive:0x00ffaa,emissiveIntensity:0.3,transparent:true,opacity:0.5})
+  );
+  plat.position.y=-0.6;
+  charModel.add(plat);
+  const ring=new THREE.Mesh(
+    new THREE.TorusGeometry(1.25,0.04,16,80),
+    new THREE.MeshBasicMaterial({color:0x00ffaa,transparent:true,opacity:0.8})
+  );
+  ring.rotation.x=Math.PI/2;
+  ring.position.y=-0.52;
+  charModel.add(ring);
+  document.getElementById('aaaCharName').textContent=a.name.toUpperCase();
+}
+
+let charT=0;
+function animateCharacter(){
+  if(!lobbyActive) return;
+  charAnimId=requestAnimationFrame(animateCharacter);
+  charT+=0.016;
+  if(charModel){
+    charModel.rotation.y+=0.008;
+    const breathe=Math.sin(charT*2)*0.015;
+    if(charModel.userData.head) charModel.userData.head.position.y=1.15+breathe;
+    charModel.position.y=-0.5+Math.sin(charT*1.5)*0.03;
+  }
+  charRenderer.render(charScene,charCam);
+}
+
+function stopAAALobby(){
+  lobbyActive=false;
+  if(charAnimId) cancelAnimationFrame(charAnimId);
+  if(lobbyBgAnimId) cancelAnimationFrame(lobbyBgAnimId);
+}
+
 
 function createRoom(){
   const name=document.getElementById('createName').value.trim()||'Joueur';
-  const animal=Math.floor(Math.random()*animals.length);
-  socket.emit('create_room',{name,color:animals[animal].color,animal});
+  socket.emit('create_room',{name,color:animals[aaaSelectedAnimal].color,animal:aaaSelectedAnimal});
 }
 function joinRoom(){
   const code=document.getElementById('joinCode').value.trim().toUpperCase();
   const name=document.getElementById('joinName').value.trim()||'Joueur';
   if(!code){alert('Entre un code !');return;}
-  const animal=Math.floor(Math.random()*animals.length);
-  socket.emit('join_room',{roomId:code,name,color:animals[animal].color,animal});
+  socket.emit('join_room',{roomId:code,name,color:animals[aaaSelectedAnimal].color,animal:aaaSelectedAnimal});
 }
 
 socket.on('room_created',({roomId:rid,playerId,isHost:host})=>{
@@ -877,6 +1405,7 @@ function startGame(){
 socket.on('map',m=>{map=m;initMinimap();});
 socket.on('game_started',()=>{
   showScreen('');
+  stopAAALobby();
   document.getElementById('topHud').classList.remove('hidden');
   document.getElementById('bottomHud').classList.remove('hidden');
   initThree();
@@ -1395,35 +1924,142 @@ function makeExit(){
 
 function makePlayer(color,animal,name){
   const g=new THREE.Group();
-  const body=new THREE.Mesh(
-    new THREE.BoxGeometry(0.6,1.0,0.4),
-    new THREE.MeshStandardMaterial({color})
-  );
-  body.position.y=0.5;
+  const animalType=animal||0;
+
+  // Rounded body (capsule-like using sphere + cylinder)
+  const bodyMat=new THREE.MeshStandardMaterial({color,roughness:0.6,metalness:0.1});
+  const body=new THREE.Mesh(new THREE.SphereGeometry(0.38,16,16),bodyMat);
+  body.position.y=0.55;
+  body.scale.set(1,1.25,0.9);
   body.castShadow=true;
   g.add(body);
-  const head=new THREE.Mesh(
-    new THREE.BoxGeometry(0.5,0.5,0.5),
-    new THREE.MeshStandardMaterial({color})
+
+  // Belly (lighter shade)
+  const bellyColor=new THREE.Color(color).lerp(new THREE.Color(0xffffff),0.4);
+  const belly=new THREE.Mesh(
+    new THREE.SphereGeometry(0.26,12,12),
+    new THREE.MeshStandardMaterial({color:bellyColor,roughness:0.6})
   );
-  head.position.y=1.25;
+  belly.position.set(0,0.5,0.18);
+  belly.scale.set(1,1.2,0.5);
+  g.add(belly);
+
+  // Head (big and round - cute)
+  const head=new THREE.Mesh(new THREE.SphereGeometry(0.34,20,20),bodyMat);
+  head.position.y=1.15;
   head.castShadow=true;
   g.add(head);
-  const legL=new THREE.Mesh(
-    new THREE.BoxGeometry(0.25,0.6,0.25),
-    new THREE.MeshStandardMaterial({color})
+
+  // Snout/muzzle
+  const muzzle=new THREE.Mesh(
+    new THREE.SphereGeometry(0.16,12,12),
+    new THREE.MeshStandardMaterial({color:bellyColor,roughness:0.6})
   );
-  legL.position.set(-0.15,-0.3,0);
-  g.add(legL);
-  const legR=new THREE.Mesh(
-    new THREE.BoxGeometry(0.25,0.6,0.25),
-    new THREE.MeshStandardMaterial({color})
+  muzzle.position.set(0,1.08,0.26);
+  muzzle.scale.set(1,0.8,0.7);
+  g.add(muzzle);
+
+  // Nose
+  const nose=new THREE.Mesh(
+    new THREE.SphereGeometry(0.05,8,8),
+    new THREE.MeshStandardMaterial({color:0x222222})
   );
-  legR.position.set(0.15,-0.3,0);
-  g.add(legR);
-  const nameplate=makeSprite(animals[animal||0].emoji+' '+name,color,'rgba(0,0,0,0.7)');
+  nose.position.set(0,1.12,0.4);
+  g.add(nose);
+
+  // Eyes (white + pupil)
+  [-0.13,0.13].forEach(ex=>{
+    const eyeW=new THREE.Mesh(
+      new THREE.SphereGeometry(0.08,10,10),
+      new THREE.MeshStandardMaterial({color:0xffffff})
+    );
+    eyeW.position.set(ex,1.22,0.27);
+    g.add(eyeW);
+    const pupil=new THREE.Mesh(
+      new THREE.SphereGeometry(0.045,8,8),
+      new THREE.MeshStandardMaterial({color:0x111111})
+    );
+    pupil.position.set(ex,1.22,0.33);
+    g.add(pupil);
+  });
+
+  // Ears - shape depends on animal
+  const earMat=bodyMat;
+  if(animalType===0||animalType===2){ // Cat / Fox - pointy ears
+    [-0.2,0.2].forEach(ex=>{
+      const ear=new THREE.Mesh(new THREE.ConeGeometry(0.12,0.25,5),earMat);
+      ear.position.set(ex,1.45,0);
+      ear.rotation.z=ex>0?-0.2:0.2;
+      g.add(ear);
+    });
+  } else if(animalType===3){ // Bear - round ears
+    [-0.22,0.22].forEach(ex=>{
+      const ear=new THREE.Mesh(new THREE.SphereGeometry(0.13,10,10),earMat);
+      ear.position.set(ex,1.42,0);
+      g.add(ear);
+    });
+  } else if(animalType===5){ // Rabbit - long ears
+    [-0.13,0.13].forEach(ex=>{
+      const ear=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.07,0.4,8),earMat);
+      ear.position.set(ex,1.6,0);
+      ear.rotation.z=ex>0?-0.15:0.15;
+      g.add(ear);
+    });
+  } else if(animalType===1){ // Monkey - side round ears
+    [-0.32,0.32].forEach(ex=>{
+      const ear=new THREE.Mesh(new THREE.SphereGeometry(0.11,10,10),earMat);
+      ear.position.set(ex,1.15,0);
+      ear.scale.set(0.6,1,1);
+      g.add(ear);
+    });
+  } else { // Frog - eyes on top
+    [-0.16,0.16].forEach(ex=>{
+      const bump=new THREE.Mesh(new THREE.SphereGeometry(0.12,10,10),earMat);
+      bump.position.set(ex,1.38,0.05);
+      g.add(bump);
+    });
+  }
+
+  // Arms (rounded)
+  [-0.42,0.42].forEach(ax=>{
+    const arm=new THREE.Mesh(
+      new THREE.CylinderGeometry(0.1,0.1,0.35,8),
+      bodyMat
+    );
+    arm.position.set(ax,0.55,0);
+    arm.rotation.z=ax>0?-0.3:0.3;
+    g.add(arm);
+  });
+
+  // Legs (rounded stubby)
+  [-0.16,0.16].forEach(lx=>{
+    const leg=new THREE.Mesh(
+      new THREE.CylinderGeometry(0.12,0.12,0.25,8),
+      bodyMat
+    );
+    leg.position.set(lx,0.08,0);
+    g.add(leg);
+    // Feet
+    const foot=new THREE.Mesh(
+      new THREE.SphereGeometry(0.13,10,10),
+      new THREE.MeshStandardMaterial({color:bellyColor,roughness:0.7})
+    );
+    foot.position.set(lx,-0.05,0.05);
+    foot.scale.set(1,0.6,1.3);
+    g.add(foot);
+  });
+
+  // Subtle glow
+  const glow=new THREE.PointLight(color,0.4,3);
+  glow.position.y=0.8;
+  g.add(glow);
+
+  const nameplate=makeSprite(animals[animalType].emoji+' '+name,color,'rgba(0,0,0,0.7)');
   nameplate.position.y=2.0;
   g.add(nameplate);
+
+  g.userData.head=head;
+  g.userData.animal=animalType;
   return g;
 }
 
@@ -1984,10 +2620,29 @@ function animate(){
 }
 
 window.addEventListener('resize',()=>{
-  if(!camera||!renderer) return;
-  camera.aspect=window.innerWidth/window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth,window.innerHeight);
+  if(camera&&renderer){
+    camera.aspect=window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth,window.innerHeight);
+  }
+  if(lobbyBgRenderer&&lobbyBgCam){
+    lobbyBgCam.aspect=window.innerWidth/window.innerHeight;
+    lobbyBgCam.updateProjectionMatrix();
+    lobbyBgRenderer.setSize(window.innerWidth,window.innerHeight);
+  }
+  if(charRenderer&&charCam){
+    const cv=document.getElementById('charCanvas');
+    if(cv){
+      charCam.aspect=cv.clientWidth/cv.clientHeight;
+      charCam.updateProjectionMatrix();
+      charRenderer.setSize(cv.clientWidth,cv.clientHeight);
+    }
+  }
+});
+
+// Initialize AAA lobby on page load
+window.addEventListener('DOMContentLoaded',()=>{
+  setTimeout(initAAALobby,100);
 });
 </script>
 </body>
