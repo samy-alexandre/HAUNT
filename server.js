@@ -20,7 +20,7 @@ const RUSH_INTERVAL=90*30, RUSH_DURATION=30*30;
 const TICK_RATE=30;                 // server simulation Hz (fixed timestep)
 const SIM_DT=1/TICK_RATE;           // fixed delta — never frame-scaled
 const WALK_SPEED=4.25;              // tiles/sec
-const SPRINT_MULT=1.65;             // deterministic sprint multiplier
+const SPRINT_MULT=1.85;             // deterministic sprint multiplier
 const SPRINT_SPEED=WALK_SPEED*SPRINT_MULT;
 // ── AI STATE MACHINE ──
 const AI_STATES={IDLE:0,PATROL:1,CHASE:2,SEARCH:3,RESET:4};
