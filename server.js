@@ -291,32 +291,10 @@ function inSpawn(x,y){return dist(x,y,SPAWN_X,SPAWN_Y)<SPAWN_SAFE_R;}
 
 // SAFE RESPAWN: never at death pos, far from ghosts, path-validated
 function findSafeRespawn(room,deathX,deathY){
-  const reachable=floodFill(room.map,SPAWN_X,SPAWN_Y);
-  // Candidate safe-zone clusters near spawn corner + a few fallback nodes
-  const candidates=[
-    {x:SPAWN_X,y:SPAWN_Y},
-    {x:SPAWN_X+1,y:SPAWN_Y},
-    {x:SPAWN_X,y:SPAWN_Y+1},
-    {x:SPAWN_X+1,y:SPAWN_Y+1},
-    {x:SPAWN_X+2,y:SPAWN_Y},
-    {x:SPAWN_X,y:SPAWN_Y+2},
-  ];
-  let best=null,bestScore=-Infinity;
-  for(const c of candidates){
-    const gx=Math.floor(c.x),gy=Math.floor(c.y);
-    if(gx<1||gy<1||gx>=MAP_W-1||gy>=MAP_H-1) continue;
-    if(room.map[gy][gx]===1) continue;
-    if(!reachable.has(`${gx},${gy}`)) continue;
-    // Must be away from death position (anti soft-lock)
-    if(dist(c.x,c.y,deathX,deathY)<2.0) continue;
-    // Distance from nearest ghost (prefer far)
-    let ghostD=Infinity;
-    room.monsters.forEach(m=>{const d=dist(c.x,c.y,m.x,m.y);if(d<ghostD)ghostD=d;});
-    const score=ghostD; // higher = safer
-    if(score>bestScore){bestScore=score;best=c;}
-  }
-  // Fallback: spawn origin (always valid by construction)
-  return best||{x:SPAWN_X,y:SPAWN_Y};
+  // Always respawn at the START. The spawn zone (radius SPAWN_SAFE_R) is
+  // protected — ghosts cannot enter it (see inSpawn check in AI), so this
+  // is always 100% safe and never traps the player at their death spot.
+  return {x:SPAWN_X,y:SPAWN_Y};
 }
 
 function updateRoom(room){
