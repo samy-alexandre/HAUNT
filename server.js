@@ -16,6 +16,19 @@ const MAX_LIVES=3, STAMINA_MAX=120, STAMINA_DRAIN=0.5, STAMINA_REGEN=0.4;
 const MONSTER_HIT_R=0.55;
 const SEASON_NAMES=['winter','spring','summer','autumn'];
 const RUSH_INTERVAL=90*30, RUSH_DURATION=30*30;
+// ── DETERMINISTIC SIM CONSTANTS (shared client/server) ──
+const TICK_RATE=30;                 // server simulation Hz (fixed timestep)
+const SIM_DT=1/TICK_RATE;           // fixed delta — never frame-scaled
+const WALK_SPEED=4.25;              // tiles/sec
+const SPRINT_MULT=1.65;             // deterministic sprint multiplier
+const SPRINT_SPEED=WALK_SPEED*SPRINT_MULT;
+// ── AI STATE MACHINE ──
+const AI_STATES={IDLE:0,PATROL:1,CHASE:2,SEARCH:3,RESET:4};
+const AI_WATCHDOG_TICKS=TICK_RATE*8; // force RESET if stuck in a state 8s
+const AI_SEARCH_TICKS=TICK_RATE*3;   // search 3s after losing target
+const AI_RESET_TICKS=TICK_RATE*1;    // RESET recovery duration
+const AI_CHASE_RANGE=6.0;            // tiles
+const AI_LOSE_RANGE=9.0;             // tiles
 
 function getPlayableDims(level) {
   if(level<=2) return {w:18,h:14};
@@ -152,7 +165,9 @@ function generateMonsters(map,level,reachable,pw,ph){
         if(map[ny][nx]!==0) continue;
         if(!reachable.has(`${nx},${ny}`)) continue;
         if(dist(nx,ny,SPAWN_X,SPAWN_Y)<SPAWN_SAFE_R+2) continue;
-        monsters.push({id:i,x:nx+0.5,y:ny+0.5,dx:c.dx,dy:c.dy,speed,type:mtype});
+        monsters.push({id:i,x:nx+0.5,y:ny+0.5,dx:c.dx,dy:c.dy,speed,type:mtype,
+          state:AI_STATES.PATROL,stateTicks:0,watchdog:0,searchTicks:0,
+          homeX:nx+0.5,homeY:ny+0.5,lastX:nx+0.5,lastY:ny+0.5,stuckTicks:0});
         placed=true;break outer;
       }
     }
@@ -175,16 +190,66 @@ function createBoss(level,pw,ph){
   };
 }
 
+function validateLevel(map,exit,pw,ph){
+  // 1. Spawn must be open
+  if(map[Math.floor(SPAWN_Y)][Math.floor(SPAWN_X)]===1) return false;
+  // 2. Exit must be reachable from spawn (path exists)
+  const reach=floodFill(map,SPAWN_X,SPAWN_Y);
+  if(!reach.has(`${exit.gx},${exit.gy}`)) return false;
+  // 3. Spawn safe zone must have open tiles
+  let openNearSpawn=0;
+  for(let dy=0;dy<3;dy++)for(let dx=0;dx<3;dx++){
+    const gx=Math.floor(SPAWN_X)+dx,gy=Math.floor(SPAWN_Y)+dy;
+    if(gy<MAP_H&&gx<MAP_W&&map[gy][gx]===0)openNearSpawn++;
+  }
+  if(openNearSpawn<4) return false;
+  // 4. Enough reachable tiles for items
+  if(reach.size<10) return false;
+  return true;
+}
+
+function buildSafeFallbackMap(pw,ph){
+  // Guaranteed-solvable open arena with sparse pillars
+  const map=[];
+  for(let y=0;y<MAP_H;y++){
+    map[y]=[];
+    for(let x=0;x<MAP_W;x++) map[y][x]=(x===0||x===MAP_W-1||y===0||y===MAP_H-1||x>=pw||y>=ph)?1:0;
+  }
+  // Sparse pillars (never block path — single tiles, spaced)
+  for(let y=3;y<ph-3;y+=4)for(let x=3;x<pw-3;x+=4){
+    if(dist(x,y,SPAWN_X,SPAWN_Y)>SPAWN_SAFE_R+1) map[y][x]=1;
+  }
+  // Clear spawn 3x3
+  for(let dy=0;dy<3&&1+dy<ph;dy++)for(let dx=0;dx<3&&1+dx<pw;dx++) map[1+dy][1+dx]=0;
+  return map;
+}
+
 function buildLevel(level){
   const season=SEASON_NAMES[Math.floor(Math.random()*SEASON_NAMES.length)];
   const {w:pw,h:ph}=getPlayableDims(level);
-  const baseMap=generateMap(level);
-  const reachable=floodFill(baseMap,SPAWN_X,SPAWN_Y);
-  const exitData=generateExit(baseMap,reachable,pw,ph);
-  const map=exitData.map;
-  const exit={x:exitData.x,y:exitData.y,gx:exitData.gx,gy:exitData.gy};
-  const reachable2=floodFill(map,SPAWN_X,SPAWN_Y);
 
+  // RETRY UP TO 5x for a solvable, spawn-safe maze
+  let map=null,exit=null;
+  for(let attempt=0;attempt<5;attempt++){
+    const baseMap=generateMap(level);
+    const reachable=floodFill(baseMap,SPAWN_X,SPAWN_Y);
+    const exitData=generateExit(baseMap,reachable,pw,ph);
+    const candMap=exitData.map;
+    const candExit={x:exitData.x,y:exitData.y,gx:exitData.gx,gy:exitData.gy};
+    if(validateLevel(candMap,candExit,pw,ph)){
+      map=candMap; exit=candExit; break;
+    }
+  }
+  // FALLBACK: guaranteed-safe open arena
+  if(!map){
+    map=buildSafeFallbackMap(pw,ph);
+    const reach=floodFill(map,SPAWN_X,SPAWN_Y);
+    const exitData=generateExit(map,reach,pw,ph);
+    map=exitData.map;
+    exit={x:exitData.x,y:exitData.y,gx:exitData.gx,gy:exitData.gy};
+  }
+
+  const reachable2=floodFill(map,SPAWN_X,SPAWN_Y);
   const isBoss=level%5===0&&level>0;
   const items=isBoss?[]:generateItems(map,level,exit,reachable2,pw,ph);
   const monsters=isBoss?[]:(generateMonsters(map,level,reachable2,pw,ph));
@@ -223,6 +288,36 @@ function wallSimple(map,x,y){
   return map[ty][tx]===1;
 }
 function inSpawn(x,y){return dist(x,y,SPAWN_X,SPAWN_Y)<SPAWN_SAFE_R;}
+
+// SAFE RESPAWN: never at death pos, far from ghosts, path-validated
+function findSafeRespawn(room,deathX,deathY){
+  const reachable=floodFill(room.map,SPAWN_X,SPAWN_Y);
+  // Candidate safe-zone clusters near spawn corner + a few fallback nodes
+  const candidates=[
+    {x:SPAWN_X,y:SPAWN_Y},
+    {x:SPAWN_X+1,y:SPAWN_Y},
+    {x:SPAWN_X,y:SPAWN_Y+1},
+    {x:SPAWN_X+1,y:SPAWN_Y+1},
+    {x:SPAWN_X+2,y:SPAWN_Y},
+    {x:SPAWN_X,y:SPAWN_Y+2},
+  ];
+  let best=null,bestScore=-Infinity;
+  for(const c of candidates){
+    const gx=Math.floor(c.x),gy=Math.floor(c.y);
+    if(gx<1||gy<1||gx>=MAP_W-1||gy>=MAP_H-1) continue;
+    if(room.map[gy][gx]===1) continue;
+    if(!reachable.has(`${gx},${gy}`)) continue;
+    // Must be away from death position (anti soft-lock)
+    if(dist(c.x,c.y,deathX,deathY)<2.0) continue;
+    // Distance from nearest ghost (prefer far)
+    let ghostD=Infinity;
+    room.monsters.forEach(m=>{const d=dist(c.x,c.y,m.x,m.y);if(d<ghostD)ghostD=d;});
+    const score=ghostD; // higher = safer
+    if(score>bestScore){bestScore=score;best=c;}
+  }
+  // Fallback: spawn origin (always valid by construction)
+  return best||{x:SPAWN_X,y:SPAWN_Y};
+}
 
 function updateRoom(room){
   if(room.gameOver||room.gameWon||!room.started) return;
@@ -279,6 +374,7 @@ function updateRoom(room){
           if(item){item.carriedBy=null;item.x=p.x;item.y=p.y;}p.carrying=null;
         }
         p.consecutiveDeliveries=0; p.comboActive=false;
+        p.deathX=p.x; p.deathY=p.y;
         p.lives=(p.lives||MAX_LIVES)-1; p.dead=true; p.deaths=(p.deaths||0)+1;
         if(p.lives<=0){p.lives=0;p.eliminated=true;io.to(room.id).emit('player_eliminated',{name:p.name});}
         else p.respawnTimer=120;
@@ -290,36 +386,93 @@ function updateRoom(room){
     // For now, boss HP only decreases via special trigger (placeholder)
   }
 
-  // MONSTERS
+  // MONSTERS — DETERMINISTIC STATE MACHINE (IDLE/PATROL/CHASE/SEARCH/RESET)
+  const globalFrozen=players.some(p=>p.freezeActive&&p.freezeActive>0);
   room.monsters.forEach((m,mi)=>{
-    let target=null,minD=Infinity;
-    players.forEach(p=>{
-      if(!p.dead&&!inSpawn(p.x,p.y)){const d=dist(m.x,m.y,p.x,p.y);if(d<minD){minD=d;target=p;}}
-    });
+    // Ensure state fields exist (reinit-safe)
+    if(m.state===undefined){m.state=AI_STATES.PATROL;m.stateTicks=0;m.watchdog=0;m.searchTicks=0;m.homeX=m.x;m.homeY=m.y;m.lastX=m.x;m.lastY=m.y;m.stuckTicks=0;}
 
-    let dx=m.dx,dy=m.dy;
+    m.stateTicks++; m.watchdog++;
 
-    // Apply freeze power-up
-    const frozen=players.some(p=>p.freezeActive&&p.freezeActive>0);
-    if(frozen){dx=0;dy=0;}
-    else{
-      if(m.type==='hunter'){
-        if(target){const a=Math.atan2(target.y-m.y,target.x-m.x);dx=Math.cos(a);dy=Math.sin(a);}
-      } else if(m.type==='twin'){
-        if(target){
-          const a=Math.atan2(target.y-m.y,target.x-m.x)+Math.PI*0.5;
-          dx=Math.cos(a);dy=Math.sin(a);
-        }
-      } else {
-        if(target&&minD<5){const a=Math.atan2(target.y-m.y,target.x-m.x);dx=Math.cos(a)*0.6+m.dx*0.4;dy=Math.sin(a)*0.6+m.dy*0.4;}
-        else{dx=m.dx;dy=m.dy;}
-      }
+    // WATCHDOG: force RESET if stuck in any non-reset state too long
+    if(m.watchdog>AI_WATCHDOG_TICKS && m.state!==AI_STATES.RESET){
+      m.state=AI_STATES.RESET; m.stateTicks=0; m.watchdog=0;
     }
 
-    const spd=frozen?0:(m.speed*2*cursedSpeedMult);
+    // Find nearest valid target
+    let target=null,minD=Infinity;
+    players.forEach(p=>{
+      if(!p.dead&&!p.eliminated&&!inSpawn(p.x,p.y)){
+        const d=dist(m.x,m.y,p.x,p.y);
+        if(d<minD){minD=d;target=p;}
+      }
+    });
+
+    // ── STATE TRANSITIONS ──
+    if(m.state===AI_STATES.RESET){
+      // Recovery: return toward home, clear corrupted state
+      if(m.stateTicks>=AI_RESET_TICKS){
+        m.state=AI_STATES.PATROL; m.stateTicks=0; m.watchdog=0; m.searchTicks=0;
+      }
+    } else if(globalFrozen){
+      // Freeze handled in movement, but keep state coherent (no permanent freeze)
+    } else if(target && minD<AI_CHASE_RANGE){
+      if(m.state!==AI_STATES.CHASE){m.state=AI_STATES.CHASE;m.stateTicks=0;}
+      m.watchdog=0; // actively chasing = healthy
+      m.searchTicks=0;
+    } else if(m.state===AI_STATES.CHASE){
+      // Lost sight → SEARCH
+      m.state=AI_STATES.SEARCH; m.stateTicks=0; m.searchTicks=AI_SEARCH_TICKS;
+    } else if(m.state===AI_STATES.SEARCH){
+      m.searchTicks--;
+      if(m.searchTicks<=0){m.state=AI_STATES.PATROL;m.stateTicks=0;}
+      else if(target&&minD<AI_LOSE_RANGE){m.state=AI_STATES.CHASE;m.stateTicks=0;m.watchdog=0;}
+    }
+
+    // ── STATE BEHAVIOR → direction vector ──
+    let dx=m.dx,dy=m.dy;
+    if(globalFrozen){
+      dx=0;dy=0;
+    } else if(m.state===AI_STATES.RESET){
+      // Move back toward home position
+      const a=Math.atan2(m.homeY-m.y,m.homeX-m.x);
+      dx=Math.cos(a);dy=Math.sin(a);
+    } else if(m.state===AI_STATES.CHASE && target){
+      if(m.type==='twin'){
+        const a=Math.atan2(target.y-m.y,target.x-m.x)+Math.PI*0.5;
+        dx=Math.cos(a);dy=Math.sin(a);
+      } else {
+        const a=Math.atan2(target.y-m.y,target.x-m.x);
+        dx=Math.cos(a);dy=Math.sin(a);
+      }
+    } else if(m.state===AI_STATES.SEARCH){
+      // Wander around last known direction
+      dx=m.dx;dy=m.dy;
+    } else {
+      // PATROL — bounce pattern
+      dx=m.dx;dy=m.dy;
+    }
+
+    // Deterministic speed (fixed timestep, no frame scaling)
+    const stateMul=m.state===AI_STATES.CHASE?1.0:m.state===AI_STATES.RESET?0.8:0.7;
+    const spd=globalFrozen?0:(m.speed*2*cursedSpeedMult*stateMul);
     const nx=m.x+dx*spd,ny=m.y+dy*spd;
-    if(!wallSimple(room.map,nx,m.y)&&!inSpawn(nx,m.y)) m.x=nx; else m.dx=-m.dx;
-    if(!wallSimple(room.map,m.x,ny)&&!inSpawn(m.x,ny)) m.y=ny; else m.dy=-m.dy;
+    let movedX=false,movedY=false;
+    if(!wallSimple(room.map,nx,m.y)&&!inSpawn(nx,m.y)){m.x=nx;movedX=true;} else m.dx=-m.dx;
+    if(!wallSimple(room.map,m.x,ny)&&!inSpawn(m.x,ny)){m.y=ny;movedY=true;} else m.dy=-m.dy;
+
+    // STUCK DETECTION → nudge into RESET (prevents permanent freeze/corner-lock)
+    const moveDist=dist(m.x,m.y,m.lastX,m.lastY);
+    if(!globalFrozen && moveDist<0.01){
+      m.stuckTicks++;
+      if(m.stuckTicks>TICK_RATE*2 && m.state!==AI_STATES.RESET){
+        m.state=AI_STATES.RESET;m.stateTicks=0;m.stuckTicks=0;m.watchdog=0;
+        m.dx=-m.dx;m.dy=-m.dy;
+      }
+    } else {
+      m.stuckTicks=0;
+    }
+    m.lastX=m.x;m.lastY=m.y;
 
     // Hit detection
     players.forEach(p=>{
@@ -330,6 +483,7 @@ function updateRoom(room){
           if(item){item.carriedBy=null;item.x=p.x;item.y=p.y;}p.carrying=null;
         }
         p.consecutiveDeliveries=0; p.comboActive=false;
+        p.deathX=p.x; p.deathY=p.y;
         p.lives=(p.lives||MAX_LIVES)-1; p.dead=true; p.deaths=(p.deaths||0)+1;
         if(p.lives<=0){p.lives=0;p.eliminated=true;io.to(room.id).emit('player_eliminated',{name:p.name});}
         else p.respawnTimer=120;
@@ -340,7 +494,13 @@ function updateRoom(room){
 
   // Respawn & regen & power-up timers
   players.forEach(p=>{
-    if(p.dead&&!p.eliminated){p.respawnTimer--;if(p.respawnTimer<=0){p.dead=false;p.x=SPAWN_X;p.y=SPAWN_Y;}}
+    if(p.dead&&!p.eliminated){
+      p.respawnTimer--;
+      if(p.respawnTimer<=0){
+        const safe=findSafeRespawn(room,p.deathX!==undefined?p.deathX:SPAWN_X,p.deathY!==undefined?p.deathY:SPAWN_Y);
+        p.dead=false; p.x=safe.x; p.y=safe.y;
+      }
+    }
     // Power-up timers
     if(p.speedActive>0){p.speedActive--;if(p.speedActive===0)io.to(room.id).emit('powerup_end',{playerId:p.id,type:'speed'});}
     if(p.shieldActive>0){p.shieldActive--;if(p.shieldActive===0)io.to(room.id).emit('powerup_end',{playerId:p.id,type:'shield'});}
