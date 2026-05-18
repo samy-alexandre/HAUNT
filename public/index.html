@@ -1585,6 +1585,13 @@ socket.on('state',state=>{
       spectating=false;
       document.getElementById('killedMsg').style.opacity='0';
       document.getElementById('spectateMsg').classList.add('hidden');
+      // Teleport camera to spawn (server respawned us there)
+      if(camera){
+        camera.position.x=me.x*TILE;
+        camera.position.z=me.y*TILE;
+        camera.position.y=EYE_H;
+      }
+      velX=0;velZ=0;
     }
   }
   
@@ -2364,12 +2371,12 @@ function updateMovement(dt){
   if(keys['d']) inputX+=1;
   const moving=inputX!==0||inputZ!==0;
   
-  // Speed — SHARED DETERMINISTIC CONSTANTS (must match server)
-  const C_WALK=4.25*TILE, C_SPRINT=4.25*1.85*TILE; // 8.5 / 15.7 world u/s
+  // Speed — REALISTIC AAA FPS (CoD/Apex-like): walk ~3/s, sprint ~5/s
+  const C_WALK=3.0*TILE, C_SPRINT=5.0*TILE; // 6.0 / 10.0 world u/s
   const wantSprint=keys['shift']&&stamina>0;
   const targetSpd=wantSprint?C_SPRINT:C_WALK;
-  const ACCEL=60;   // reach target fast
-  const DECEL=14;   // smooth stop ONLY when no input
+  const ACCEL=42;   // reach target smoothly (not instant, not sluggish)
+  const DECEL=16;   // smooth stop ONLY when no input
 
   if(moving){
     // Direction from input + camera yaw
@@ -2395,7 +2402,7 @@ function updateMovement(dt){
   if(Math.abs(velZ)<0.02) velZ=0;
   
   const speed=Math.sqrt(velX*velX+velZ*velZ);
-  const sprinting=speed>C_WALK+1.5;
+  const sprinting=speed>C_WALK+0.8;
   
   // Collision
   const wx=(camera.position.x+velX*dt)/TILE;
