@@ -2371,11 +2371,11 @@ function updateMovement(dt){
   if(keys['d']) inputX+=1;
   const moving=inputX!==0||inputZ!==0;
   
-  // Speed — REALISTIC AAA FPS (CoD/Apex-like): walk ~3/s, sprint ~5/s
-  const C_WALK=3.0*TILE, C_SPRINT=5.0*TILE; // 6.0 / 10.0 world u/s
+  // Speed — REALISTIC AAA FPS, tuned via playtest: walk ~2.7/s, sprint ~4.5/s
+  const C_WALK=2.7*TILE, C_SPRINT=4.5*TILE; // 5.4 / 9.0 world u/s
   const wantSprint=keys['shift']&&stamina>0;
   const targetSpd=wantSprint?C_SPRINT:C_WALK;
-  const ACCEL=42;   // reach target smoothly (not instant, not sluggish)
+  const ACCEL=40;   // smooth ramp-up
   const DECEL=16;   // smooth stop ONLY when no input
 
   if(moving){
