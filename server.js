@@ -135,7 +135,7 @@ function generateItems(map,level,exit,reachable,pw,ph){
 }
 
 function generateMonsters(map,level,reachable,pw,ph){
-  const baseSpd=0.018+level*0.003;
+  const baseSpd=0.016+level*0.0018;
   const typePool=level<=2
     ?['rover','hunter','rover','hunter','rover','rover']
     :level<=4
@@ -155,7 +155,7 @@ function generateMonsters(map,level,reachable,pw,ph){
   for(let i=0;i<count;i++){
     const c=positions[i];
     const mtype=typePool[i]||'rover';
-    const speedMult=mtype==='hunter'?1.4:mtype==='twin'?1.1:0.7;
+    const speedMult=mtype==='hunter'?1.15:mtype==='twin'?1.0:0.65;
     const speed=baseSpd*speedMult;
     let placed=false;
     outer:for(let r=0;r<12;r++){
@@ -289,6 +289,26 @@ function wallSimple(map,x,y){
 }
 function inSpawn(x,y){return dist(x,y,SPAWN_X,SPAWN_Y)<SPAWN_SAFE_R;}
 
+// LINE OF SIGHT — raycast (DDA grid traversal). Returns true if NO wall
+// blocks the straight line between (x0,y0) and (x1,y1). This makes ghosts
+// only "see" the player when there's a clear path — no more wall-hacking AI.
+function hasLineOfSight(map,x0,y0,x1,y1){
+  const dx=x1-x0, dy=y1-y0;
+  const distTotal=Math.sqrt(dx*dx+dy*dy);
+  if(distTotal<0.001) return true;
+  // Step along the ray in small increments, check each grid cell
+  const steps=Math.ceil(distTotal/0.18); // ~0.18 tile resolution
+  const sx=dx/steps, sy=dy/steps;
+  let cx=x0, cy=y0;
+  for(let i=0;i<steps;i++){
+    cx+=sx; cy+=sy;
+    const tx=Math.floor(cx), ty=Math.floor(cy);
+    if(tx<0||tx>=MAP_W||ty<0||ty>=MAP_H) return false;
+    if(map[ty][tx]===1) return false; // wall blocks vision
+  }
+  return true;
+}
+
 // SAFE RESPAWN: never at death pos, far from ghosts, path-validated
 function findSafeRespawn(room,deathX,deathY){
   // Always respawn at the START. The spawn zone (radius SPAWN_SAFE_R) is
@@ -377,34 +397,43 @@ function updateRoom(room){
       m.state=AI_STATES.RESET; m.stateTicks=0; m.watchdog=0;
     }
 
-    // Find nearest valid target
-    let target=null,minD=Infinity;
+    // Find nearest target THAT THE GHOST CAN ACTUALLY SEE (line of sight)
+    let target=null,minD=Infinity,canSeeTarget=false;
     players.forEach(p=>{
       if(!p.dead&&!p.eliminated&&!inSpawn(p.x,p.y)){
         const d=dist(m.x,m.y,p.x,p.y);
-        if(d<minD){minD=d;target=p;}
+        if(d<minD){
+          // Within sight range AND clear line of sight (no wall blocking)
+          const visible=d<AI_LOSE_RANGE && hasLineOfSight(room.map,m.x,m.y,p.x,p.y);
+          if(visible){minD=d;target=p;canSeeTarget=true;}
+        }
       }
     });
 
-    // ── STATE TRANSITIONS ──
+    // ── STATE TRANSITIONS (vision-based) ──
     if(m.state===AI_STATES.RESET){
-      // Recovery: return toward home, clear corrupted state
       if(m.stateTicks>=AI_RESET_TICKS){
         m.state=AI_STATES.PATROL; m.stateTicks=0; m.watchdog=0; m.searchTicks=0;
       }
     } else if(globalFrozen){
-      // Freeze handled in movement, but keep state coherent (no permanent freeze)
-    } else if(target && minD<AI_CHASE_RANGE){
+      // frozen: no state change
+    } else if(canSeeTarget && minD<AI_CHASE_RANGE){
+      // SEES player within chase range → CHASE + remember position
       if(m.state!==AI_STATES.CHASE){m.state=AI_STATES.CHASE;m.stateTicks=0;}
-      m.watchdog=0; // actively chasing = healthy
-      m.searchTicks=0;
+      m.watchdog=0; m.searchTicks=0;
+      m.lastSeenX=target.x; m.lastSeenY=target.y; // remember for search
     } else if(m.state===AI_STATES.CHASE){
-      // Lost sight → SEARCH
+      // Lost line of sight → SEARCH last known position
       m.state=AI_STATES.SEARCH; m.stateTicks=0; m.searchTicks=AI_SEARCH_TICKS;
     } else if(m.state===AI_STATES.SEARCH){
       m.searchTicks--;
-      if(m.searchTicks<=0){m.state=AI_STATES.PATROL;m.stateTicks=0;}
-      else if(target&&minD<AI_LOSE_RANGE){m.state=AI_STATES.CHASE;m.stateTicks=0;m.watchdog=0;}
+      if(canSeeTarget&&minD<AI_LOSE_RANGE){
+        // Re-spotted → resume chase
+        m.state=AI_STATES.CHASE;m.stateTicks=0;m.watchdog=0;
+        m.lastSeenX=target.x;m.lastSeenY=target.y;
+      } else if(m.searchTicks<=0){
+        m.state=AI_STATES.PATROL;m.stateTicks=0;
+      }
     }
 
     // ── STATE BEHAVIOR → direction vector ──
@@ -424,8 +453,17 @@ function updateRoom(room){
         dx=Math.cos(a);dy=Math.sin(a);
       }
     } else if(m.state===AI_STATES.SEARCH){
-      // Wander around last known direction
-      dx=m.dx;dy=m.dy;
+      // Move toward LAST SEEN position (investigate where player vanished)
+      if(m.lastSeenX!==undefined){
+        const ldx=m.lastSeenX-m.x, ldy=m.lastSeenY-m.y;
+        const ld=Math.sqrt(ldx*ldx+ldy*ldy);
+        if(ld>0.5){
+          dx=ldx/ld; dy=ldy/ld;
+        } else {
+          // Reached last known spot, player not here → wander to look
+          dx=m.dx; dy=m.dy;
+        }
+      } else { dx=m.dx; dy=m.dy; }
     } else {
       // PATROL — bounce pattern
       dx=m.dx;dy=m.dy;
