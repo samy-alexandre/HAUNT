@@ -66,14 +66,15 @@ body {
 .aaa-topbar {
   position: relative; z-index: 10;
   display: flex; justify-content: space-between; align-items: center;
-  padding: 1.5rem 3rem;
+  padding: 0.8rem 2rem;
   background: linear-gradient(180deg, rgba(10,10,15,0.9) 0%, transparent 100%);
   animation: aaaSlideDown 0.6s ease-out 0.2s backwards;
+  flex-shrink: 0;
 }
 @keyframes aaaSlideDown { from { transform: translateY(-100%); } }
 .aaa-logo {
   font-family: 'Rajdhani', sans-serif;
-  font-size: 3rem; font-weight: 700; letter-spacing: 10px;
+  font-size: 2.2rem; font-weight: 700; letter-spacing: 8px;
   background: linear-gradient(135deg, var(--accent-cyan) 0%, var(--accent-magenta) 100%);
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -89,17 +90,26 @@ body {
   color: #000; padding: 0.3rem 1rem; border-radius: 20px;
   font-weight: 700; box-shadow: var(--glow-cyan);
 }
+#menuScreen {
+  background: var(--bg) !important;
+  padding: 0 !important;
+  overflow: hidden;
+  display: flex !important;
+  flex-direction: column;
+  height: 100vh;
+}
 .aaa-content {
   position: relative; z-index: 5; flex: 1;
-  display: grid; grid-template-columns: 320px 1fr 320px;
-  gap: 2rem; padding: 1rem 3rem; align-items: center;
-  max-width: 1800px; margin: 0 auto; width: 100%;
+  display: grid; grid-template-columns: 280px 1fr 280px;
+  gap: 1.5rem; padding: 0.5rem 2rem; align-items: center;
+  max-width: 1700px; margin: 0 auto; width: 100%;
+  min-height: 0; overflow: hidden;
 }
 .aaa-glass {
   background: var(--bg-glass);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 16px; padding: 1.8rem;
+  border-radius: 14px; padding: 1.2rem;
   box-shadow: 0 8px 32px rgba(0,0,0,0.3);
 }
 .aaa-left { animation: aaaSlideLeft 0.6s ease-out 0.4s backwards; }
@@ -108,15 +118,15 @@ body {
 @keyframes aaaSlideRight { from { transform: translateX(100%); opacity:0; } }
 .aaa-ptitle {
   font-family: 'Rajdhani', sans-serif;
-  font-size: 1.3rem; font-weight: 700; margin-bottom: 1.2rem;
+  font-size: 1.1rem; font-weight: 700; margin-bottom: 0.8rem;
   color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 3px;
 }
 .aaa-modebtn {
-  width: 100%; padding: 0.9rem 1.3rem; margin-bottom: 0.8rem;
+  width: 100%; padding: 0.7rem 1.1rem; margin-bottom: 0.6rem;
   background: rgba(255,255,255,0.05);
   border: 2px solid rgba(255,255,255,0.1); border-radius: 8px;
   color: var(--text); font-family: 'Rajdhani', sans-serif;
-  font-size: 1.05rem; font-weight: 600; cursor: pointer;
+  font-size: 1rem; font-weight: 600; cursor: pointer;
   transition: all 0.3s ease; text-align: left;
   display: flex; align-items: center; gap: 0.8rem;
 }
@@ -131,54 +141,56 @@ body {
 .aaa-center {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   animation: aaaScaleIn 0.8s ease-out 0.6s backwards;
+  min-height: 0;
 }
 @keyframes aaaScaleIn { from { transform: scale(0.8); opacity:0; } }
 #charCanvas {
-  width: 100%; height: 480px;
+  width: 100%; height: 42vh; max-height: 380px;
   filter: drop-shadow(0 20px 60px rgba(0,255,170,0.3));
 }
 .aaa-charname {
   font-family: 'Rajdhani', sans-serif;
-  font-size: 1.8rem; font-weight: 700; margin-top: 0.5rem;
+  font-size: 1.6rem; font-weight: 700; margin-top: 0.3rem;
   background: linear-gradient(135deg, var(--accent-cyan), white);
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 .aaa-stat {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 0.9rem; margin-bottom: 0.8rem;
+  padding: 0.7rem; margin-bottom: 0.6rem;
   background: rgba(255,255,255,0.05); border-radius: 8px;
   border-left: 3px solid var(--accent-cyan);
   transition: all 0.3s ease;
   font-family: 'Rajdhani', sans-serif;
 }
 .aaa-stat:hover { background: rgba(0,255,170,0.1); transform: translateX(-5px); }
-.aaa-stat-val { font-size: 1.6rem; font-weight: 700; color: var(--accent-cyan); }
+.aaa-stat-val { font-size: 1.4rem; font-weight: 700; color: var(--accent-cyan); }
 .aaa-bottom {
   position: relative; z-index: 10;
-  padding: 1rem 3rem 2rem;
+  padding: 0.5rem 2rem 1rem;
   background: linear-gradient(0deg, rgba(10,10,15,0.95) 0%, transparent 100%);
   animation: aaaSlideUp 0.6s ease-out 0.8s backwards;
+  flex-shrink: 0;
 }
 @keyframes aaaSlideUp { from { transform: translateY(100%); } }
 .aaa-customize {
   background: var(--bg-glass); backdrop-filter: blur(20px);
-  border: 1px solid rgba(255,255,255,0.1); border-radius: 16px;
-  padding: 1.2rem 1.8rem; margin-bottom: 1rem;
-  display: flex; align-items: center; gap: 1.5rem;
+  border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
+  padding: 0.7rem 1.4rem; margin-bottom: 0.6rem;
+  display: flex; align-items: center; gap: 1.2rem;
 }
 .aaa-ctitle {
   font-family: 'Rajdhani', sans-serif;
-  font-size: 0.9rem; color: var(--text-dim);
+  font-size: 0.8rem; color: var(--text-dim);
   text-transform: uppercase; letter-spacing: 2px;
-  min-width: 90px;
+  min-width: 70px;
 }
-.aaa-cgrid { display: flex; gap: 0.7rem; flex-wrap: wrap; flex: 1; }
+.aaa-cgrid { display: flex; gap: 0.5rem; flex-wrap: wrap; flex: 1; }
 .aaa-cbtn {
   background: rgba(255,255,255,0.05);
-  border: 2px solid rgba(255,255,255,0.1); border-radius: 12px;
-  padding: 0.6rem 1.2rem; color: var(--text);
-  font-family: 'Rajdhani', sans-serif; font-size: 0.95rem; font-weight: 600;
+  border: 2px solid rgba(255,255,255,0.1); border-radius: 10px;
+  padding: 0.45rem 0.9rem; color: var(--text);
+  font-family: 'Rajdhani', sans-serif; font-size: 0.85rem; font-weight: 600;
   cursor: pointer; transition: all 0.3s ease;
   display: flex; align-items: center; gap: 0.4rem; position: relative;
 }
@@ -192,15 +204,16 @@ body {
 }
 .aaa-cbtn.locked { opacity: 0.4; cursor: not-allowed; }
 .aaa-cbtn.locked::after {
-  content: '🔒'; position: absolute; top: -8px; right: -8px; font-size: 0.75rem;
+  content: '🔒'; position: absolute; top: -8px; right: -8px; font-size: 0.7rem;
 }
 .aaa-playrow {
   display: flex; justify-content: center; gap: 1rem; align-items: center;
+  margin-top: 0.3rem;
 }
 .aaa-playbtn {
   background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
-  border: none; border-radius: 50px; padding: 1.1rem 4rem;
-  font-family: 'Rajdhani', sans-serif; font-size: 1.7rem; font-weight: 700;
+  border: none; border-radius: 50px; padding: 0.9rem 3rem;
+  font-family: 'Rajdhani', sans-serif; font-size: 1.4rem; font-weight: 700;
   color: #000; cursor: pointer; letter-spacing: 4px; text-transform: uppercase;
   box-shadow: var(--glow-cyan); transition: all 0.3s ease;
   position: relative; overflow: hidden;
@@ -857,9 +870,8 @@ input[type="text"]:focus {
       <div class="aaa-cgrid" id="aaaTrailGrid"></div>
     </div>
     <div class="aaa-playrow">
-      <button class="aaa-secbtn" onclick="showCreateRoom()">Créer Partie</button>
-      <button class="aaa-playbtn" onclick="showJoinRoom()">▶ Jouer</button>
-      <button class="aaa-secbtn" onclick="showJoinRoom()">Rejoindre</button>
+      <button class="aaa-playbtn" onclick="showCreateRoom()">CRÉER PARTIE</button>
+      <button class="aaa-secbtn" onclick="showJoinRoom()">REJOINDRE</button>
     </div>
   </div>
 </div>
