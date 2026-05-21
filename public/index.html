@@ -2314,7 +2314,7 @@ document.addEventListener('mousemove',e=>{
 // KEYBOARD
 document.addEventListener('keydown',e=>{
   if(document.activeElement.tagName==='INPUT') return;
-  keys[e.key.toLowerCase()]=true;
+  if(e.key) keys[e.key.toLowerCase()]=true;
   if(e.key==='F3'){
     e.preventDefault();
     debugMode=!debugMode;
@@ -2335,7 +2335,7 @@ document.addEventListener('keydown',e=>{
   }
 });
 document.addEventListener('keyup',e=>{
-  keys[e.key.toLowerCase()]=false;
+  if(e.key) keys[e.key.toLowerCase()]=false;
 });
 
 // PHYSICS
