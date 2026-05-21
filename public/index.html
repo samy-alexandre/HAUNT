@@ -269,7 +269,14 @@ body {
 }
 .aaa-input:focus { outline: none; border-color: var(--accent-cyan); }
 
-#canvas3d { display:block; width:100%; height:100vh; }
+#canvas3d {
+  display: block;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 0;
+}
 .screen {
   position: fixed; inset:0;
   display: flex; flex-direction: column;
@@ -1093,11 +1100,11 @@ let trailParticles=[];
 function showScreen(id){
   ['menuScreen','createRoomScreen','joinRoomScreen','lobbyScreen','pauseScreen','endScreen'].forEach(s=>{
     const el=document.getElementById(s);
-    if(el) el.classList.add('hidden');
+    if(el){el.classList.add('hidden');el.style.display='';}  // clear inline style
   });
   if(id){
     const el=document.getElementById(id);
-    if(el) el.classList.remove('hidden');
+    if(el){el.classList.remove('hidden');el.style.display='';}
   }
 }
 function showCreateRoom(){showScreen('createRoomScreen');}
@@ -1426,10 +1433,17 @@ function startGame(){
 
 socket.on('map',m=>{map=m;initMinimap();});
 socket.on('game_started',()=>{
-  showScreen('');
+  // Force hide ALL screens — belt + suspenders (class AND inline style)
+  ['menuScreen','createRoomScreen','joinRoomScreen','lobbyScreen','pauseScreen','endScreen'].forEach(s=>{
+    const el=document.getElementById(s);
+    if(el){el.classList.add('hidden');el.style.display='none';}
+  });
   stopAAALobby();
   document.getElementById('topHud').classList.remove('hidden');
   document.getElementById('bottomHud').classList.remove('hidden');
+  // Make sure the 3D canvas is visible
+  const c3d=document.getElementById('canvas3d');
+  if(c3d){c3d.style.display='block';c3d.style.visibility='visible';}
   initThree();
   initAudio();
   playMusic();
