@@ -94,10 +94,11 @@ body {
   background: var(--bg) !important;
   padding: 0 !important;
   overflow: hidden;
-  display: flex !important;
+  display: flex;
   flex-direction: column;
   height: 100vh;
 }
+#menuScreen.hidden { display: none !important; }
 .aaa-content {
   position: relative; z-index: 5; flex: 1;
   display: grid; grid-template-columns: 280px 1fr 280px;
@@ -1433,57 +1434,27 @@ function startGame(){
 
 socket.on('map',m=>{map=m;initMinimap();});
 socket.on('game_started',()=>{
-  console.log('[DEBUG] game_started received');
   // Force hide ALL screens — belt + suspenders (class AND inline style)
   ['menuScreen','createRoomScreen','joinRoomScreen','lobbyScreen','pauseScreen','endScreen'].forEach(s=>{
     const el=document.getElementById(s);
     if(el){el.classList.add('hidden');el.style.display='none';}
   });
-  console.log('[DEBUG] screens hidden');
-  try{stopAAALobby();console.log('[DEBUG] stopAAALobby OK');}catch(e){console.error('[DEBUG] stopAAALobby FAILED:',e);}
+  stopAAALobby();
   document.getElementById('topHud').classList.remove('hidden');
   document.getElementById('bottomHud').classList.remove('hidden');
-  console.log('[DEBUG] HUDs shown');
   // Make sure the 3D canvas is visible
   const c3d=document.getElementById('canvas3d');
   if(c3d){c3d.style.display='block';c3d.style.visibility='visible';}
-  console.log('[DEBUG] canvas3d ready, calling initThree…');
-  try{initThree();console.log('[DEBUG] initThree OK');}catch(e){console.error('[DEBUG] initThree FAILED:',e);showDebugPanel('initThree CRASH: '+e.message);}
-  try{initAudio();}catch(e){console.error('[DEBUG] initAudio FAILED:',e);}
-  try{playMusic();}catch(e){console.error('[DEBUG] playMusic FAILED:',e);}
-  try{startPointerLock();}catch(e){console.error('[DEBUG] pointerLock FAILED:',e);}
+  initThree();
+  initAudio();
+  playMusic();
+  startPointerLock();
   velX=0;velZ=0;stamina=STAM_MAX;paused=false;spectating=false;
   yaw=0;pitch=0;
   document.getElementById('spectateMsg').classList.add('hidden');
   document.getElementById('killedMsg').style.opacity='0';
-  try{startLoop();console.log('[DEBUG] startLoop OK — game running');}catch(e){console.error('[DEBUG] startLoop FAILED:',e);showDebugPanel('startLoop CRASH: '+e.message);}
-
-  // Visible diagnostic: report state every 2 seconds for 10 seconds
-  let dCount=0;
-  const diag=setInterval(()=>{
-    dCount++;
-    const menu=document.getElementById('menuScreen');
-    const lobby=document.getElementById('lobbyScreen');
-    const cv=document.getElementById('canvas3d');
-    const menuVis=menu && getComputedStyle(menu).display!=='none';
-    const lobbyVis=lobby && getComputedStyle(lobby).display!=='none';
-    const cvVis=cv && getComputedStyle(cv).display!=='none';
-    console.log('[DIAG '+dCount+'] menuVisible='+menuVis+' lobbyVisible='+lobbyVis+' canvasVisible='+cvVis+' sceneExists='+!!scene+' renderer='+!!renderer);
-    if(dCount>=5){clearInterval(diag);}
-  },2000);
+  startLoop();
 });
-
-// Debug panel always visible (top-left) showing critical errors
-function showDebugPanel(msg){
-  let p=document.getElementById('debugPanel');
-  if(!p){
-    p=document.createElement('div');
-    p.id='debugPanel';
-    p.style.cssText='position:fixed;top:10px;left:10px;background:rgba(255,0,0,0.85);color:#fff;padding:10px 16px;font-family:monospace;font-size:12px;z-index:999;max-width:400px;border-radius:4px;';
-    document.body.appendChild(p);
-  }
-  p.textContent='[CRASH] '+msg;
-}
 
 socket.on('level_start',({level,totalItems,season:s,isBossLevel})=>{
   season=s;
